@@ -71,8 +71,13 @@ class Config {
     }
 
     private function getEnv($key, $default = '') {
+        // Check $_ENV first (more reliable), then fall back to getenv()
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+
         $value = getenv($key);
-        return $value !== false ? $value : $default;
+        return $value !== false && $value !== '' ? $value : $default;
     }
 
     public function get($section = null) {
