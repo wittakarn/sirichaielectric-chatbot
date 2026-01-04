@@ -1,16 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ChatMessage, ChatRequest, ChatResponse, ConversationHistory, GeminiConfig } from '../types';
+import { ProductFetcher } from './product-fetcher';
 
 export class SirichaiChatbot {
   private genAI: GoogleGenerativeAI;
   private model: any;
   private conversations: Map<string, ConversationHistory>;
   private systemPrompt: string;
+  private productFetcher?: ProductFetcher;
 
-  constructor(config: GeminiConfig) {
+  constructor(config: GeminiConfig, productFetcher?: ProductFetcher) {
     this.genAI = new GoogleGenerativeAI(config.apiKey);
     this.model = this.genAI.getGenerativeModel({
-      model: config.model || 'gemini-2.0-flash-exp',
+      model: config.model || 'gemini-2.5-flash',
       generationConfig: {
         temperature: config.temperature || 0.7,
         maxOutputTokens: config.maxTokens || 2048,
@@ -19,6 +21,7 @@ export class SirichaiChatbot {
       },
     });
     this.conversations = new Map();
+    this.productFetcher = productFetcher;
     this.systemPrompt = this.buildSystemPrompt();
   }
 
@@ -94,6 +97,29 @@ Remember: You represent a trusted electrical supplier. Build confidence and prov
       history.map(msg => `${msg.role === 'user' ? 'Customer' : 'Assistant'}: ${msg.content}`).join('\n');
   }
 
+  private buildFullPrompt(message: string, history: ChatMessage[]): string {
+    let prompt = this.systemPrompt;
+
+    // Add product context if available
+    if (this.productFetcher) {
+      const productContext = this.productFetcher.getProductContext();
+      if (productContext) {
+        prompt += `\n\n${productContext}`;
+      }
+    }
+
+    // Add conversation history
+    const contextMessage = this.buildContextMessage(history);
+    if (contextMessage) {
+      prompt += contextMessage;
+    }
+
+    // Add current message
+    prompt += `\n\nCUSTOMER MESSAGE:\n${message}`;
+
+    return prompt;
+  }
+
   async chat(request: ChatRequest): Promise<ChatResponse> {
     try {
       const conversationId = request.conversationId || this.generateConversationId();
@@ -110,8 +136,7 @@ Remember: You represent a trusted electrical supplier. Build confidence and prov
 
       // Build the full prompt with system context and conversation history
       const recentHistory = conversation.messages.slice(-10); // Keep last 10 messages for context
-      const contextMessage = this.buildContextMessage(recentHistory.slice(0, -1));
-      const fullPrompt = `${this.systemPrompt}${contextMessage}\n\nCUSTOMER MESSAGE:\n${request.message}`;
+      const fullPrompt = this.buildFullPrompt(request.message, recentHistory.slice(0, -1));
 
       // Generate response
       const result = await this.model.generateContent(fullPrompt);
@@ -157,8 +182,7 @@ Remember: You represent a trusted electrical supplier. Build confidence and prov
       conversation.messages.push(userMessage);
 
       const recentHistory = conversation.messages.slice(-10);
-      const contextMessage = this.buildContextMessage(recentHistory.slice(0, -1));
-      const fullPrompt = `${this.systemPrompt}${contextMessage}\n\nCUSTOMER MESSAGE:\n${request.message}`;
+      const fullPrompt = this.buildFullPrompt(request.message, recentHistory.slice(0, -1));
 
       // Generate streaming response
       const result = await this.model.generateContentStream(fullPrompt);

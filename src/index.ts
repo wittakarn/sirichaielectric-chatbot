@@ -32,13 +32,13 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 // Initialize product fetcher
 const productFetcher = new ProductFetcher(config.productData);
 
-// Initialize chatbot
+// Initialize chatbot with product fetcher
 const chatbot = new SirichaiChatbot({
   apiKey: config.gemini.apiKey,
   model: config.gemini.model,
   temperature: config.gemini.temperature,
   maxTokens: config.gemini.maxTokens,
-});
+}, productFetcher);
 
 // Start fetching product data
 productFetcher.start().catch(err => {

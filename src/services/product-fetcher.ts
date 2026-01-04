@@ -98,7 +98,13 @@ export class ProductFetcher {
       throw new Error(`API returned ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
+
+    // Check for API error
+    if (data.error) {
+      throw new Error(data.message || 'API returned an error');
+    }
+
     this.productContext = this.buildProductContext(data);
   }
 
@@ -130,29 +136,54 @@ export class ProductFetcher {
    */
   private buildProductContext(data: any): string {
     // Format the data into a readable context for the AI
-    let context = `PRODUCT CATALOG:\n`;
+    let context = `CURRENT PRODUCT INVENTORY (Updated: ${data.lastUpdated || 'Recently'}):\n`;
 
-    if (data.categories) {
-      context += `\nProduct Categories:\n`;
+    // Categories with counts and brands
+    if (data.categories && data.categories.length > 0) {
+      context += `\nหมวดหมู่สินค้า (Product Categories):\n`;
       data.categories.forEach((cat: any) => {
-        if (typeof cat === 'string') {
-          context += `- ${cat}\n`;
-        } else {
-          context += `- ${cat.name} (${cat.nameTh || ''}): ${cat.brands?.join(', ') || ''}\n`;
+        context += `- ${cat.name}`;
+        if (cat.brands && cat.brands.length > 0) {
+          context += ` [${cat.brands.join(', ')}]`;
         }
+        if (cat.productCount) {
+          context += ` (${cat.productCount} สินค้า)`;
+        }
+        if (cat.priceRange) {
+          context += ` - ราคา ${cat.priceRange}`;
+        }
+        context += `\n`;
       });
     }
 
-    if (data.brands) {
-      context += `\nAvailable Brands: ${data.brands.join(', ')}\n`;
+    // All available brands
+    if (data.brands && data.brands.length > 0) {
+      context += `\nแบรนด์ที่มีจำหน่าย (Available Brands):\n`;
+      context += data.brands.join(', ') + '\n';
     }
 
-    if (data.products) {
-      context += `\nFeatured Products:\n`;
-      data.products.slice(0, 10).forEach((product: any) => {
-        context += `- ${product.name} (${product.brand})\n`;
+    // Featured/Popular products
+    if (data.featuredProducts && data.featuredProducts.length > 0) {
+      context += `\nสินค้าแนะนำ (Featured Products):\n`;
+      data.featuredProducts.slice(0, 15).forEach((product: any) => {
+        context += `- ${product.name}`;
+        if (product.brand) {
+          context += ` [${product.brand}]`;
+        }
+        if (product.category) {
+          context += ` (${product.category})`;
+        }
+        if (product.price) {
+          context += ` - ฿${product.price.toLocaleString('th-TH')}`;
+        }
+        if (product.inStock === false) {
+          context += ` [สินค้าหมด]`;
+        }
+        context += `\n`;
       });
     }
+
+    context += `\nWebsite: ${this.config.websiteUrl}\n`;
 
     return context;
   }

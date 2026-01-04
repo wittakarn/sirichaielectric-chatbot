@@ -19,13 +19,13 @@ async function testChatbot() {
     await productFetcher.start();
     console.log('✅ Product fetcher initialized\n');
 
-    // Initialize chatbot
+    // Initialize chatbot with product fetcher
     const chatbot = new SirichaiChatbot({
       apiKey: config.gemini.apiKey,
       model: config.gemini.model,
       temperature: config.gemini.temperature,
       maxTokens: config.gemini.maxTokens,
-    });
+    }, productFetcher);
     console.log('✅ Chatbot initialized\n');
 
     // Test cases
