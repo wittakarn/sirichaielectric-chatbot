@@ -58,13 +58,24 @@ $chatbot = new SirichaiChatbot($geminiConfig, $productFetcher);
 $conversationManager = new ConversationManager(10);
 
 // Route the request
-$requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
 $requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 
-// Remove query string and script name from URI
-$scriptName = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
-$path = str_replace($scriptName, '', $requestUri);
-$path = strtok($path, '?');
+// Get the path - use REDIRECT_URL if available (from .htaccess rewrite), otherwise parse REQUEST_URI
+if (isset($_SERVER['REDIRECT_URL']) && !empty($_SERVER['REDIRECT_URL'])) {
+    // Apache mod_rewrite provides the clean path in REDIRECT_URL
+    $path = $_SERVER['REDIRECT_URL'];
+    // Remove the base path if present
+    $basePath = '/sirichaielectric-chatbot/php';
+    if (strpos($path, $basePath) === 0) {
+        $path = substr($path, strlen($basePath));
+    }
+} else {
+    // Fallback to parsing REQUEST_URI
+    $requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $scriptName = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
+    $path = str_replace($scriptName, '', $requestUri);
+    $path = strtok($path, '?');
+}
 $path = trim($path, '/');
 
 // Route handling
