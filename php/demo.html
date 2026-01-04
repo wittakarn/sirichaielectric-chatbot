@@ -132,6 +132,41 @@
             border-bottom-left-radius: 4px;
         }
 
+        /* Markdown styling */
+        .message-content ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+        }
+
+        .message-content a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+        }
+
+        .message-content p {
+            margin: 8px 0;
+        }
+
+        .message-content p:first-child {
+            margin-top: 0;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
         .message.user .message-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -341,6 +376,8 @@
             }
         }
     </style>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -495,7 +532,18 @@
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = content;
+
+            // Parse markdown for assistant messages, use plain text for user
+            if (role === 'assistant' && typeof marked !== 'undefined') {
+                // Configure marked for security
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true
+                });
+                contentDiv.innerHTML = marked.parse(content);
+            } else {
+                contentDiv.textContent = content;
+            }
 
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
