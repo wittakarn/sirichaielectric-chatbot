@@ -138,6 +138,117 @@ class SirichaiElectricChatbot {
         return $contents;
     }
 
+    /**
+     * Chat with an image (and optional text message)
+     * Downloads are handled by the caller - this receives raw image bytes
+     *
+     * @param string $imageData Raw binary image data
+     * @param string $mimeType Image MIME type (e.g., 'image/jpeg')
+     * @param string $textMessage Optional text message from user
+     * @param array $conversationHistory Previous conversation messages
+     * @return array Same format as chat() response
+     */
+    public function chatWithImage($imageData, $mimeType, $textMessage = '', $conversationHistory = array()) {
+        try {
+            $totalTokens = 0;
+
+            // Build conversation contents from history
+            $contents = $this->buildConversationHistory($conversationHistory);
+
+            // Build user message parts with image
+            $userParts = array();
+
+            // Add inline image data (base64 encoded)
+            $userParts[] = array(
+                'inline_data' => array(
+                    'mime_type' => $mimeType,
+                    'data' => base64_encode($imageData)
+                )
+            );
+
+            // Add text part - use default prompt if no text provided
+            if (!empty($textMessage)) {
+                $userParts[] = array('text' => $textMessage);
+            } else {
+                $userParts[] = array('text' => 'The customer sent this image. Analyze it. If it shows electrical products, identify the type and search the catalog. If not product-related, describe what you see and ask how you can help.');
+            }
+
+            $contents[] = array(
+                'role' => 'user',
+                'parts' => $userParts
+            );
+
+            // Make API call with function declarations (same as text chat)
+            $response = $this->callGeminiWithFunctions($contents);
+
+            if (isset($response['tokensUsed'])) {
+                $totalTokens += $response['tokensUsed'];
+            }
+
+            if (!$response['success']) {
+                return array(
+                    'success' => false,
+                    'response' => '',
+                    'error' => $response['error'],
+                    'language' => 'th',
+                    'tokensUsed' => $totalTokens,
+                );
+            }
+
+            // Handle function calls if present
+            if (isset($response['functionCalls']) && !empty($response['functionCalls'])) {
+                foreach ($response['functionCalls'] as $call) {
+                    $functionName = isset($call['name']) ? $call['name'] : 'unknown';
+                    $args = isset($call['args']) ? $call['args'] : array();
+                    $argsJson = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    error_log('[Chatbot] Image: Calling: ' . $functionName . '(' . $argsJson . ')');
+                }
+
+                $response = $this->handleFunctionCalls($response, $contents);
+
+                if (isset($response['tokensUsed'])) {
+                    $totalTokens += $response['tokensUsed'];
+                }
+            }
+
+            if (!$response['success']) {
+                return array(
+                    'success' => false,
+                    'response' => '',
+                    'error' => $response['error'],
+                    'language' => 'th',
+                    'tokensUsed' => $totalTokens,
+                );
+            }
+
+            if (!isset($response['text'])) {
+                return array(
+                    'success' => false,
+                    'response' => '',
+                    'error' => 'Response missing text field',
+                    'language' => 'th',
+                    'tokensUsed' => $totalTokens,
+                );
+            }
+
+            return array(
+                'success' => true,
+                'response' => $response['text'],
+                'language' => 'th',
+                'tokensUsed' => $totalTokens,
+            );
+
+        } catch (Exception $e) {
+            error_log('[Chatbot] Image ERROR: ' . $e->getMessage());
+            return array(
+                'success' => false,
+                'response' => '',
+                'error' => $e->getMessage(),
+                'tokensUsed' => 0,
+            );
+        }
+    }
+
     public function chat($message, $conversationHistory = array()) {
         try {
             // Track total tokens used across all API calls

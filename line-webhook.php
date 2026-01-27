@@ -146,16 +146,15 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
 
     $messageType = isset($event['message']['type']) ? $event['message']['type'] : '';
 
-    // Only handle text messages
-    if ($messageType !== 'text') {
+    // Only handle text and image messages
+    if ($messageType !== 'text' && $messageType !== 'image') {
         return;
     }
 
     $replyToken = isset($event['replyToken']) ? $event['replyToken'] : '';
     $userId = isset($event['source']['userId']) ? $event['source']['userId'] : '';
-    $messageText = isset($event['message']['text']) ? $event['message']['text'] : '';
 
-    if (empty($replyToken) || empty($userId) || empty($messageText)) {
+    if (empty($replyToken) || empty($userId)) {
         return;
     }
 
@@ -165,16 +164,46 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
-    // Add user message to history (0 tokens for user messages)
-    $conversationManager->addMessage($conversationId, 'user', $messageText, 0);
-
     // Show loading animation (instead of sending a message)
     // This gives us up to 60 seconds to process the request
     showLoadingAnimation($userId, 60, $accessToken);
 
-    // Get chatbot response
     $startTime = microtime(true);
-    $response = $chatbot->chat($messageText, $history);
+
+    if ($messageType === 'image') {
+        // Handle image message
+        $messageId = isset($event['message']['id']) ? $event['message']['id'] : '';
+        if (empty($messageId)) {
+            return;
+        }
+
+        // Download image from LINE Content API
+        $imageData = downloadLineContent($messageId, $accessToken);
+        if ($imageData === false) {
+            error_log('[LINE] ERROR: Failed to download image ' . $messageId);
+            sendPushMessage($userId, "ขออภัยครับ ไม่สามารถรับรูปภาพได้ กรุณาลองส่งใหม่อีกครั้งครับ\n\nSorry, we couldn't receive the image. Please try sending it again.", $accessToken);
+            return;
+        }
+
+        // Store placeholder in conversation history (images can't be stored in DB)
+        $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0);
+
+        // Get chatbot response with image
+        $response = $chatbot->chatWithImage($imageData, 'image/jpeg', '', $history);
+    } else {
+        // Handle text message
+        $messageText = isset($event['message']['text']) ? $event['message']['text'] : '';
+        if (empty($messageText)) {
+            return;
+        }
+
+        // Add user message to history (0 tokens for user messages)
+        $conversationManager->addMessage($conversationId, 'user', $messageText, 0);
+
+        // Get chatbot response
+        $response = $chatbot->chat($messageText, $history);
+    }
+
     $duration = round(microtime(true) - $startTime, 2);
 
     // Log response status with duration
@@ -311,6 +340,36 @@ function sendPushMessage($userId, $message, $accessToken) {
     );
 
     return sendLineRequest($url, $data, $accessToken, 'Push');
+}
+
+function downloadLineContent($messageId, $accessToken) {
+    $url = 'https://api-data.line.me/v2/bot/message/' . $messageId . '/content';
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Authorization: Bearer ' . $accessToken
+    ));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+    $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($result === false) {
+        error_log('[LINE] Content download cURL error: ' . $error);
+        return false;
+    }
+
+    if ($httpCode !== 200) {
+        error_log('[LINE] Content download failed: HTTP ' . $httpCode);
+        return false;
+    }
+
+    error_log('[LINE] Downloaded content: ' . strlen($result) . ' bytes');
+    return $result;
 }
 
 function showLoadingAnimation($userId, $seconds, $accessToken) {

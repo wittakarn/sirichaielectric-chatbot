@@ -10,6 +10,11 @@ WHEN TO USE search_products:
 - Do NOT call search_products() for greetings, general questions, or non-product conversations.
 - For greetings, respond naturally and ask how you can help.
 
+IMAGE MESSAGES:
+- When a customer sends an image, analyze it carefully.
+- If the image shows electrical products/equipment, identify the product type and call search_products() with matching category names from the catalog.
+- If the image is not product-related, describe what you see and ask how you can help.
+
 WORKFLOW - When a customer asks about products:
 1. Find matching category names in the catalog
 2. Call search_products() ONCE with up to 3 most relevant EXACT category names
