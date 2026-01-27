@@ -1,0 +1,1044 @@
+CATEGORIES
+1 สายไฟ PRYMAIN LAPP CONNECT CSDELTA สายไฟกล่อง
+1.1 สายไฟ NYY 450/750V ยูไนเต็ด
+1.1c สายลำโพง VTF ชนิดตีเกลียว [ยาซากิ]
+1.3 สายไฟ VCT ยูไนเต็ด UNITED
+1.3.9 อุปกรณ์โทรศัพท์ [3M]
+1.4.5 สายไฟ H05V-K H07V-K HELUKABEL (กล่อง = 100เมตร)
+1.4d สายไฟ ทองแดงเปลือย [Bare Copper BC] [ฟูเลอร์ FUHRER]
+1.5.Z สายไฟอลูมิเนียม 10-50 ยูไนเต็ด *สั่งตัดจากโรงงาน
+1.5.Z สายไฟอลูมิเนียม 70-300 ยูไนเต็ด *สั่งตัดจากโรงงาน
+1.6.Z สายไฟ YSLY-JZ (ไม่มีชิล) NYX
+1.7.1 สายไฟ LIYCY (มีชิล) HELUKABEL *สั่งตัดจากโรงงาน
+1.7.Z สายไฟ LIYCY (มีชิล) XBK *สั่งตัดจากโรงงาน
+1.B RG-6 [5STAR]
+1.B สาย RG-6 / RG-6/AC [BIGCCTV]
+1.B สาย RG-6 / RG-6/AC [COMMSCOPE]
+1.B สาย RG-6 / RG-6/AC [dBY]
+1.B สาย RG-6 / RG-6/AC [LINK]
+1.C.1 สายโทรศัพท์ ภายนอก FIG FIG-8 เฟลดอดจ์ PHELDODGE
+1.C.1 สายโทรศัพท์ ภายใน ST [Phelps Dodge]
+1.C.1 สายโทรศัพท์ ภายใน TPEV เฟลดอดจ์ PHELDODGE
+1.C.Y สายโทรศัพท์ ภายใน เฟลดอดจ์ PHELDODGE *ตัดเศษ
+1.C.Z สายโทรศัพท์ ภายใน ERW
+1.D สายแลน COMMSCOPE
+1.D สายแลน LAN [LINK] **ตัดจากหน้าร้าน
+1.D สายแลน [GLINK]
+1.D สายแลน [LINK + AMP]
+1.D สายแลนสำเร็จรูป LINK
+1.E สายไฟ VFF **ตัดจากหน้าร้าน
+1.E สายไฟ VFF / VKF ANT
+1.N สายไฟ SOLAR CELL HELUKABEL
+1.N สายไฟ SOLAR CELL [LINK]
+1.Y สายเชื่อม สีส้ม
+1.Z อุปกรณ์เชื่อมต่อสายไฟ 3M
+1.Z เทปพันสายไฟ
+2.1 หลอด LED + รางสำเร็จรูป BEC
+2.1 หลอด LED + รางสำเร็จรูป [EVE]
+2.1 หลอด LED + รางสำเร็จรูป [FSL]
+2.1 หลอด LED + รางสำเร็จรูป [IWACHI]
+2.1 หลอด LED + รางสำเร็จรูป [PHILIPS]
+2.1 หลอด LED + รางสำเร็จรูป [SELEC]
+2.1 หลอด LED BULB E27 PHILIPS
+2.1 หลอด LED BULB E27 ULTRA-X BEC
+2.1 หลอด LED ขนาดใหญ่ [ธรรมดา]
+2.1 หลอด LED อื่นๆ BEC
+2.1 หลอด LED อื่นๆ [PHILIPS]
+2.1 หลอดนีออน + อุปกรณ์ (T8) [ฟิลิปส์]
+2.3 โคมไฟ สปอร์ไลท์ เมทัล BEC
+2.4 โคมไฟ LED โซล่าเซล SOLAR CELL [PHILIPS]
+2.8 หลอด + อุปกรณ์ HID [GATA / CROSS]
+2.8 หลอด + อุปกรณ์ HID [ฟิลิปส์ PHILIPS]
+3.0 กล่องเบรกเกอร์ พิมทอง
+3.1 POPUP [พานาโซนิค]
+3.1 ชุดปลัํก HACO
+3.1 สวิตช์ ปลั๊ก หน้ากาก BAMBOO BTICINO
+3.1 สวิตช์ ปลั๊ก หน้ากาก CHANG
+3.1 สวิทซ์-ปลั๊ก [BTICINO : MATIX]
+3.1 สวิทซ์-ปลั๊ก รุ่นConcept [Schneider]
+3.1 สวิทซ์-ปลั๊ก รุ่นS-Flexi [Schneider]
+3.1 สวิทซ์-ปลั๊ก-หน้ากาก Neoline [พานาโซนิค]
+3.1 สวิทซ์-ปลั๊ก-หน้ากาก รุ่นเก่า [พานาโซนิค]
+3.1 แผงยึดอุปกรณ์กันน้ำ [BTICINO]
+3.2 คอนซูเมอร์ CHANG
+3.2 คอนซูเมอร์ โหลดเซ็นเตอร์ PLUGON BTICINO
+3.2 ตู้คอนซูเมอร์ โหลดเซ็นเตอร์ MCB PLUGON CHINT
+3.2 ตู้โหลดเซ็นเตอร์ PLUGON BTICINO
+3.2 ลูกเซอร์กิตเบรกเกอร์ กันดูด HACO
+3.2 เซอร์กิตเบรกเกอร์ DINRAIL CHANG
+3.2 เซอร์กิตเบรกเกอร์ HACO
+3.2 เซอร์กิตเบรกเกอร์ HITACHI
+3.2 เซอร์กิตเบรกเกอร์ MCB PLUGON BTICINO
+3.2 เซอร์กิตเบรกเกอร์ NP PLUGON NANO
+3.2 เซอร์กิตเบรกเกอร์ SHINOHAWA
+3.2 เซอร์กิตเบรกเกอร์ กันดูด PLUGON BTICINO
+3.3 กันดูด SPECIAL-A SAFE-T-CUT
+3.3 คอนซูเมอร์ (สำเร็จรูป) DINRAIL NANO
+3.3 คอนซูเมอร์ โหลดเซ็นเตอร์ DINRAIL TEC
+3.3 คอนซูเมอร์ โหลดเซ็นเตอร์ MCB DINRAIL HIET
+3.3 ตู้คอนซูเมอร์ NN-HC NN-HT DINRAIL NANO
+3.3 เซอร์กิตเบรกเกอร์ (พิเศษ) DINRAIL CHINT
+3.3 เซอร์กิตเบรกเกอร์ (พิเศษ) DINRAIL SCHNEIDER
+3.3 เซอร์กิตเบรกเกอร์ IC60H DINRAIL SCHNEIDER
+3.3 เซอร์กิตเบรกเกอร์ PMD PLE DINRAIL NANO
+3.3 เซอร์กิตเบรกเกอร์ SC1 DINRAIL TEC
+3.3 เซอร์กิตเบรกเกอร์ SIEMENS
+3.3 เซอร์กิตเบรกเกอร์ SXJI DINRAIL TEC
+3.3 เซอร์กิตเบรกเกอร์กันดููด DINRAIL SCHNEIDER
+3.3 เซอร์กิตเบรเกอร์ MCB DINRAL NXB-125 CHINT
+3.3 เซอร์กิตเบรเกอร์ MCB DINRAL NXB-63 CHINT
+3.3 เซอร์กิตเบรเกอร์ กันดุด MCB NL1 NL210 DINRAIL CHINT
+3.3 เซอร์กิตเบรเกอร์ กันดุด MCB NXBLE-63 DINRAIL CHINT
+3.4 คัตเอ้า 2P [ช้าง]
+3.5 BOX ยาง พร้อมปลั๊กกราวด์คู่ [NANO]
+3.5 ปลั๊กพ่วง NANO
+3.5 ล้อสายไฟ SUNTECH
+3.Z Box ลอย อย่างดี
+3.Z ปลั๊กไฟ ยาง+พลาสติก
+3.Z ปลั๊กไฟ ยาง+พลาสติก NEW
+3.Z ปลั๊กไฟ ยาง+พลาสติก [DAKO]
+3.Z สวิตช์กด เพิ่มเติม
+4.0 เบรกเกอร์-แมกเนติก TEC
+4.0 เบรกเกอร์-แมกเนติก [TEC SPX]
+4.1 UVT SHUNTRIP NS SCHNEIDER
+4.1 เบรกเกอร์ ACB ABB
+4.1 เบรกเกอร์ EZS SCHNEIDER
+4.1 เบรกเกอร์ EZS SCHNEIDER **อุปกรณ์เสริม
+4.1 เบรกเกอร์ MCCB (พิเศษ) FUJI
+4.1 เบรกเกอร์ MCCB T(ยกเลิก) ABB
+4.1 เบรกเกอร์ NSX SCHNEIDER (รุ่นเก่า)
+4.1 เบรกเกอร์ NSX400 SCHNEIDER (ตัวใหญ่)
+4.2 MAIN EMERGENCY SWITCH [SCHNEIDER]
+4.2 Time Delay แมกเนติก [Schneider]
+4.2 คอนแท็กช่วย,อินเตอร์ล็อค แมกเนติก/มอเตอร์เบรกเกอร์ [Schneider]
+4.2 แมกเนติก 24VDC [SCHNEIDER]
+4.2 แมกเนติก โอเวอร์โหลด (พิเศษ GIGA) SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด (พิเศษ) SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด (อุปกรณ์เสริม) SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด (เล็ก) FUJI
+4.2 แมกเนติก โอเวอร์โหลด (เล็ก) HITACHI
+4.2 แมกเนติก โอเวอร์โหลด (เล็ก) SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด (ใหญ่) FUJI
+4.2 แมกเนติก โอเวอร์โหลด (ใหญ่) HITACHI
+4.2 แมกเนติก โอเวอร์โหลด (ใหญ่) SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด EATON
+4.2 แมกเนติก โอเวอร์โหลด LC1D09-32M7 ราคาพิเศษ SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด LC1E LRE SCHNEIDER
+4.2 แมกเนติก โอเวอร์โหลด SIEMENS
+4.4 อุปกรณ์เสริม [FUJI]
+4.5 แมกเนติกสตาร์ทเตอร์ HITACHI
+4.5 แมกเนติกสตาร์ทเตอร์ TEND
+4.5 แมกเนติกสตาร์เตอร์ MAGNETIC STARTER LE [SCHNEIDER]
+4.6 มอเตอร์เบรกเกอร์ (อุปกรณ์เสริม) SCHNEIDER
+4.6 มอเตอร์เบรกเกอร์ EATON
+4.6 มอเตอร์เบรกเกอร์ GV2P,3P,2L,3L SCHNEIDER
+4.6 มอเตอร์เบรกเกอร์ MOTER STARTER NS2 CHINT
+4.8 เบรกเกอร์ 3P,2P [SALZER]
+4.8 แมกเนติก [SALZER]
+4.9 เบรกเกอร์ & แมกเนติก [Takamura]
+4.A เบรกเกอร์-แมกเนติก [CCS]
+4.A เบรกเกอร์-แมกเนติก [DAKO]
+4.B เบรกเกอร์-แมกเนติก SHIHILIN
+5.1 กล่องใส่ [SCHNEIDER]
+5.1 กันดูด [531F26] iDPN N,H Vigi 1P+N 30mA [Schneider]
+5.3 เบรกเกอร์ 3P [BTICINO]
+5.9 กันดูด 3P [เซปทีคัต]
+5.9 ตู้คอนซูเมอร์ + กันดูด [เซปทีคัต]
+5.9 ตู้โหลดเซ็นเตอร์ PLUG ON [NANO]
+5.9 เซอร์กิตเบรกเกอร์ กันดูด (for EV) [NANO]
+5.9 เมนสำหรับตู้โหลดเซ็นเตอร์ PLUG ON [NANO]
+6.3 เคเบิ้ลเทรย์(ข้างเรียบ) OLD [KJL]
+6.3 เคเบิ้ลเทรย์(ข้างเรียบ) งานเบา เจาะรู แบบชุบกัลวาไนซ์ [KJL]
+6.3 เคเบิ้ลเทรย์(ข้างเรียบ) งานเบา เจาะรู แบบพ่นสี [KJL]
+6.4 รางเคเบิ้ลเทรย์ ชุบกัลวาไนท์ [KJL]
+6.4 รางเคเบิ้ลเทรย์(ข้างลอน) + อุปกรณ์ [KJL]
+6.4 เคเบิ้ลเทรย์(ข้างลอน) NEW [KJL]
+6.4 เคเบิ้ลเทรย์(ข้างลอน) ชุบกัลวาไนซ์ NEW [KJL]
+6.4.Z ตะแกรงทางเดิน งานโซล่าร์เซลล์ WALKWAY [KJL]
+6.6 ตู้สแตนเลส [TAMCO]
+6.6 ตู้เหล็ก CB [TAMCO]
+6.6 ตู้เหล็ก CRSG/CRS รุ่นใหม่ IP55 [TAMCO]
+6.6 ตู้เหล็ก กันน้ำมีหลังคา 5KSW [5K]
+6.6 อะไหล่ ตู้คอนโทรล KJL
+6.7 ตู้พลาสติก กันน้ำ NNP ขนาดเล็ก NANO
+6.7 ตู้พลาสติก กันน้ำ NNP ขนาดใหญ่ NANO
+6.7 ตู้พลาสติก กันน้ำ [KJL]
+6.7 ตู้พลาสติก กันน้ำ [NANO] **พิเศษ
+6.7 ตู้พลาสติก กันน้ำ [PRI]
+6.7 ตู้พลาสติกกันน้ำ + กล่องพักสายไฟ [RITTO]
+6.8 กล่องพักสายไฟ สีขาว NNP 2x4 / 4x4 สั่งครั้งละ 20ลัง NANO
+6.8 กล่องพักสายไฟ สีขาว NNP [NANO]
+6.8 กล่องพักสายไฟ สีขาว [TTM]
+6.8 กล่องพักสายไฟ สีดำ [NANO]
+6.8 กล่องพักสายไฟ สีเทา [TTM]
+6.8 กล่องพักสายไฟ สีเทา/ขาว [NANO]
+6.9 แผงพลาสติก [NANO]
+6.A กล่อง ใส่เซอร์กิตเบรกเกอร์ รุ่นล็อค
+6.A กล่อง ใส่เบรกเกอร์ NF30 NF63
+6.A กล่อง ใส่เบรกเกอร์ NF30 NF63 NF125
+7.1.9 PULLBOX สแตนเลส KBXL KJL
+7.1.J สินค้าชุบกัลวาไนซ์ [SEC]
+7.1.Z สินค้าชุบกัลวาไนซ์
+7.1.Z สินค้าชุบกัลวาไนซ์ SET
+7.2 ที่ดัดท่อ หน่วยมิล/นิ้ว SPG NANO
+7.2 ท่อร้อยสายไฟ PVC (ตัดแบ่งเศษ) UPC
+7.2 ท่อร้อยสายไฟ PVC สีขาว-ดำ + อุปกรณ์ UPC
+7.2 ท่อร้อยสายไฟ uPVC สีขาว CLIPSAL
+7.2 ท่อร้อยสายไฟสีขาว NNPP NANO
+7.2 ท่ออ่อน uPVC สีขาว CLIPSAL
+7.2 ท่ออ่อนร้อยสายไฟสีขาว NNCC NANO
+7.2 ท่อ่ออน PVC สีขาว-ดำ UPC
+7.2 อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว (กล่องพักสายไฟ) **หน่วยนิ้ว/มิล NANO
+7.2 อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว (กล่องพักสายไฟ) NANO
+7.2 อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว **หน่วยนิ้ว NANO
+7.2 อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว-ดำ NANO
+7.2 อุปกรณ์ท่อร้อยสายไฟ สีขาว CLIPSAL
+7.2 แฮนดี้ พลาสติก [ปรกติ]
+7.3 ท่อท่ออ่อน PVC สีขาว BS [ช้าง]
+7.3 ท่อร้อยสายไฟ PVC สีขาว BS SCG
+7.3 อุปกรณ์ท่อร้อยสายไฟ PVC สีเหลือง (กล่องพักสายไฟ) **หน่วยนิ้ว [NANO]
+7.A กล่องพักสายไฟ สีเหลือง [ช้าง]
+7.A ท่อร้อยสายไฟ EFLEX พิเศษ
+8.1 LAMP LED PUSHBUTTON SWTICH TEC
+8.1 สวิตช์ IDEC พิเศษ 
+8.1 สวิตช์กด 22มิล XB5 [SCHNEIDER]
+8.1 สวิตช์กด เพิ่มเติม [IDEC]
+8.1 สวิทซ์กด + กล่องสวิทซ์กด [FUJI]
+8.1 สวิทซ์กด + กล่องสวิทซ์กด [IDEC]
+8.1 สวิทซ์กด 22 รุ่นTN2 TEND
+8.1 สวิทซ์กด 22 รุ่นTS2 [Tend]
+8.1 สวิทซ์กด 22-30มิล รุ่นTN [Tend]
+8.1 สวิทซ์กด 22/25 รุ่นT2 (เพิ่มเติม) [Tend]
+8.1 สวิทซ์กด 22/25 รุ่นT2 [Tend]
+8.1 สวิทซ์กด 22มิล รุ่น XA2 SCHNEIDER
+8.1 สวิทซ์กด 22มิล รุ่น XB2 [SCHNEIDER]
+8.1 สวิทซ์กด 22มิล รุ่น XB4 (พิเศษ) [Schneider]
+8.1 สวิทซ์กด 22มิล รุ่น XB4 [Schneider]
+8.1 สวิทซ์กด 22มิล รุ่น XB5 [Schneider]
+8.1 สวิทซ์กด 22มิล รุ่น XB7 (พิเศษ) [Schneider]
+8.1 สวิทซ์กด 22มิล รุ่น XB7 [Schneider]
+8.1 สวิทซ์กด 25 รุ่นTB [Tend]
+8.1 สวิทซ์กด 25มิล [รุ่นถูก]
+8.1 สวิทซ์กด 30มิล รุ่นTB [Tend]
+8.1 สวิทซ์กด PUSHBUTTON YW ทั่วไป IDEC
+8.1 สวิทซ์กด XB7 [TEC]
+8.1 อุปกรณ์เพิ่มเติม (กล่องคอนโทรล XAL) SCHNEIDER
+8.1 อุปกรณ์เพิ่มเติม รุ่นT2 [Tend]
+8.1 เนมเพลต 22มิล
+8.1 เพิ่มเติมสวิทซืกด แปลก [SCHNEIDER]
+8.2 STOPPER TBR [BIGONE]
+8.2 TERMINAL [TMS]
+8.2 ขั้วต่อสายไฟ PCT
+8.2 รางรีลย์ + เทอร์มินอล [CN]
+8.2 รางรีเลย์ + รางเทอร์มินอล [BIGONE]
+8.2 เต๋ากระเบื้อง ต่อสายไฟ
+8.2 เต๋าต่อสายไฟ
+8.2 เต๋าต่อสายไฟ ไนลอน [อย่างดี]
+8.2 เทอร์มินอล FJ BLOX
+8.2 เทอร์มินอล TB15 TB25 TBR STOPPER [TEC]
+8.2 เทอร์มินอล TBC60-100 [PTEN-BF]
+8.2 เทอร์มินอล TC200-400 [PTEN-BF]
+8.2 เทอร์มินอล TERMAINAL IDEC
+8.2 เทอร์มินอล TERMINAL SCHNEIDER
+8.2 เทอร์มินอล TERMINAL TBR BIGONE
+8.2 เทอร์มินอล TERMINAL TEND
+8.2 เทอร์มินอล TERMINAL TR BIGONE
+8.2 เทอร์มินอล UK USLK PT ST TEC
+8.2 เทอร์มินอล [CIKACHI]
+8.2 เทอร์มินอล [E-TEN]
+8.2 เทอร์มินอล สำเร็จรูป TB25 [BIGONE]
+8.3 ปลั๊กเพาเวอร์ 3-4-5ขา (16A-32A) [PCE]
+8.3 ปลั๊กเพาเวอร์ [ABB]
+8.3 ปลั๊กเพาเวอร์ [CEE]
+8.3 ปลั๊กเพาเวอร์ [DAKO]
+8.3 ปลั๊กเพาเวอร์ [MENNEKES]
+8.3 ปลั๊กเพาเวอร์ กันน้ำ 3-4-5ขา (63A-125A) [PCE]
+8.3 เต้ารับอินเตอร์ล็อค [SCAME]
+8.4 CAMSWITCH MAINSWITCH [TEND]
+8.4 CAMSWITCH [QUBIX]
+8.4 MAINSWITCH [QUBIX]
+8.4 ซีเล็คเตอร์ (64x80) [Salzer]
+8.4 มิเตอร์ (50x50) แบบเข็ม [Salzer]
+8.4 มิเตอร์ (60x60) แบบเข็ม [Salzer]
+8.4 มิเตอร์ (80x80) แบบเข็ม [Salzer]
+8.5 CT (Current Transformer)
+8.5 CT [QUBIX]
+8.5 CT [SCHNEIDER]
+8.5 CT รุ่นถอดประกอบได้ DP DAKO
+8.5 CT รุ่นถอดประกอบได้ TP [QUBIX]
+8.6 พัดลมดูดอากาศตู้คอนโทรล (อุปกรณ์) TEC
+8.6 พัดลมดูดอากาศตู้คอนโทรล (อุปกรณ์) [WINDSTORM]
+8.6 พัดลมดูดอากาศตู้คอนโทรล TEC
+8.6 พัดลมดูดอากาศตู้คอนโทรล [WINDSTORM]
+8.6 พัดลมดูดอากาศตู้คอนโทรล ตัวพิเศษ [WINDSTORM]
+8.6 พัดลมระบายอากาศตู้คอนโทรล [EMBPOPE]
+8.8  SNAP บุชชิ่ง SB [BANDEX]
+8.8 SADDLE TIE [BANDEX]
+8.8 กระดูกงู [BANDEX]
+8.8 ตัวอุดช่องว่าง HP [Tend]
+8.8 มาคเคเบิ้ลไทร์
+8.8 ยางกันบาด ม้วน-เมตร
+8.8 วายมาคเกอร์ [BANDEX]
+8.8 เคเบิ้ลแกลน [BANDEX]
+8.8 เคเบิ้ลแกลน [BIGONE]
+8.8 เคเบิ้ลไทร์ แป้นกาว TEC
+8.8 เคเบิ้ลไทล์ CABLE TIE ขนาดปรกติ ซื้อยกลัง [BANDEX]
+8.8 เคเบิ้ลไทล์ CABLE TIE ขนาดใหญ่ [BANDEX]
+8.8 เคเบิ้ลไทล์ CABLE TIE สีๆ [BANDEX]
+8.8 แป้นกาว [BANDEX]
+8.8 ไส้ไก่ สีขาว [PRI]
+8.8 ไส้ไก่ สีขาว+ดำ [BANDEX]
+8.9 TOWER LIGHT [SCHNEIDER]
+8.9 TOWER LIGHT อุปกรณ์กรณ์เสริม DAKO
+8.9 TOWERLIGHT 40มิล [TEND]
+8.9 TOWERLIGHT 50มิล [TEND]
+8.9 TOWERLIGHT 60มิล [TEND]
+8.9 TOWERLIGHT 70มิล [TEND]
+8.9 TOWERLIGHT อุปกรณ์เสริม TEND
+8.9 กระดิ่งแดง
+8.9 มอเตอร์ไซเรน
+8.9 ออด [Tend]
+8.9 ไฟหมุน BIGONE
+8.9 ไฟหมุน LED BIGONE
+8.9 ไฟหมุน REVOLVING WARNING LIGHT DAKO
+8.9 ไฟหมุน [PATLITE]
+8.9 ไฟหมุน [Tend]
+8.B HRC FUSE LINK ฟิวส์ใบมีด
+8.B [SCHNEIDER]
+8.B ฐานฟิวส์ + ลูกฟิวส์ 10x38
+8.B ฐานฟิวส์ + ลูกฟิวส์ 14x51
+8.B ฐานฟิวส์ + ลูกฟิวส์ แก้ว 20-30มิล
+8.B ฐานฟิวส์ 10x38 SCHNEIDER
+8.B ฐานฟิวส์ แก้ว 20-30มิล
+8.B ฐานฟิวส์ ใบมีด แบบมีฝาครอบ TEC
+8.B ฟิวส์ [BOGENFUSE]
+8.B ฟิวส์ กระบอก/ใบมีด สำหรัยบเซปตี้สวิตช์ [BOGENFUSE]
+8.B ฟิวส์ คอนโทรล 1000VDC 10x38 [TEC]
+8.B ฟิวส์ คอนโทรล RT18-32 10x38 [TEC CCS]
+8.B ฟิวส์+ฐานฟิวส์ [TEND]
+8.B ฟิวส์ขวด E16
+8.B ฟิวส์ใบมีด 00 [OEZ]
+8.B ฟิวส์ใหญ่ ฐานฟิวส์ใบมีด ทุกขนาด [OEZ]
+8.C สวิทซ์เท้าเหยียบ FOOTSWITCH SCHNEIDER
+8.C สวิทซ์เท้าเหยียบ FOOTSWITCH TEND
+8.D ลูกรอก สีส้ม [BIGONE]
+8.D สวิทซ์รอก [Tend]
+8.E ซัพพอร์ท บัสบาร์ทองแดง SUPPORT INSULATOR SALE
+8.E บัสบาร์ทองแดง
+8.E บัสบาร์ทองแดง (เมตร)
+8.E บาร์กราวด์
+8.E ลูกถ้วยฉนวน บัสบาร์สีแดง + ชุดน็อต (อิงราคา BF)
+8.H เคเบิ้ลแกลน PG7 - PG16
+8.H เคเบิ้ลแกลน พลาสติก สีดำ
+8.H เคเบิ้ลแกลน เบอร์ใหญ่ CCS
+8.I Toggle Switch [Tend]
+8.J สวิทซ์โยก [Tend]
+8.K สวิทซ์ควบคุม TEND
+8.L ท่อหด
+8.L ปลอกหุ้มบัสบาร์ [BANDEX]
+8.L วายมาคเกอร์
+8.L อุปกรณ์เพิ่มเติม MS / GM
+9.1 รีเลย์ + SOCKET กลม OMRON { 8PFA 11PFA P3G-08 P3GA-11 P2CF US-08 }
+9.2 ลิมิตสวิทซ์ (LIMIT SWITCH) ทั้งหมด [QUBIX]
+9.2 ลิมิตสวิทซ์ [SCHNEIDER]
+9.3 GENERAL TIMER H3CR-A [OMRON]
+9.3 GENERAL TIMER H3CR-A8 220V NET [OMRON]
+9.3 OFF-DELAY TIMER H3CR-H [OMRON]
+9.3 TIMER BF
+9.3 TIMER DIGITAL H5AN-H5S-H5F-H5L OMRON
+9.3 TIMER DIGITAL H5CX-N H5CN OMRON
+9.3 Timer H3Y [OMRON]
+9.3 TIMER SOLID-STATE H3CA OMRON
+9.3 TIMER STAR-DELTA [OMRON]
+9.3 Timer SY [FOTEK]
+9.3 TIMER TB ต้องซื้อให้ครบยอด พานาโซนิค [PANASONIC]
+9.3 TIMER TB388 [พานาโซนิค]
+9.3 TIMER [BEC]
+9.3 TIMER [FUJI]
+9.3 TIMER [SCHNEIDER]
+9.3 TIMER ขนาดเล็ก H3Y OMRON
+9.3 TIMER ไทม์เมอร์ WIP
+9.5 Solid State Relay [FOTEK]
+9.5 Solid State Relay [OMRON]
+9.6 PROX [FOTEK]
+9.6 Proximity Sensors [AUTONICS]
+9.6 Proximity Sensors [DAKO]
+9.6 Proximity Sensors [SCHNEIDER]
+9.6 Proximity Sensors ทั้งหมด [Omron]
+9.7 Phase Proctect [WIP]
+9.8 HOUR METER [CCS]
+9.8 HOUR METER [RISESUN]
+9.8 HOUR METER [SALZER]
+9.8 HOUR METER [SHINOHAWA]
+9.9 FLOATLESS OMRON
+9.9 Floatless ตัวซื้อ NET [Omron]
+9.9 สวิตช์ลูกลอย DAESAN
+9.9 สวิตช์ลูกลอย [SHINOHAWA]
+9.9 สวิตช์ลูกลอย [ธรรมดา]
+9.A COUNTER H7BX/H7EC-N/H7ET-N/H7ER-N/H7CC-A [OMRON]
+9.A COUNTER H7CX-N [OMRON]
+9.A COUNTER [FOTEK]
+9.A COUNTER [OMRON]
+9.A COUNTER-TIMER AUTONICS
+9.C PHOTO SENSOR [OMRON]
+9.C PHOTO [FOTEK]
+9.C PHOTO [SCHNEIDER]
+9.C [AUTONICS]
+A หางปลาเข็ม ก้านไม้ขีด [TEC]
+A.1 ปลอกหางปลา สีปรกติ (สั่งที่ ธีรชัย)
+A.1 ปลอกหางปลา สีพิเศษ (สั่งที่ ธีรชัย)
+A.1 วายนัท [SC]
+A.1 หัวหมวก [BANDEX]
+A.1 หางปลา [KABLE]
+A.1 หางปลา [SHINOHAWA]
+A.1 หางปลา [T-LUG]
+A.1 หางปลา ตัวเล็ก ตั้ง-ลด [T-LUG]
+A.1 หางปลา ตัวแปลก [T-LUG]
+A.1 หางปลา หนา2ชั้น [TEC]
+A.1 หางปลา อื่นๆ update-2025 TEC
+A.1 หางปลา แฉก หุ้ม-เปลือย SV SNB *ห้ามแก้ไข* [TEC]
+A.1 หางปลาอลูมิเนียมแรงสูง หลอดรับแรงดึง [AP]
+A.10 บ่อกราว์พิธ [KUMWELL]
+A.10 บ่อกราว์พิธ [STATICWELD]
+A.2 ลูกถ้วยแร็ค + หางหนู
+A.2 แร็คไฟฟ้า
+A.3 พรีฟรอม
+A.3 ลวดมิเนียม
+A.4 น็อตไฟฟ้า + แหวนรอง 1/2"
+A.4 น็อตไฟฟ้า + แหวนรอง 5/8"
+A.4 แท่งกราว์ด กลีบมะเฟือง
+A.4 แท่งกราว์ดทองแดง (ทั่วไป)
+A.4 แท่งกราว์ดทองแดง ทองแดงหุ้ม (พิเศษ)
+A.4 แท่งกราว์ดทองแดง ทองแดงแท้ (พิเศษ)
+A.4 แหวนเหลี่ยม (สำหรับน็อตไฟฟ้า) NET [AP]
+A.6 PG แคลมป์
+A.6 แคลมป์ 2สกรู
+A.6 แคลมป์ลูกตาล
+A.7 ONETIME วันทาม [KUMWELL]
+A.7 ONETIME วันทาม [ธรรมดา]
+A.8 3แฉกล่อฟ้า (ระบบล่อฟ้า) [AP]
+A.8 ฐานล่อฟ้า (ระบบล่อฟ้า) [AP]
+A.8 อุปกรณ์จับสายและบาร์ทองแดง (ระบบล่อฟ้า) [AP]
+A.8 อุปกรณ์ล่อฟ้า
+A.8 เสาล่อฟ้า (ระบบล่อฟ้า) [AP]
+A.9 กราวด์เทสบ๊อกซ์ [KUMMWELL]
+A.9 กราวด์เทสบ๊อกซ์ [SEC]
+B.1 คาปาซิเตอร์ + แมกเนติก + RVC CHINT
+B.1 คาปาซิเตอร์ + แมกเนติก + RVC [SCHNEIDER]
+B.4 POWER METER **ราคาแข่งขัน** SCHNEIDER
+B.4 POWER METER SIEMENS
+B.4 POWER METER [SCHNEIDER]
+B.7 อินเวอร์เตอร์ MEGA [FUJI]
+B.7 อินเวอร์เตอร์ MINI [FUJI]
+B.7 อินเวอร์เตอร์ MULTI [FUJI]
+C.1 สวิทซ์กด ติดตั้งลอย
+C.8 ฟิตเทป [Y-PULL]
+D ตะกั่ว บักกรี
+D.4 เครื่องมือวัดไฟฟ้า [เคียวริซึ SANWA]
+D.5 ADAPTER อะแด๊ปเตอร์ [GLINK]
+D.5 วอลลุ่ม
+D.6 คาปาซิเตอร์ CAPACITOR กระบอกสีเงิน สีขาว CBB60 CBB65
+D.Z คาปาซิเตอร์ CAPACITOR สี่เหลี่ยมสีดำ CBB61
+E พัดลม [พานาโซนิค]
+E.1 พัดลม [HATARI]
+E.1 พัดลม [MITSUBISHI]
+E.1 พัดลมอุตสาหกกรม [VENZ]
+F.1 SWITCHING EDR MEANWELL รุ่นปรกติ
+F.1 SWITCHING LRS MEANWELL ตัวใหญ่
+F.1 SWITCHING LRS MEANWELL รุ่นปรกติ
+F.1 Switching Power Supply : DR  [Meanwell]
+F.1 Switching Power Supply : EDR-MDR-NDR  [Meanwell]
+F.1 Switching Power Supply : LRS/MDR  [MEANWELL]
+F.1 Switching Power Supply : MDR  [Meanwell]
+F.1 Switching Power Supply : NES  [Meanwell]
+F.1 Switching Power Supply : RS  [Meanwell]
+F.1 Switching Power Supply : S8JX  [Omron]
+F.1 Switching Power Supply : S8VS  [Omron]
+F.1 Switching Power Supply S8FS-C OMRON
+F.1 Switching Power Supply [SCHNEIDER]
+F.2 หม้อแปลงไฟฟ้า
+F.3 แบตแห้ง
+F.5 ไฟฉุกเฉิน-ป้ายทางออก [DYNO]
+G. PU FOAM
+G. ไขควง ป้องกันไฟฟ้า พัมกิ้น PUMPKIN
+G. ไขควง พัมกิ้น
+G.1 น็อตเกลียวปล่อย (หัวP และ หัวF)
+G.1 น็อตเกลียวปล่อย (หัวP และ หัวF) ถุง 50ตัว
+G.1 น็อตเกลียวปล่อย (อื่นๆ)
+G.2 พุกกัลวาไนท์
+G.2 พุกดรอปอิน
+G.2 พุกดรอปอิน (ตัวใหญ่)
+G.2 พุกตะกั่ว
+G.2 พุกตะกั่ว **แหวน+น็อต
+G.2 พุกผีเสื้อ
+G.2 พุกพลาสติก M7
+G.2 พุกเหล็ก
+G.3 เกลียวตลอด (เหล็กสตัด)
+G.5 กรรไกรตัดท่อ PVC [OPT]
+G.5 คีมตัด [OPT]
+G.5 คีมตัด คีมย้ำ IWISS
+G.5 คีมย้ำ-คีมตัด-ฟิตเทป [CN จีน]
+G.5 คีมย้ำ-คีมตัด-ฟิตเทป [OPT]
+G.5 คีมย้ำหางปลา CORD-END [OPT]
+G.5 คีมย้ำหางปลา KH-SU-HX-LYG-SN  OPT
+G.5 คีมย้ำหางปลา [OPT]
+G.5 คีมย้ำหางปลา โซล่า SOLAR [OPT]
+G.5 อุปกรณ์ช่าง [ธรรมดา]
+G.5 อุปกรณ์ช่าง [อย่างดี TSUNODA]
+G.6 ดอกสว่าน PUMPKIN
+G.6 โฮซอ เจาะเหล็ก [SHELL]
+G.6 โฮซอ เจาะเหล็ก-สแตนเลส [PUMPKIN]
+G.7 คัตเตอร์ PUMPKIN
+G.7 ตลับเมตร [PUMPKIN]
+G.8 น้ำยาร้อยสายไฟ
+G.8 ฟิชเทป [CCS]
+G.8 ฟิชเทป [OPT]
+G.B น้ำยาล้างคอนแท็ก [3M & CRC]
+G.Z คีมย้ำ-คีมตัด-คีมบีบ-กุญแจเลื่อน-คีมปอกสายไฟ [PUMPKIN]
+H. อุปกรณ์ย้ำ โทรศัพท์ แลน [LINK]
+H.1 ACCESSIRUES RACK GERMANY
+H.1 ตู้ WALL RACK G1-G3 GERMANY
+H.1.9 อุปกรณ์ปลีกย่อย คอมพิวเตอร์
+H.2.9 อุปกรณ์ปลีกย่อย ทีวี
+H.3 หัวแลน Lan [AMP & LINK]
+H.3 เม็ดเชิ่อมสายโทรศัพท์ [3M]
+H.3.9 หัวโทรศัพท์ [LINK]
+I.5 TELEPHONE BACK MOUNT
+I.5 TELEPHONE CABINET
+I.5 TELEPHONE MODULE & ARRESTER & TOOL
+I.5 TELEPHONE โทรศัพท์ CONNECTOR RJ11 PLUG OUTLETS
+J. สายลม PU [ECO-FLEX]
+J.1 โซลีนอยวาล์ว STNC
+J.1 โซลีนอยวาล์ว [AIRTEC]
+K AC-DC SURGE PROTECTIVE DEVICE [LUMIRA]
+K DC MCB เบรกเกอร์ [LUMIRA]
+K DC MCCB เบรกเกอร์ [FEEO]
+K DC-AC SURGE PROTECTIVE [FEEO]
+K เครื่องชาร์จรถไฟฟ้า SCHNEIDER
+K. AC RCBO MCB FEEO
+K. AC SURGE SPD [NANO]
+K. AC-DC SURGE SPD ABB
+K. AC-DC SURGE SPD LW
+K. AC-DC SURGE SPD TEC
+K. AC-DC SURGE SPD ZOII
+K. ATS CSQ
+K. DC MCB FPV-63 เซอร์กิตเบรกเกอร์ [FEEO]
+K. DC MCB NANO
+K. DC RCBO FRD2-63 เซอร์กิตเบรกเกอร์กันดูด [FEEO]
+K. DC SURGE SPD [NANO]
+K. MC4 FEEO
+K. RAPID SHUTDOWN
+K. RCCB EV SOLAR A9R A9Z เซอร์กิตเบรกเกอร์กันดูด SCHNEIDER
+K. SOLAR [FEEO]
+K. สินค้า SOLAR CELL CHINT
+K. สินค้า SOLAR CELL อุปกรณ์เชื่อมต่อ LINK
+K. สินค้า SOLAR CELL อุปกรณ์เชื่อมต่อ TEC
+K. สินค้าใหม่ FEEO
+K. แผงโซลาร์เซลล์ 580W RUNERGY
+K. แผงโซลาร์เซลล์ 585W RUNERGY
+K. แผงโซลาร์เซลล์ 635W RUNERGY
+K. แผงโซลาร์เซลล์ JASOLAR LONGI JINKO
+K. แผงโซลาร์เซลล์ [RUNERGY]
+K.1 อินเวอร์เตอร์ INVERTER HUAWEI
+K.1 อินเวอร์เตอร์ INVERTER SOLIS
+K.Y อุปกรณ์เสริม HUAWEI
+M. INDUSTRIAL NETWORKING SWITCHES [3ONEDATA]
+M. INDUSTRY DEVICE NETWORKING [3ONEDATA]
+O. เครื่องมือวัด RIKA
+SMART LOGGER HUAWEI
+Y Ampmeter PRIMUS
+Y TempController TCN4 [AUTONICS]
+Y TIMER [HITEK]
+Y สินค้า KUMWELL
+Y. Ampmeter [PRIMUS]
+Y. SENSE สินค้าราคา ส่วนลด
+Y. TEMP CONTROLLER [TOHO]
+Y.CIKACHI สินค้าราคา NET
+Y.CIKACHI สินค้าราคา ส่วนลด
+Y.SHINOHAWA สินค้าราคา ส่วนลด
+Y.WIP สินค้าราคา ส่วนลด20%
+YYY ข้อต่อลม PU
+YYY สายลม PU **ตัดแบ่ง {ธรรมดา}
+YYY สายลม PU {CDC / ธรรมดา}
+Z สินค้า TEC (หางปลา NET)
+Z สีสเปรย์
+Z เทอร์มินอล TBU/UK TEC
+Z. Counter/Timer
+Z. กิ๊ป รัดสายไฟ 
+Z. ของแปลก ตัวเล็ก สั่งครั้งละ 10ตัวขึ้น
+Z. ชุดโคมไฟสำเร็จ [CROSS]
+z. ปลอกฮอทมาคเกอร์
+Z. ฟิวส์ RS94
+Z. สวิทว์โยก เดินหน้า-ถอยหลัง
+Z. สินค้า GATA/CROSS
+Z. สินค้า KUMWELL
+Z. สินค้า SHELL
+Z. อุปกรณ์พิเศษ [SCHNEIDER]
+Z. เคเบิ้ลไทร์ สแตนเลส
+Z. เคเบิ้ลไทร์ สแตนเลส
+Z. เพรชเชอร์คลิป
+Z. โซลีนอยวาว [UNI-D]
+Z.Z แมกเนติก แอร์ จีน
+ZZ. สินค้า หาที่ลงไม่ได้ FOTEK
+Zzzz สินค้า TEC
+[1.1.1 สายไฟ 60227 IEC01 THW ยาซากิ YAZAKI (ม้วน = 100เมตร)
+[1.1.1 สายไฟ 60227 IEC01 THW ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.1.2 สายไฟ 60227 IEC01 THW ไทยยูเนี่ยน THAI UNION (ม้วน = 100เมตร)
+[1.1.2 สายไฟ 60227 IEC01 THW ไทยยูเนี่ยน THAI UNION (ม้วน = 90เมตร)
+[1.1.3 สายไฟ 60227 IEC01 THW ฟูเลอร์ FUHRER (ม้วน = 100เมตร)
+[1.1.3 สายไฟ 60227 IEC01 THW ฟูเลอร์ FUHRER *สั่งตัดจากโรงงาน
+[1.1.4 สายไฟ 60227 IEC01 THW บางกอกเคเบิ้ล BCC (ม้วน = 100เมตร)
+[1.1.4 สายไฟ 60227 IEC01 THW บางกอกเคเบิ้ล BCC *สั่งตัดจากโรงงาน
+[1.1.Y สายไฟ 60227 IEC01 THW *ตัดเศษ
+[1.1.Z สายไฟ 60227 IEC01 THW NNN (ม้วน = 100เมตร)
+[1.1.Z สายไฟ 60227 IEC01 THW NNN (ม้วน = 90เมตร)
+[1.1.Z สายไฟ 60227 IEC01 THW ยูไนเต็ด (ม้วน = 100เมตร)
+[1.1.Z สายไฟ 60227 IEC01 THW ยูไนเต็ด *สั่งตัดจากโรงงาน
+[1.1.Z สายไฟ 60227 IEC01 THW เฟลดอดจ์ PHELDODGE (ม้วน = 100เมตร)
+[1.1.Z สายไฟ 60227 IEC01 THW เฟลดอดจ์ PHELDODGE *สั่งตัดจากโรงงาน
+[1.2.1 สายไฟ VAF ยาซากิ YAZAKI (ม้วน = 100เมตร)
+[1.2.2 สายไฟ VAF 100เมตร ไทยยูเนี่ยน THAI UNION (ม้วน = 100เมตร)
+[1.2.2 สายไฟ VAF 90เมตร ไทยยูเนี่ยน THAI UNION (ม้วน = 90เมตร)
+[1.2.Y สายไฟ VAF *ตัดเศษ
+[1.2.Z สายไฟ VAF NNN (ม้วน = 100เมตร)
+[1.2.Z สายไฟ VAF NNN (ม้วน = 90เมตร)
+[1.2.Z สายไฟ VAF ยูไนเต็ด (ม้วน = 100เมตร)
+[1.3.1 สายไฟ VCT ไทยยูเนี่ยน THAI UNION (ม้วน = 100เมตร)
+[1.3.2 สายไฟ IEC53 VCT ยาซากิ YAZAKI (ม้วน = 100เมตร)
+[1.3.2 สายไฟ VCT ยาซากิ YAZAKI (ม้วน = 100เมตร)
+[1.3.2 สายไฟ VCT ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.3.3 สายไฟ VCT แอ็นท์ ANT (ม้วน = 100เมตร)
+[1.3.4 สายไฟ VCT ฟูเลอร์ FUHRER (ม้วน = 100เมตร)
+[1.3.Y สายไฟ VCT *ตัดเศษ
+[1.3.Z สายไฟ VCT NNN (ม้วน = 100เมตร)
+[1.4.1 สายไฟ VSF THW(F) ไทยยูเนี่ยน THAI UNION (ม้วน = 100เมตร)
+[1.4.2 สายไฟ VSF THW(F) ยาซากิ YAZAKI (ม้วน = 100เมตร)
+[1.4.3 สายไฟ VSF THW(F) ฟูเลอร์ FUHRER (ม้วน = 100เมตร)
+[1.4.Y สายไฟ VSF THW(F) ฟูเลอร์ FUHRER *ตัดเศษ
+[1.4.Y สายไฟ VSF THW(F) ไทยยูเนี่ยน THAI UNION *ตัดเศษ
+[1.5.1 สายไฟอลูมิเนียม ไทยยูเนี่ยน THAIUNION (ม้วน = 100เมตร)
+[1.5.1 สายไฟอลูมิเนียม ไทยยูเนี่ยน THAIUNION *สั่งตัดจากโรงงาน
+[1.5.3 สายไฟ TWA อลูมิเนียม บางกอกเคเบิ้ล BCC (ม้วน = 100เมตร)
+[1.5.3 สายไฟ TWA อลูมิเนียม บางกอกเคเบิ้ล BCC *สั่งตัดจากโรงงาน
+[1.5.5 สายไฟอลูมิเนียม THW-A ฟูเลอร์ FUHRER *สั่งตัดจากโรงงาน
+[1.5.Y สายไฟ THW-A มิเนียม **ตัดเศษ
+[1.5.Z สายไฟอลูมิเนียม เบอร์10-50 NNN
+[1.6-1.7 สายไฟ JZ LIYCY *ไม่มีราคาตั้ง* DELTA
+[1.6.1 สายไฟ OPVC-JZ (ไม่มีชิล) HELUKABEL *สั่งตัดจากโรงงาน
+[1.6.2 สายไฟ OPVC-JZ (ไม่มีชิล) CSDELTA *สั่งตัดจากโรงงาน
+[1.7.2 สายไฟ LIYCY (มีชิล) CSDELTA *สั่งตัดจากโรงงาน
+[1.8.1 สายไฟ NYY ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.8.2 สายไฟ NYY ฟูเลอร์ FUHRER *สั่งตัดจากโรงงาน
+[1.9.1 สายไฟ CV ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.9.2 สายไฟ CV ฟูเลอร์ FUHRER *สั่งตัดจากโรงงาน
+[1.9.Z สายไฟ CV BCC *สั่งตัดจากโรงงาน
+[1.9.Z สายไฟ CV เฟลดอดจ์ PHELDODGE *สั่งตัดจากโรงงาน
+[1.A ปลอกสายไฟทนความร้อน
+[1.A สายไฟ FRC สีส้ม *สั่งตัดจากโรงงาน
+[1.A สายไฟทนความร้อน (ม้วน = 100เมตร)
+[1.A สายไฟทนความร้อน *ตัดเศษ
+[1.G.1 สายไฟ CVV-F (ไม่มีชิล) ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.H.1 สายไฟ CVV-S (มีชิล) ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.I สายไฟ 60227 IEC53 VCT-G ยาซากิ YAZAKI
+[1.I สายไฟ VCT-G ฟูเลอร์ FUHRER
+[1.I สายไฟ VCT-G ยาซากิ YAZAKI
+[1.J สายไฟ NYY-G ยาซากิ YAZAKI *สั่งตัดจากโรงงาน
+[1.K VAF-G 100เมตร NNN
+[1.K สายไฟ VAF บางกอกเคเบิ้ล BCC
+[1.K สายไฟ VAF-G **ตัดจากหน้าร้าน
+[1.K สายไฟ VAF-G 100เมตร ไทยยูเนี่ยน THAI UNION
+[1.K สายไฟ VAF-G 90เมตร NNN
+[1.K สายไฟ VAF-G 90เมตร ไทยยูเนี่ยน THAI UNION
+[1.K สายไฟ VAF-G BCC
+[1.K สายไฟ VAF-G ยาซากิ YAZAKI
+[1.O.1 สายไฟ สลิง 1ข้าง 2ข้าง LIFT CSDELTA
+[1.O.1 สายไฟ แบน สีดำ H07VVH6-F CSDELTA
+[2.1 หลอด LED BULB NANO
+[2.1.4 หลอด LED + รางสำเร็จรูป [VCK]
+[2.1.5 หลอด LED + รางสำเร็จรูป HIET
+[2.2 หลอด LED MEGAMAN
+[2.2 โคมไฟ LED HIET
+[2.2 โคมไฟ LED MEGAMAN
+[2.2 โคมไฟตะแกรงฝังฝ้า & ติดลอย LUMAX
+[2.2.1 โคมไฟ LED กันน้ำกันฝุ่น BEC
+[2.2.1 โคมไฟ LED ดาวไลท์ BEC
+[2.2.1 โคมไฟ LED ฝังฝ้า พาแนล PANEL BEC
+[2.2.1 โคมไฟ LED สปอร์ตไลท์ ฟลัดไลท์ FLOODLIGHT BEC
+[2.2.1 โคมไฟ LED โคมไฟถนน BEC
+[2.2.1 โคมไฟ LED ไฮเบย์ HIBAY BEC
+[2.2.2 โคมไฟ LED กันน้ำกันฝุ่น ฟิลิปส์ PHILIPS
+[2.2.2 โคมไฟ LED ฝังฝ้า พาแนล PANEL PHILIPS
+[2.2.2 โคมไฟ LED สปอร์ตไลท์ ฟลัดไลท์ FLOODLIGHT PHILIPS
+[2.2.2 โคมไฟ LED โคมไฟถนน PHILIPS
+[2.2.2 โคมไฟ LED ไฮเบย์ HIBAY ฟิลิปส์ PHILIPS
+[2.2.2 โคมไฟ ดาวไลท์ LED ฟิลิปส์ PHILIPS
+[2.2.4 โคมไฟ LED ติดลอย พาแนล PANEL VCK
+[2.2.4 โคมไฟ LED ถนน VCK
+[2.2.4 โคมไฟ LED ฝังฝ้า พาแนล PANEL VCK
+[2.2.4 โคมไฟ LED สปอร์ตไลท์ ฟลัดไลท์ FLOODLIGHT VCK
+[2.2.4 โคมไฟ LED ไฮเบย์ HIBAY VCK
+[2.2.5 โคมไฟ LED ฝังฝ้า พาแนล PANEL HIET
+[2.2.5 โคมไฟ LED สปอร์ตไลท์ ฟลัดไลท์ FLOODLIGHT NANO
+[2.2.5 โคมไฟ LED เพดานกลม ซาลาเปา NANO
+[2.2.5 โคมไฟ LED โคมไฟถนน NANO
+[2.2.5 โคมไฟ ดาวน์ไลท์ LED NANO
+[2.2.5 โคมไฟ ไฮเบย์ LED NANO
+[2.2.Z โคมไฟ LED EVE
+[2.4.1 โคมไฟ ถนน โซล่าเซล์ SOLAR CELL LED BEC
+[2.4.1 โคมไฟ ฟลัดไลท์ โซล่าเซล์ SOLAR CELL LED BEC
+[2.4.1 โคมไฟ สนาม โซล่าเซล์ SOLAR CELL LED BEC
+[2.5 ฝาชี + ขั้วหลอด
+[2.5 โคมไฟ HIET
+[2.5 โคมไฟ VCK
+[2.5 โคมไฟ ดาว์นไลท์ E27 [PHIPLS]
+[2.5 โคมไฟ ติดผนัง BEC
+[2.5 โคมไฟสปอร์ ไลท์ ไอโดดีน MICON
+[2.5 โคมไฟเปล่า [SSCL] **ราคาส่วนลด
+[2.5 โคมไฟเปล่า [VCK : AURA] **ราคาNET ทุนเท่าราคาตั้ง
+[2.5 โคมไฟเปล่า [VCK : AURA] **ราคาส่วนลด
+[2.5.2 โคมไฟ กันน้ำกันฝุ่น BEC
+[2.5.2 โคมไฟ ดาวน์ไลท์ BEC
+[2.5.2 โคมไฟถนน E27 BEC
+[2.5.2 โคมไฟถนน E27 HIET
+[2.5.5 โคมไฟ กันน้ำกันฝุ่น HIET
+[2.5.5 โคมไฟ ดาวน์ไลท์ HIET
+[2.5.A โคมไฟกลม ซาลาเปา LUMAX
+[2.5.A โคมไฟดาวไลท์ LUMAX
+[2.6 ขั้วหลอด ไฟระย้า สำเร็จรูป + สายไฟ
+[2.6 ขั้วหลอดไฟ
+[2.6 จุ๊บหลอดไฟ กันน้ำ
+[3.1 สวิตช์ ปลั๊ก หน้ากาก INITIO สีขาว PANASONIC
+[3.1 สวิตช์ ปลั๊ก หน้ากาก INITIO สีเทา สีดำ PANASONIC
+[3.1 สวิตช์ ปลั๊ก หน้ากาก WIDE PANASONIC
+[3.1 สวิตช์ ปลั๊ก หน้ากาก WIDE PANASONIC { ราคาพิเศษ }
+[3.1 สวิตช์ ปลั๊ก หน้ากาก WIDE-COLOR PANASONIC
+[3.1 สวิตช์ ปลั๊ก หน้ากาก สีขาว NANO
+[3.1 สวิทซ์-ปลั๊ก รุ่นAvatarOn A SCHNEIDER
+[3.1 สวิทซ์-ปลั๊ก รุ่นAvatarOn A รุ่นประกอบสำเร็จ SCHNEIDER
+[3.1.1 เต้ารับฝังพื้น POP-UP NANO
+[3.1.3 POPUP BTICINO
+[3.1.3 กล่องกันน้ำ แบบติดลอย หน้ากากกันน้ำ IDROBOX BTICINO
+[3.1.3 สวิตช์กริ่ง กระดิ่งไฟฟ้า BTICINO
+[3.1.3 สวิทซ์ ปลั๊ก BTICINO MAGIC ADVANCE
+[3.1.5 กระดิ่งทูโทน NANO
+[3.1.5 กล่องฝาปิดกันน้ำ หน้ากากกันน้ำ NANO
+[3.1.5 ชุดปลั๊กพร้อมสวิตช์ควบคุม NANO
+[3.1.5 สวิตช์ ปลั๊ก เต้ารับ สีขาว NANO
+[3.1.5 สวิตช์ ปลั๊ก เต้ารับ สีขาว NANO { เพิ่มเติม }
+[3.1.5 สวิตช์ ปลั๊ก เต้ารับ สีดำ NANO
+[3.1.5 สวิตช์ ปลั๊ก เต้ารับ สีดำ NANO { เพิ่มเติม }
+[3.1.5 หน้ากาก สีขาว NANO
+[3.1.5 หน้ากาก สีดำ NANO
+[3.1.5 หน้ากาก สแตนเลส อะคริลิค สีขาว สีดำ NANO
+[3.2.1 กันฟ้าผ่า Surge Protection SCHNEIDER
+[3.2.1 ตู้คอนซูมเมอร์ CONSUMER S9HCL SCHENEIDER { พิเศษ }
+[3.2.1 ตู้คอนซูมเมอร์ CONSUMER S9HCL SCHNEIDER
+[3.2.1 ตู้คอนซูเมอร์ โหลดเซ็นเตอร์ MCB PLUGON EASY9 SCHNEIDER
+[3.2.1 ตู้โหลดเซ็นเตอร์ 3P รุ่นใส่เมนได้ QO3-100EZ QO3-250EZ SCHNEIDER
+[3.2.1 ตู้โหลดเซ็นเตอร์ 3P รุ่นใส่เมนไม่ได้ QO3-100L QO3-250L SCHNEIDER
+[3.2.1 อุปกรณ์เสริม ตู้คอนซูเมอร์ ตู้โหลดเซ็นเตอร์ SCHNEIDER
+[3.2.1 เซอร์กิตเบรกเกอร์ MCB PLUGON SCHNEIDER
+[3.2.1 เซอร์กิตเบรกเกอร์ MCB PLUGON SCHNEIDER { พิเศษ }
+[3.2.1 เซอร์กิตเบรกเกอร์ NET 1P PLUGON SCHNEIDER
+[3.2.1 เซอร์กิตเบรกเกอร์ กันดูด RCBO PLUGON SCHNEIDER
+[3.2.1 เซอร์กิตเบรกเกอร์ กันดูด RCBO PLUGON SCHNEIDER { พิเศษ }
+[3.3.1 เซอร์กิตเบรกเกอร์ IC60N-C120N DINRAIL SCHNEIDER
+[3.3.1 เซอร์กิตเบรกเกอร์ IK60N DINRAIL SCHNEIDER
+[3.3.1 เซอร์กิตเบรกเกอร์ MCB DINRAIL MITSUBISHI
+[3.3.2 คอนซูเมอร์ โหลดเซ็นเตอร์ CONSUMER LOADCENTER ABB { DINRAIL }
+[3.3.2 เซอร์กิตเบรกเกอร์ ABB { DINRAIL MCB }
+[3.3.2 เซอร์กิตเบรกเกอร์ ABB { DINRAIL MCB พิเศษ}
+[3.3.2 เซอร์กิตเบรกเกอร์ กันดูด RCBO ABB { DINRAIL MCB }
+[3.3.2 เซอร์กิตเบรกเกอร์ กันดูด RCBO ABB { DINRAIL MCB พิเศษ }
+[3.3.2 เซอร์กิตเบรกเกอร์ กันดูด RCBO RCCB ABB { MCB DINRAIL  }
+[3.5 ปลั๊กพ่วง PANASONIC
+[3.5 ปลั๊กแปลง 2ขา [NANO]
+[3.5.5 BOX ยาง พร้อมปลั๊กกราวด์คู่ NANO
+[3.6.1 เซฟตี้สวิตช์ SAFETY SWITCH SCHNEIDER
+[3.7 ISOLATOR SWITCH DAKO
+[3.7 ISOLATOR SWITCH HACO
+[3.7 ISOLATOR SWITCH SCHNEIDER
+[3.7 WATERPROOF ISOLATOR SWITCH UKF TEC
+[3.7.2 ISOLATOR SWITCH OTP ABB
+[3.7.2 ISOLATOR SWITCH WSD ABB
+[3.A มิเตอร์ UFO
+[3.A มิเตอร์วัดไฟฟ้า HOLLY
+[3.A.1 มิเตอร์วัดไฟฟ้า ดิจิตอล MITSUBISHI
+[3.A.1 มิเตอร์วัดไฟฟ้า ดิจิตอล รุ่นมาตราฐาน MITSUBISHI
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER 2P PANASONIC
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER 2P TEC
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER CHANG
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER HACO
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER KYOKUTO
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER NANO
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER กันดูด RCBO 2P NANO
+[3.B เซฟตี้เบรกเกอร์ SAFETY BREAKER กันดูด RCBO 2P PANASONIC
+[3.B.7 เซฟตี้เบรกเกอร์ SAFETY BREAKER BTICINO
+[3.C TIMER ไทม์เมอร์ 24HR BEC
+[3.C TIMER ไทม์เมอร์ 24HR BTICINO
+[3.C TIMER ไทม์เมอร์ 24HR CCS
+[3.C TIMER ไทม์เมอร์ 24HR GRASSLIN
+[3.C TIMER ไทม์เมอร์ 24HR HACO
+[3.C TIMER ไทม์เมอร์ 24HR QUBIX
+[3.C TIMER ไทม์เมอร์ 24HR THEBEN
+[3.C.3 TIMER ไทม์เมอร์ 24HR ABB
+[3.D สวิตช์แสงแดด BEC
+[3.D สวิตช์แสงแดด CCS
+[3.D สวิตช์แสงแดด DAKO
+[3.D สวิตช์แสงแดด HACO
+[3.D สวิตช์แสงแดด HOME
+[3.D สวิตช์แสงแดด SELCON KAGASEL
+[3.D สวิตช์แสงแดด กันกุล GUNKUL
+[3.Z Box ลอย กล่องลอยพลาสติก สีขาว สีดำ NANO
+[4.1 อุปกรณ์เสริม เบรกเกอร์ CVS SCHNEIDER
+[4.1 เบรกเกอร์ GOPACT SCHNEIDER
+[4.1 เบรกเกอร์ MCCB A1 A2 ABB { 1P 2P }
+[4.1 เบรกเกอร์ MCCB A2 ABB
+[4.1 เบรกเกอร์ MCCB BW32AAG BW50EAG BW63EAG BW100EAG FUJI
+[4.1 เบรกเกอร์ MCCB CVS100 CVS160 CVS250 CVS400 CVS630 SCHNEIDER
+[4.1 เบรกเกอร์ MCCB NS SCHNEIDER
+[4.1 เบรกเกอร์ MCCB NXM CHINT
+[4.1 เบรกเกอร์ MCCB S-30E SXK HITACHI
+[4.1 เบรกเกอร์ NSX SCHNEIDER
+[4.1 เบรกเกอร์ กันดูด RCBO NXMLE CHINT
+[4.1.1 เบรกเกอร์ NF32 NF63 NF125 NF250 MITSUBISHI
+[4.1.1 เบรกเกอร์ NF32 NF63 NF125 NF250 MITSUBISHI { พิเศษ }
+[4.1.1 เบรกเกอร์ NF400 NF630 NF800 MITSUBISHI
+[4.1.2 เบรกเกอร์ 3P EZC400 SCHNEIDER { พิเศษ }
+[4.1.2 เบรกเกอร์ MCCB EZC 1P SCHNEIDER { พิเศษ }
+[4.1.2 เบรกเกอร์ MCCB EZC 2P SCHNEIDER { for QO-100EZ }
+[4.1.2 เบรกเกอร์ MCCB EZC100 SCHNEIDER { for QO-100EZ }
+[4.1.2 เบรกเกอร์ MCCB EZC250 SCHNEIDER { for QO-250EZ }
+[4.1.3 เบรกเกอร์ A1 ABB
+[4.1.3 เบรกเกอร์ A3 ABB
+[4.1.3 เบรกเกอร์ MCCB XT1-TX7 ABB
+[4.1.O เบรกเกอร์ MCCB กันดูด RCBO CM50L-S CCS FUJICUT
+[4.2 แมกเนติก NXC CHINT
+[4.2 โอเวอร์โหลด NXR CHINT
+[4.2.1 แมกเนติก MAGNETIC MITSUBISHI { COIL พิเศษ 110V 380V 24V 48V }
+[4.2.1 แมกเนติก S-N MAGNETIC MITSUBISHI { COIL พิเศษ ขนาดใหญ่ }
+[4.2.1 แมกเนติก S-N MAGNETIC MITSUBISHI { ขนาดใหญ่ }
+[4.2.1 แมกเนติก S-T MAGNETIC MITSUBISHI { ขนาดเล็ก }
+[4.2.1 โอเวอร์โหลด TH-N120 TH-N220 TH-N400 OVERLOAD MITSUBISHI { ขนาดใหญ่ }
+[4.2.1 โอเวอร์โหลด TH-T18 TH-T25 TH-T50 TH-T65 TH-T100 OVERLOAD MITSUBISHI { ขนาดเล็ก }
+[4.2.3 แมกเนติก MAGNETIC (อุปกรณ์เสริม) ABB
+[4.2.3 แมกเนติก MAGNETIC ABB { ขนาดเล็ก }
+[4.2.3 แมกเนติก MAGNETIC ABB { ขนาดใหญ่ }
+[4.2.3 โอเวอร์โหลด OVERLOAD ABB { ขนาดเล็ก }
+[4.2.3 โอเวอร์โหลด OVERLOAD ABB { ขนาดใหญ่ }
+[4.3 อุปกรณ์เสริม เบรกเกอร์ A ABB
+[4.3 อุปกรณ์เสริม เบรกเกอร์ XT ABB
+[4.6 มอเตอร์เบรกเกอร์ MS132 MS116 ABB
+[4.6.2 มอเตอร์เบรกเกอร์ MOTER STARTER GV2ME SCHNEIDER
+[4.6.3 มอเตอร์เบรกเกอร์ (อุปกรณ์เสริม) ABB
+[5.9 เซอร์กิตเบรกเกอร์กันดูด RCCB (for EV) ABB
+[6.1.1 รางวายเวย์ ชุบกัลวาไนซ์ HDG KJL { KWBG KWIG KWOG KWSG KWTG KWXG KWHG KWCG KWFG KWNG }
+[6.1.1 รางวายเวย์ พ่นสี KJL { KWSS KWBS KWIS KWOS KWTS KWXS KWHS KWCS KWFS KWNS }
+[6.1.1 รางวายเวย์ สีขาว KJL { KWSS KWBS KWIS KWOS KWTS KWXS KWHS KWCS KWFS KWNS -10 }
+[6.1.1 รางวายเวย์ สแตนเลส KJL { KWSL KWBL KWIL KWOL KWTL KWXL KWHL KWCL KWFL KWNL }
+[6.1.Z รางวายเวย์ รุ่นประหยัด เหล็กหนา0.5มิล 5K { 5KWW }
+[6.2.1 รางเคเบิ้ลแลดเดอร์ ชุบกัลวาไนท์ KJL
+[6.2.Z รางเคเบิ้ลแลดเดอร์ ชุบกัลวาไนซ์ รุ่นบาง 5K
+[6.3 เคเบิ้ลเทรย์(ข้างเรียบ) NEW KJL
+[6.4.1 ตะแกรงทางเดิน งานโซล่าร์เซลล์ WALKWAY (ZAM) KWWZ KJL
+[6.5.1 รางเดินสายไฟ สีขาว พลาสติกPVC PRI
+[6.5.1 รางเดินสายไฟ หลังเต๋า ฝาอลูมิเนียม ฐานพลาสติกPVC PRI
+[6.5.Y รางเดินสายไฟ สีขาว พลาสติกPVC NANO
+[6.6.1 ตู้สแตนเลส KBLQ KBLR KJL
+[6.6.1 ตู้เหล็ก KBJ KJL { KBJW KBJA KBJB KBJC KBJD KBJF KBJG }
+[6.6.1 ตู้เหล็ก กันน้ำ ฝา1ชั้นกระจก KBSA KBSB KJL
+[6.6.1 ตู้เหล็ก กันน้ำมีหลังคา KBSW KJL
+[6.6.1 ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้ากระจก KBSG KJL
+[6.6.1 ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้าทึบ KBSD KJL
+[6.6.1 ตู้เหล็ก กันน้ำมีหลังคา หลังคาเสมอฝา KBJR KJL
+[6.6.1 ตู้เหล็ก กันน้ำไม่มีหลังคา KBJQ KJL
+[6.6.1 ตู้เหล็ก กันน้ำไม่มีหลังคา KBSN KJL
+[6.6.1 ตู้เหล็ก กันน้ำไม่มีหลังคา KBVQ KJL
+[6.6.1 ตู้เหล็ก ธรรมดา KBSS KJL
+[6.6.1 ตู้เหล็ก ธรรมดา แบบบาง KBSE KJL
+[6.6.2 ตู้ไฟสวิทซ์บรอด ตู้เหล็ก CE CES CESG TAMCO
+[6.6.3 ตู้สแตนเลส DA-S DS-S DSG-S DENCO
+[6.6.3 ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้ากระจก DSG DENCO
+[6.6.3 ตู้เหล็ก กันน้ำมีหลังคา หลังคาเสมอฝา DS DENCO
+[6.6.5 ตู้ไฟสวิทซ์บรอด ตู้เหล็ก MCTT NANO
+[6.6.Z ตู้เหล็ก ธรรมดา 5KSS 5K
+[6.63 ตู้ไฟสวิตช์บรอด ตู้เหล็ก DA DENCO
+[7.1 ท่อเหล็ก RSC DYNAMIC { 1-1/2 - 2นิ้ว }
+[7.1.1 ท่อร้อยสายไฟเหล็ก EMT PANASONIC { 1/2 - 2นิ้ว }
+[7.1.1 ท่อร้อยสายไฟเหล็ก IMC PANASONIC { 1/2 - 4นิ้ว }
+[7.1.1 ท่อร้อยสายไฟเหล็ก RSC PANASONIC { 1/2 - 2นิ้ว }
+[7.1.1 ท่อร้อยสายไฟเหล็ก RSC PANASONIC { 2-1/2นิ้ว ขึ้นไป }
+[7.1.2 ท่อร้อยสายไฟเหล็ก EMT ARROW { 1/2นิ้ว }
+[7.1.2 ท่อร้อยสายไฟเหล็ก EMT ARROW { 3/4 - 2นิ้ว }
+[7.1.2 ท่อร้อยสายไฟเหล็ก IMC ARROW { 1/2 - 2นิ้ว }
+[7.1.2 ท่อร้อยสายไฟเหล็ก IMC ARROW { 2-1/2 - 4นิ้ว }
+[7.1.2 ท่อร้อยสายไฟเหล็ก RSC ARROW { 1/2นิ้ว }
+[7.1.2 ท่อร้อยสายไฟเหล็ก RSC ARROW { 3/4นิ้ว ขึ้นไป }
+[7.1.3 ท่อร้อยสายไฟเหล็ก EMT UNION { 1/2นิ้ว }
+[7.1.3 ท่อร้อยสายไฟเหล็ก EMT UNION { 3/4 - 2นิ้ว }
+[7.1.3 ท่อร้อยสายไฟเหล็ก IMC UNION { 1/2 - 2นิ้ว }
+[7.1.3 ท่อร้อยสายไฟเหล็ก IMC UNION { 2-1/2 - 4นิ้ว }
+[7.1.4 ท่อร้อยสายไฟเหล็ก EMT IMC DIAMOND KOTA { 1/2 - 2นิ้ว }
+[7.1.4 ท่อร้อยสายไฟเหล็ก IMC KOTA { 2-1/2 - 4นิ้ว }
+[7.1.4 ท่อร้อยสายไฟเหล็ก RSC KOTA { 1/2 - 2นิ้ว }
+[7.1.4 ท่อร้อยสายไฟเหล็ก RSC KOTA { 2นิ้ว ขึ้นไป }
+[7.1.5 ท่อร้อยสายไฟเหล็ก EMT DAIWA { 1 - 2นิ้ว }
+[7.1.5 ท่อร้อยสายไฟเหล็ก EMT DAIWA { 1/2 - 3/4นิ้ว }
+[7.1.5 ท่อร้อยสายไฟเหล็ก IMC DAIWA { 1/2 - 2นิ้ว }
+[7.1.5 ท่อร้อยสายไฟเหล็ก IMC DAIWA { 2-1/2 - 4นิ้ว }
+[7.1.6 ท่อร้อยสายไฟเหล็ก EMT DYNAMIC { 1/2 - 3/4นิ้ว }
+[7.1.6 ท่อร้อยสายไฟเหล็ก IMC DYNAMIC { 1/2 - 2นิ้ว }
+[7.1.6 ท่อร้อยสายไฟเหล็ก IMC DYNAMIC { 2-1/2 - 4นิ้ว }
+[7.1.7 ท่อร้อยสายไฟเหล็ก EMT DYNAMIC { 1 - 2นิ้ว }
+[7.1.7 ท่อร้อยสายไฟเหล็ก EMT NIPPON { 1 - 2นิ้ว }
+[7.1.7 ท่อร้อยสายไฟเหล็ก EMT NIPPON { 1/2 - 3/4นิ้ว }
+[7.1.7 ท่อร้อยสายไฟเหล็ก IMC NIPPON { 1/2 - 2นิ้ว }
+[7.1.7 ท่อร้อยสายไฟเหล็ก IMC NIPPON { 2-1/2 - 4นิ้ว }
+[7.1.8 ท่อร้อยสายไฟเหล็ก IMC DIAMOND { 2-1/2 - 4นิ้ว }
+[7.1.9 ข้อต่อตรง R/T (ท่ออ่อนเหล็ก กันน้ำ - ท่อเหล็ก EMT)
+[7.1.9 ข้อต่อตรง R/T (ท่ออ่อนเหล็ก กันน้ำ - ท่อเหล็ก IMC)
+[7.1.9 ข้อต่อตรง ท่ออ่อนเหล็กกันน้ำ (ต่อเพิ่มระยะ)
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก กันน้ำ ขอบสีน้ำเงิน (หุ้มยางสีดำ) { ขนาดเล็ก }
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก กันน้ำ ขอบสีน้ำเงิน (หุ้มยางสีดำ) { ขนาดใหญ่ }
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก กันน้ำ ขอบสีเหลือง (หุ้มยางสีเทา) { ขนาดเล็ก }
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก กันน้ำ ขอบสีเหลือง (หุ้มยางสีเทา) { ขนาดใหญ่ }
+[7.1.9 คอนเน็ตเตอร์ ท่ออ่อนเหล็ก กันน้ำ ขอบสีเหลือง (หุ้มยางสีเทา) { พิเศษรุ่นโค้ง 90องศา }
+[7.1.9 ท่ออ่อนเหล็ก **ตัดเศษ
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีดำ *ตัดเศษ
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีดำ { ขนาดเล็ก }
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีดำ { ขนาดเล็กมาก }
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีดำ { ขนาดใหญ่ }
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีเทา *ตัดเศษ
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีเทา { ขนาดกลาง }
+[7.1.9 ท่ออ่อนเหล็ก กันน้ำ หุ้มยางสีเทา { ขนาดใหญ๋ }
+[7.1.9 ท่ออ่อนเหล็ก ม้วน
+[7.1.9 ปลอกใส่ท่ออ่อนเหล็ก (กันบาด)
+[7.1.A ข้อต่อตรง EMT { 1 - 2นิ้ว }
+[7.1.A ข้อต่อตรง EMT กันน้ำ { 1/2 - 2นิ้ว }
+[7.1.A ข้อต่อโค้ง EMT { 1/2 - 2นิ้ว }
+[7.1.A คอนเนคเตอร์ ข้อต่อตรง บุชชิ่ง แคล้มโอม { 1/2 - 3/4นิ้ว NET }
+[7.1.A คอนเน็คเตอร์ EMT กันน้ำ { 1/2 - 2นิ้ว }
+[7.1.A คอนเน็ตเตอร์ EMT
+[7.1.A บุชชิ่ง { 1 - 6นิ้ว }
+[7.1.A ล็อคนัท **ขนาดใหญ่
+[7.1.A ล็อคนัท { 1/2 - 4นิ้ว }
+[7.1.A แคล้มประกับ EMT { 1/2 - 2นิ้ว }
+[7.1.A แคล้มโอม EMT { 1 - 2นิ้ว }
+[7.1.A แหวนลด
+[7.1.B ข้อต่อตรง IMC { 1/2 - 4นิ้ว }
+[7.1.B ข้อต่อโค้ง IMC { 1/2 - 4นิ้ว }
+[7.1.B ข้อต่อโค้ง RSC { 1/2 - 4นิ้ว }
+[7.1.B อิเล็คสันคุปปิ้ง ERICKSON COUPLING { 1/2 - 2นิ้ว }
+[7.1.B อิเล็คสันคุปปิ้ง ERICKSON COUPLING { 2-1/2 - 4นิ้ว }
+[7.1.B ฮับคอนเน็ตเตอร์ (คอนเน็คเตอร์ IMC) เกลียวใน เกลียวนอก { 1/2 - 4นิ้ว }
+[7.1.B เกลียวลด { 1/2 - 1นิ้ว }
+[7.1.B แคล้มประกับ IMC { 1/2 - 5นิ้ว }
+[7.1.B แคล้มโอม IMC { 1/2 - 4นิ้ว }
+[7.1.C ข้อต่อ LB LR LL OT OC TB { 2-1/2นิ้ว ขึ้นไป }
+[7.1.C ข้อต่อ LB LR LL OT { 1/2 - 2นิ้ว }
+[7.1.C ข้อต่อ LB LR LL OT { 2-1/2 - 4นิ้ว }
+[7.1.C ข้อต่อ OC TB { 1/2 - 2นิ้ว }
+[7.1.C ซีนยางกันน้ำ ข้อต่อ LB LR LL OT OC TB { 1/2 - 2นิ้ว }
+[7.1.C รางซี C { for แคล้มประกับ C-RAIL }
+[7.1.C หัวงูเห่า SEC { 1/2 - 4นิ้ว }
+[7.1.C เอฟเอสบ๊อกซ์ BOX กลมกันน้ำ บ๊อกซ์หูยื่น แป้นลูกหมาก
+[7.1.C เอฟเอสบ๊อกซ์ FS-V FS-H KCE { พิเศษ }
+[7.1.C แคล้มฟันจระเข้
+[7.1.D PULLBOX พลูบ๊อกซ์ พ่นสี KBXS KJL
+[7.1.D PULLBOX พลูบ๊อกซ์ พ่นสี KCE
+[7.1.D แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ ฝาปิดแฮนดี้บ๊อกซ์ ฝาปิดสแควบ๊อกซ์ { NET }
+[7.1.D แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ ฝาปิดแฮนดี้บ๊อกซ์ ฝาปิดสแควบ๊อกซ์ ยูโรป้าบ๊อกซ์ เอ็มเคบ๊อกซ์ { NET พิเศษ2 }
+[7.1.D แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ อ๊อกตาก้อนบ๊อกซ์ ฝาปิดอ๊อกตาก้อนบ๊อกซ์ { NET พิเศษ }
+[7.1.E ที่ดัดท่อ ท่อร้อยสายไฟเหล็ก KCE { EMT IMC BEN HIC }
+[7.1.E ที่ดัดท่อ ท่อร้อยสายไฟเหล็ก SEC { EMT IMC SEC-EBD SEC-IHK }
+[7.1.E ยูโบลท์ UBOLT { 1/2 - 6นิ้ว }
+[7.1.E ลูกยางกันบาด ลูกยางอุด SEC { 1/2 - 2นิ้ว }
+[7.1.E เอ็มเอ็น คอนเน็ตเตอร์ (คอนเน็ตเตอร์ จับสายไฟ)
+[7.1.E แคล้มวงเดือน { 1/2 - 2นิ้ว }
+[7.1.E ไพน์แฮงเกอร์ { 1/2 - 5นิ้ว }
+[7.1.H PULLBOX ชุบกัลวาไนซ์ HDG 5K
+[7.1.H PULLBOX ชุบกัลวาไนซ์ HDG GCS
+[7.1.H PULLBOX ชุบกัลวาไนซ์ HDG KBXG KJL { 1.6mm - 2mm }
+[7.1.H ข้อต่อ แอลบี แอลแอล แอลอาร์ โอที ชุบกัลวาไนซ์ HDG { 1/2 - 1นิ้ว }
+[7.1.H บุชชิ่ง ล็อคนัท ชุบกัลวาไนซ์ HDG { SEC 1/2 - 4นิ้ว }
+[7.1.H ฝาปิด แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ คอนเน็คเตอร์ EMT ข้อต่อตรง EMT ชุบกัลวาไนซ์ HDG { SC }
+[7.1.H รางซี ชุบกัลวาไนซ์ HDG { SEC }
+[7.1.H แคล้มประกับ IMC EMT ชุบกัลวาไนซ์ HDG { SEC 1/2 - 6นิ้ว }
+[7.1.H แคล้มฟันจระเข้ ชุบกัลวาไนซ์ HDG { SEC }
+[7.1.H แคล้มโอม ชุบกัลวาไนซ์ HDG { SEC }
+[7.1.H แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ อ๊อกตาก้อนบ๊อกซ์ ชุบกัลวาไนซ์ HDG { SEC }
+[7.3.1 ข้อต่อโค้ง UPVC สีเหลือง SCG { 3/8 - 2นิ้ว }
+[7.3.1 ท่อร้อยสายไฟ UPVC สีเหลือง SCG { 2-1/2 - 4นิ้ว }
+[7.3.1 ท่อร้อยสายไฟ UPVC สีเหลือง SCG { 3/8 - 2นิ้ว }
+[7.3.1 ท่ออ่อนลูกฟูก UPVC สีเหลือง SCG *ตัดเศษ
+[7.3.1 ท่ออ่อนลูกฟูก UPVC สีเหลือง SCG { 3/8 - 1นิ้ว }
+[7.3.1 อุปกรณ์ท่อร้อยสายไฟ UPVC สีเหลือง ข้อต่อตรง แคล้มก้ามปู คอนเนคเตอร์ ข้อต่อ 3ทาง SCG { 3/8 - 2
+[7.3.Z ท่อร้อยสายไฟ UPVC สีเหลือง NNPY NANO { 3/8 - 1นิ้ว }
+[7.3.Z ท่ออ่อนลูกฟูก UPVC สีเหลือง NNCY NANO { 3/8 - 1นิ้ว }
+[7.3.Z. อุปกรณ์ ท่อร้อยสายไฟ UPVC สีเหลือง ข้อต่อตรง NNCU แคล้มก้ามปู NNMC คอนเนคเตอร์ NNCN ข้อต่อโค
+[7.4.9 ข้อต่อตรง A B C ปากแตร  ท่อร้อยสายไฟ ฝังดิน HDPE
+[7.4.9 ข้อต่อโค้ง ท่อร้อยสายไฟ ฝังดิน HDPE
+[7.4.9 ท่อร้อยสายไฟ ฝังดิน HDPE (ม้วน 100เมตร, ม้วน 50เมตร)
+[7.4.9 ท่อร้อยสายไฟ ฝังดิน HDPE *ตัดเศษ
+[7.4.9 ท่อร้อยสายไฟ ฝังดิน HDPE *สั่งตัดจากโรงงาน
+[7.4.9 ฝาปิด ปลายท่อ ท่อร้อยสายไฟ ฝังดิน HDPE { NET }
+[8.1.4 สวิตช์กด 22มิล ABB
+[8.4 DIGITAL MULTI-FUNCTION METER SINOTIMER { SDM มัลติฟังก์ชั่นมิเตอร์ Volt แรงดันไฟฟ้า Power Watt วัดพลังงาน วัดไฟฟ้า kWh ความถี่ Volt Amp AC220V }
+[8.4 มิเตอร์วัดค่าพลังงาน HIET { ENERGY KWH METER }
+[8.4.1 VOLT AMP HZ DIGITAL METER 96x96mm QUBIX
+[8.4.1 VOLT AMP KWH METER 96x96mm แบบเข็ม QUBIX { SD-96 }
+[8.7.9 สวิตซ์ควบคุม CNTD { CBSN CBSY CPB CMR }
+[8.8 ไส้ไก่ สีดำ PRI
+[8.B ฐานฟิวส์ BASE FUSE 10x38mm ABB
+[8.C.9 สวิตซ์เท้าเหยียบ FOOTSWITCH CNTD
+[8.F.0 รางเดินสายไฟ รางวายดักส์ WIREDUCT NANO
+[8.F.1 รางเดินสายไฟ รางวายดักส์ WIREDUCT PRI
+[8.F.2 รางเดินสายไฟ รางวายดักส์ WIREDUCT BANDEX
+[9.1 รีเลย์ RELAY OTHER OMRON { อื่นๆ }
+[9.1 รีเลย์ RELAY SCHNEIDER { RXM2 RXM4 RXZE }
+[9.1.1 รีเลย์ GENERAL RELAY OMRON { LY2 LY2N LY4 LY4N PTF08A-E PTF14A-E }
+[9.1.1 รีเลย์ GENERAL RELAY OMRON { MKS2P MKS3P }
+[9.1.1 รีเลย์ GENERAL RELAY OMRON { NET MY2N MY2N-GS MY4N MY4N-GS PYFZ-08-E PYFZ-14-E PF083A-E PF113A-E MKS2P MKS3P}
+[9.1.1 รีเลย์ LATCHING PCB RELAY OMRON { G4Q-212S G2R-1 G2R-2 G6B-4 }
+[9.1.1 รีเลย์ RELAY OMRON { OTHER MY2 MY4 MY2N MY4N }
+[9.1.5 รีเลย์ RELAY ABB { CR-MX CR-M }
+[9.1.7 รีเลย์ RELAY IDEC { RU2S RU4S RJ2S SJ2S SM2S SY4S }
+[9.1.A รีเลย์ RELAY CIKACHI { MY2N MY4N PYF-08A PYF-14A PF083A PF113A 8PFA P3G-08 }
+[9.1.Z รีเลย์ RELAY CNTD { CKE-2CS CKE-4CS CYF08A-E CYF14A-E}
+[9.2.1 ลิมิตสวิตช์ LIMIT SWITCH OMRON { V Z D4MC HL WL SS SHL ZC ZE D4N }
+[9.2.2 ลิมิตสวิตช์ LIMITSWITCH TEND { TM TZ TAP }
+[9.2.9 ลิมิตสวิตซ์ LIMIT SWITCH CNTD
+[9.2.9 ลิมิตสวิตซ์ LIMIT SWITCH CNTD **OLD
+[9.2.Z ลิมิตสวิตช์ LIMIT SWITCH DAKO { CM CZ TZ CWLCA CWLD CWLNJ }
+[9.4.3 TEMPERATURE CONTROLLER FOTEK { MT }
+[9.4.3 TEMPERATURE CONTROLLER FOTEK { NT }
+[9.4.3 TEMPERATURE CONTROLLER FOTEK { TC }
+[9.4.4 TEMPERATURE CONTROLLER OMRON { E5EC E5CC E5AZ E5EZ E5CN }
+[9.4.7 TEMPERATURE CONTROLLER SUPER { SP }
+[9.4.8 TEMPERATURE CONTROLLER THERMOSTAT SINOTIMER { KTS KTO ZR }
+[9.4.9 TEMP CONTROLLER CNTD
+[9.4.9 สายเทอร์โมคัปเปิ้ล THERMOCOUPLE WIRE TYPE K
+[9.4.9 สายเทอร์โมคัปเปิ้ล THERMOCOUPLE WIRE พร้อมหัวน็อต 1/4นิ้ว
+[9.4.9 เทอร์โมสตัท THERMOSTAT RAINBOW { TS }
+[9.4.Y TEMPERATURE CONTROLLER SHIMAX
+[9.6.Z Proximity Sensors CNTD
+[9.7.2 PHASE PROTECTION RELAY ABB { CM-MPS }
+[9.7.3 PHASE PROTECTION RELAY SCHNEIDER
+[9.7.6 PHASE PROTECTION RELAY ENTES
+[9.7.8 PHASE PROTECTOR TERMOSTAT POWER METER SINOTIMER
+[9.7.9 PHASE PROTECTION RELAY ZOII
+[9.8.A HOUR METER DAKO { HM }
+[B.1.2 คาปาซิเตอร์ CLMD + แมกเนติก + RVC ABB HITACHI
+[B.4 POWER METER ABB
+[Y] MAIN SWITCH VCF SCHNEIDER
+[Y] พัดลม อุตสาหกรรม VENZ
+[Y] สินค้า TEMPCONTROLLER [CN]
+[Y] สินค้า โซลืทเสตท [CN]
+[ZZ] แมกเนติก จีน
+{9.4.9 สายเทอร์โมคัปเปิ้ล THERMOCOUPLE WIRE พร้อมหัวน็อต 1/4นิ้ว FOTEK { TS }
+สายโทรศัพท์ ภายนอก ดรอปวาย [SUN]
+สินค้า หาที่ลงไม่ได้ NANO
+สินค้า หาที่ลงไม่ได้ OMRON 
+สินค้า หาที่ลงไม่ได้ TEND
+เทอร์โมสตัด

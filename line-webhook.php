@@ -1,0 +1,328 @@
+<?php
+/**
+ * LINE Webhook Handler for Sirichai Electric Chatbot
+ * Receives messages from LINE Official Account and responds using the chatbot
+ * PHP 5.6 compatible
+ */
+
+// Error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Allow unlimited execution time for background processing
+set_time_limit(0);
+ini_set('max_execution_time', 0);
+
+// Include required files
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/ProductAPIService.php';
+require_once __DIR__ . '/GeminiFileManager.php';
+require_once __DIR__ . '/SirichaiElectricChatbot.php';
+require_once __DIR__ . '/ConversationManager.php';
+
+// Initialize configuration
+try {
+    $config = Config::getInstance();
+    $config->validate();
+} catch (Exception $e) {
+    error_log('[LINE Webhook] Configuration error: ' . $e->getMessage());
+    http_response_code(500);
+    exit;
+}
+
+// Get LINE configuration
+$lineConfig = $config->get('line');
+$channelSecret = $lineConfig['channelSecret'];
+$channelAccessToken = $lineConfig['channelAccessToken'];
+
+if (empty($channelSecret) || empty($channelAccessToken)) {
+    error_log('[LINE Webhook] LINE credentials not configured');
+    http_response_code(500);
+    exit;
+}
+
+// Verify LINE signature
+$body = file_get_contents('php://input');
+$signature = isset($_SERVER['HTTP_X_LINE_SIGNATURE']) ? $_SERVER['HTTP_X_LINE_SIGNATURE'] : '';
+
+// SECURITY WARNING: Signature verification is disabled for testing
+// Enable this in production by setting VERIFY_LINE_SIGNATURE=true in .env
+$verifySignature = getenv('VERIFY_LINE_SIGNATURE') !== 'false';
+
+if ($verifySignature) {
+    if (!verifySignature($body, $signature, $channelSecret)) {
+        error_log('[LINE Webhook] Invalid signature');
+        http_response_code(403);
+        exit;
+    }
+}
+
+// Parse events
+$events = json_decode($body, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error_log('[LINE Webhook] Invalid JSON: ' . json_last_error_msg());
+    http_response_code(400);
+    exit;
+}
+
+// CRITICAL: Respond to LINE within 2 seconds to prevent webhook timeout
+// See: https://developers.line.biz/en/docs/messaging-api/receiving-messages/
+// "If HTTP 2xx isn't sent within 2 seconds, a request_timeout error occurs"
+http_response_code(200);
+
+// Allow script to continue running after client disconnect
+ignore_user_abort(true);
+
+// Close the connection immediately so LINE receives the 200 response
+// LiteSpeed LSAPI v8.1 supports both litespeed_finish_request() and fastcgi_finish_request()
+if (function_exists('litespeed_finish_request')) {
+    error_log('[LINE Webhook] Using litespeed_finish_request() to close connection');
+    litespeed_finish_request(); // Native LiteSpeed function
+} elseif (function_exists('fastcgi_finish_request')) {
+    error_log('[LINE Webhook] Using fastcgi_finish_request() to close connection');
+    fastcgi_finish_request(); // Fallback for PHP-FPM
+} else {
+    error_log('[LINE Webhook] Using header-based connection close (fallback)');
+    // Fallback for other SAPIs
+    header('Content-Length: 0');
+    header('Connection: close');
+    flush();
+    if (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+}
+
+// Now process events asynchronously (after LINE has received the 200 response)
+if (isset($events['events']) && is_array($events['events']) && count($events['events']) > 0) {
+    $geminiConfig = $config->get('gemini');
+
+    // Initialize Product API Service (replaces context cache)
+    $productAPIConfig = $config->get('productAPI');
+
+    try {
+        $productAPI = new ProductAPIService($productAPIConfig);
+        $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+    } catch (Exception $e) {
+        error_log('[LINE Webhook] FATAL: Failed to initialize chatbot - ' . $e->getMessage());
+        exit;
+    }
+
+    // Use custom conversation manager for LINE (stores by LINE User ID)
+    $dbConfig = $config->get('database');
+    $conversationConfig = $config->get('conversation');
+    $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 50;
+    $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
+
+    foreach ($events['events'] as $event) {
+        try {
+            handleEvent($event, $chatbot, $conversationManager, $channelAccessToken);
+        } catch (Exception $e) {
+            error_log('[LINE Webhook] ERROR: ' . $e->getMessage());
+            error_log('[LINE Webhook] Stack trace: ' . $e->getTraceAsString());
+
+            // Try to notify user of error via Push API
+            if (isset($event['source']['userId'])) {
+                $userId = $event['source']['userId'];
+                $errorMsg = "ขออภัยครับ ขณะนี้ระบบมีปัญหา กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานโดยตรงครับ\n\nSorry, the system is experiencing issues. Please try again or contact our team directly.";
+                sendPushMessage($userId, $errorMsg, $channelAccessToken);
+            }
+        }
+    }
+}
+
+exit;
+
+// ===== Helper Functions =====
+
+function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
+    $eventType = isset($event['type']) ? $event['type'] : '';
+
+    // Only handle message events
+    if ($eventType !== 'message') {
+        return;
+    }
+
+    $messageType = isset($event['message']['type']) ? $event['message']['type'] : '';
+
+    // Only handle text messages
+    if ($messageType !== 'text') {
+        return;
+    }
+
+    $replyToken = isset($event['replyToken']) ? $event['replyToken'] : '';
+    $userId = isset($event['source']['userId']) ? $event['source']['userId'] : '';
+    $messageText = isset($event['message']['text']) ? $event['message']['text'] : '';
+
+    if (empty($replyToken) || empty($userId) || empty($messageText)) {
+        return;
+    }
+
+    // Use LINE User ID as conversation ID
+    $conversationId = 'line_' . $userId;
+
+    // Get conversation history
+    $history = $conversationManager->getConversationHistory($conversationId);
+
+    // Add user message to history (0 tokens for user messages)
+    $conversationManager->addMessage($conversationId, 'user', $messageText, 0);
+
+    // Show loading animation (instead of sending a message)
+    // This gives us up to 60 seconds to process the request
+    showLoadingAnimation($userId, 60, $accessToken);
+
+    // Get chatbot response
+    $startTime = microtime(true);
+    $response = $chatbot->chat($messageText, $history);
+    $duration = round(microtime(true) - $startTime, 2);
+
+    // Log response status with duration
+    if (!$response['success']) {
+        error_log('[LINE] ERROR: Chatbot failed (' . $duration . 's) - ' . $response['error']);
+    }
+
+    if ($response['success']) {
+        // Add assistant response to history with token tracking
+        $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
+        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed);
+
+        // Send the actual AI response
+        // Use Push API for ALL messages because:
+        // 1. Reply token may expire after long Gemini processing (10+ seconds)
+        // 2. We're already using Push API for loading animation
+        // 3. Push API is more reliable for async processing
+        $replyMessage = $response['response'];
+        $messages = splitMessage($replyMessage, 4900);
+
+        // Send all messages via Push API
+        for ($i = 0; $i < count($messages); $i++) {
+            $result = sendPushMessage($userId, $messages[$i], $accessToken);
+            if (!$result) {
+                error_log('[LINE] ERROR: Push message ' . $i . ' failed');
+            }
+        }
+    } else {
+        // Check if it's a rate limit error
+        if (isset($response['error']) &&
+            (strpos($response['error'], 'RATE_LIMIT_EXCEEDED') !== false ||
+             strpos($response['error'], '429') !== false)) {
+            $errorMsg = "ขออภัยครับ ขณะนี้มีผู้ใช้งานเยอะมาก กรุณารอสักครู่แล้วลองใหม่อีกครั้งครับ\n\nSorry, we're experiencing high traffic. Please wait a moment and try again.";
+        } else {
+            $errorMsg = "ขออภัยครับ ขณะนี้ระบบมีปัญหา กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานโดยตรงครับ\n\nSorry, the system is experiencing issues. Please try again or contact our team directly.";
+        }
+
+        sendPushMessage($userId, $errorMsg, $accessToken);
+    }
+}
+
+function splitMessage($text, $maxLength = 4900) {
+    $messages = array();
+
+    if (strlen($text) <= $maxLength) {
+        $messages[] = $text;
+        return $messages;
+    }
+
+    // Split by paragraphs
+    $paragraphs = explode("\n\n", $text);
+    $currentMessage = '';
+
+    foreach ($paragraphs as $paragraph) {
+        if (strlen($currentMessage . $paragraph) > $maxLength) {
+            if (!empty($currentMessage)) {
+                $messages[] = trim($currentMessage);
+                $currentMessage = '';
+            }
+
+            // If single paragraph is too long, split by sentences
+            if (strlen($paragraph) > $maxLength) {
+                $sentences = preg_split('/([.!?]\s+)/', $paragraph, -1, PREG_SPLIT_DELIM_CAPTURE);
+                foreach ($sentences as $sentence) {
+                    if (strlen($currentMessage . $sentence) > $maxLength && !empty($currentMessage)) {
+                        $messages[] = trim($currentMessage);
+                        $currentMessage = $sentence;
+                    } else {
+                        $currentMessage .= $sentence;
+                    }
+                }
+            } else {
+                $currentMessage = $paragraph . "\n\n";
+            }
+        } else {
+            $currentMessage .= $paragraph . "\n\n";
+        }
+    }
+
+    if (!empty($currentMessage)) {
+        $messages[] = trim($currentMessage);
+    }
+
+    return $messages;
+}
+
+function verifySignature($body, $signature, $secret) {
+    if (empty($signature) || empty($secret)) {
+        return false;
+    }
+
+    $hash = base64_encode(hash_hmac('sha256', $body, $secret, true));
+    return hash_equals($signature, $hash);
+}
+
+function sendLineRequest($url, $data, $accessToken, $logPrefix) {
+    $headers = array(
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $accessToken
+    );
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+    $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Accept 2xx status codes (200, 202, etc.)
+    if ($httpCode < 200 || $httpCode >= 300) {
+        error_log('[LINE] ' . $logPrefix . ' failed: HTTP ' . $httpCode . ', Response: ' . $result);
+        return false;
+    }
+
+    return true;
+}
+
+function sendPushMessage($userId, $message, $accessToken) {
+    $url = 'https://api.line.me/v2/bot/message/push';
+
+    $data = array(
+        'to' => $userId,
+        'messages' => array(
+            array(
+                'type' => 'text',
+                'text' => $message
+            )
+        )
+    );
+
+    return sendLineRequest($url, $data, $accessToken, 'Push');
+}
+
+function showLoadingAnimation($userId, $seconds, $accessToken) {
+    $url = 'https://api.line.me/v2/bot/chat/loading/start';
+
+    // Ensure seconds is between 5 and 60
+    $seconds = max(5, min(60, $seconds));
+
+    $data = array(
+        'chatId' => $userId,
+        'loadingSeconds' => $seconds
+    );
+
+    return sendLineRequest($url, $data, $accessToken, 'Loading Animation');
+}

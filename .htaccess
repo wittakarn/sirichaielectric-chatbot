@@ -1,0 +1,32 @@
+# Sirichai Electric Chatbot - Apache Configuration
+# Rewrite rules for clean URLs
+
+RewriteEngine On
+
+# Redirect all requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Prevent direct access to .env file
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Prevent directory listing
+Options -Indexes
+
+# Set PHP settings (if allowed by server)
+<IfModule mod_php5.c>
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# For PHP-FPM
+<IfModule mod_fcgid.c>
+    FcgidIOTimeout 300
+    FcgidIdleTimeout 300
+</IfModule>
