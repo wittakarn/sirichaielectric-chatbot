@@ -127,12 +127,7 @@ sirichaielectric-chatbot/
 │   └── view-cache-stats.php        # Cache statistics viewer
 │
 └── Documentation
-    ├── PROJECT.md                   # This file (comprehensive guide)
-    ├── REPOSITORY_REFACTOR_SUMMARY.md
-    ├── FILE-API-INTEGRATION.md
-    ├── MIGRATION_GUIDE.md
-    ├── IMPLEMENTATION-SUMMARY.md
-    └── CLEANUP-GUIDE.md
+    └── PROJECT.md                   # This file (comprehensive guide)
 ```
 
 ---
