@@ -1,9 +1,9 @@
 # Sirichai Electric Chatbot - Complete Project Documentation
 
-**Last Updated:** January 16, 2026
+**Last Updated:** January 28, 2026
 **Database:** chatbotdb (MySQL)
 **PHP Version:** 5.6+
-**Architecture:** Repository Pattern + File API + LINE Integration
+**Architecture:** Repository Pattern + File API + LINE Integration + Image Recognition
 
 ---
 
@@ -37,6 +37,7 @@ Sirichai Electric Chatbot is a conversational AI system powered by Google Gemini
 
 ### Key Capabilities
 - Natural language product search
+- **Image recognition and product identification**
 - Multi-turn conversations with context
 - Token usage tracking and optimization
 - LINE Official Account integration
@@ -189,7 +190,63 @@ sirichaielectric-chatbot/
 - sequence_number (message order)
 - timestamp
 
-### 3. Repository Pattern
+### 3. Image Recognition & Product Identification
+
+**Feature:** Users can send images of electrical products and get product recommendations
+
+**How It Works:**
+1. **Image Upload**: User sends image via LINE or API
+2. **AI Analysis**: Gemini analyzes the image using multimodal capabilities
+3. **Product Identification**: AI identifies electrical products in the image
+4. **Catalog Search**: Automatically searches catalog for matching products
+5. **Smart Response**: Provides product details, prices, and recommendations
+
+**Supported Sources:**
+- LINE Official Account (JPEG images from chat)
+- API endpoint (base64 encoded images)
+
+**Technical Implementation:**
+- Uses Gemini's native vision capabilities (inline_data)
+- Supports JPEG, PNG, and other common image formats
+- Automatic fallback for non-product images
+- Context-aware responses in Thai or English
+
+**Example Flow:**
+```
+User sends image of circuit breaker
+    ↓
+Gemini analyzes: "This is a circuit breaker"
+    ↓
+Calls search_products(['เบรกเกอร์'])
+    ↓
+Returns matching products with prices
+```
+
+**LINE Integration:**
+```php
+// Download image from LINE Content API
+$imageData = downloadLineContent($messageId, $accessToken);
+
+// Process with chatbot
+$response = $chatbot->chatWithImage($imageData, 'image/jpeg', '', $history);
+```
+
+**API Integration:**
+```php
+// Receive base64 image
+$imageData = base64_decode($base64Image);
+
+// Process with optional text message
+$response = $chatbot->chatWithImage($imageData, $mimeType, $textMessage, $history);
+```
+
+**Smart Features:**
+- Detects if image is product-related or not
+- Asks clarifying questions if needed
+- Handles images with text descriptions
+- Falls back gracefully for non-electrical products
+
+### 4. Repository Pattern
 
 **Security & Maintainability:**
 - All queries use PDO prepared statements (SQL injection prevention)
@@ -202,7 +259,7 @@ sirichaielectric-chatbot/
 - `ConversationRepository`: Conversation CRUD, cleanup, analytics
 - `MessageRepository`: Message CRUD, token tracking, history retrieval
 
-### 4. LINE Messaging Integration
+### 5. LINE Messaging Integration
 
 **Features:**
 - Async processing (responds within 2 seconds)
@@ -210,11 +267,15 @@ sirichaielectric-chatbot/
 - Push API for reliable message delivery
 - Automatic message splitting (5000 char limit)
 - Error handling with Thai+English messages
+- **Image message support (JPEG/PNG)**
+- **Automatic image download from LINE Content API**
 
 **LINE-Specific Handling:**
 - User ID → conversation ID mapping (`line_{userId}`)
 - Separate platform tracking for analytics
 - Connection closing via `litespeed_finish_request()` or `fastcgi_finish_request()`
+- Image message download via LINE Content API
+- Image placeholder storage in conversation history (`[ผู้ใช้ส่งรูปภาพ]`)
 
 ---
 
@@ -542,7 +603,7 @@ VERIFY_LINE_SIGNATURE=true  # Set to false for testing only
 ### Webhook Flow
 
 ```
-LINE User Sends Message
+LINE User Sends Message (Text or Image)
     ↓
 LINE Platform → Webhook (line-webhook.php)
     ↓
@@ -555,9 +616,10 @@ Close Connection (litespeed_finish_request)
 Process Asynchronously:
   1. Show loading animation (60 seconds)
   2. Get conversation history from DB
-  3. Call Gemini API
-  4. Save response to DB
-  5. Send via Push API
+  3. If image: Download from LINE Content API
+  4. Call Gemini API (chatWithImage or chat)
+  5. Save response to DB
+  6. Send via Push API
 ```
 
 ### Key Implementation Details
@@ -599,6 +661,29 @@ function splitMessage($text, $maxLength = 4900) {
 $errorMsg = "ขออภัยครับ ขณะนี้ระบบมีปัญหา กรุณาลองใหม่อีกครั้ง\n\n"
           . "Sorry, the system is experiencing issues. Please try again.";
 sendPushMessage($userId, $errorMsg, $accessToken);
+```
+
+**Image Message Handling:**
+```php
+// Check message type
+if ($messageType === 'image') {
+    $messageId = $event['message']['id'];
+
+    // Download image from LINE Content API
+    $imageData = downloadLineContent($messageId, $accessToken);
+
+    if ($imageData === false) {
+        // Send error message
+        sendPushMessage($userId, "ขออภัยครับ ไม่สามารถรับรูปภาพได้...", $accessToken);
+        return;
+    }
+
+    // Store placeholder in conversation history
+    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0);
+
+    // Process with chatbot
+    $response = $chatbot->chatWithImage($imageData, 'image/jpeg', '', $history);
+}
 ```
 
 ### LINE-Specific Features
@@ -689,11 +774,21 @@ Contains AI behavior instructions, role definition, and workflow. Referenced as 
 ### API Testing
 
 ```bash
-# Test chat endpoint
+# Test text chat endpoint
 curl -X POST https://yourdomain.com/sirichaielectric-chatbot/chat \
   -H "Content-Type: application/json" \
   -d '{
     "message": "หาสายไฟ 2.5 ตร.มม.",
+    "conversationId": "test_conv_123"
+  }'
+
+# Test image chat endpoint
+curl -X POST https://yourdomain.com/sirichaielectric-chatbot/chat-with-image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageData": "'"$(base64 -i test-image.jpg)"'",
+    "mimeType": "image/jpeg",
+    "message": "What product is this?",
     "conversationId": "test_conv_123"
   }'
 
@@ -702,6 +797,22 @@ curl https://yourdomain.com/sirichaielectric-chatbot/conversation/test_conv_123
 
 # Delete conversation
 curl -X DELETE https://yourdomain.com/sirichaielectric-chatbot/conversation/test_conv_123
+```
+
+### LINE Image Testing
+
+```bash
+# Send image via LINE Official Account
+# 1. Open LINE chat with your bot
+# 2. Send an image of an electrical product
+# 3. Check logs to verify processing
+tail -f /path/to/error.log | grep "LINE"
+
+# Expected log flow:
+# [LINE] Message type: image
+# [LINE] Downloading image: <message_id>
+# [Chatbot] Image: Calling: search_products(...)
+# [LINE] Sending response via Push API
 ```
 
 ### Database Monitoring Queries
@@ -973,6 +1084,49 @@ SELECT * FROM messages WHERE conversation_id = 'your_conv_id';
 SHOW CREATE TABLE messages;
 ```
 
+#### 6. AI Not Searching Products Correctly
+
+**Issue:** AI lists categories but doesn't show actual products, or can't find products from follow-up questions
+
+**Common Symptoms:**
+- "ขออภัยค่ะ ระบบไม่สามารถดึงข้อมูล..." when user asks follow-up questions
+- AI lists category names but shows no products
+- Can't find products when user mentions model codes (KBSA, KBSW, etc.)
+
+**Root Causes:**
+1. System prompt not clear about when to call search_products()
+2. AI not matching user queries to exact category names
+3. Follow-up questions not triggering product searches
+
+**Solutions:**
+1. **Review system-prompt.txt**: Ensure it has clear guidance:
+   - When to call search_products() (including follow-up questions)
+   - How to match keywords to category names
+   - Examples of common query patterns
+   - CRITICAL rule to always show products, not just categories
+
+2. **Check catalog file**: Verify product catalog is uploaded and cached:
+   ```bash
+   cat file-cache.json | grep catalog
+   ```
+
+3. **Test with explicit queries**: Ask specific questions to verify:
+   ```
+   "หาตู้เหล็ก KJL ทุกรุ่น"  (should trigger search)
+   "ขอรายละเอียด KBSA"      (should find exact category)
+   "มีรุ่นไหนบ้าง"          (should show actual products)
+   ```
+
+4. **Force refresh files**: If catalog changed:
+   ```php
+   $chatbot->refreshFiles();
+   ```
+
+5. **Check logs**: Look for function call logs:
+   ```bash
+   tail -f error.log | grep "Calling: search_products"
+   ```
+
 ### Debug Mode
 
 Enable detailed logging:
@@ -1052,6 +1206,23 @@ $messages = $messageRepository->getHistory($conversationId);
 - Created `PROJECT.md` (this file)
 - Combined all documentation into single comprehensive guide
 
+**January 2026 - Image Recognition Support**
+- Added `chatWithImage()` method to `SirichaiElectricChatbot.php`
+- Implemented image download from LINE Content API
+- Updated `line-webhook.php` to handle image messages
+- Added image analysis instructions to `system-prompt.txt`
+- Support for multimodal AI interactions (image + text)
+- Automatic product identification from images
+- Smart fallback for non-product images
+
+**January 28, 2026 - System Prompt Improvements**
+- Enhanced product search accuracy for follow-up questions
+- Added explicit guidance for handling model code queries (KBSA, KBSW, etc.)
+- Improved keyword matching logic (brand + product type + model code)
+- Added CRITICAL rule to always show actual products, not just category lists
+- Added matching examples for common query patterns
+- Clarified when to call search_products() vs general conversation
+
 ### Key Architectural Decisions
 
 **Why Repository Pattern?**
@@ -1075,6 +1246,20 @@ $messages = $messageRepository->getHistory($conversationId);
 - Reliability: Reply tokens expire after ~60 seconds
 - Async: Gemini processing can take 10+ seconds
 - Features: Loading animation + actual response
+
+**Why Image Recognition?**
+- User Experience: Customers can simply take a photo of a product
+- Accuracy: Visual identification reduces miscommunication
+- Convenience: No need to describe complex electrical products in text
+- Native Support: Gemini's multimodal API handles images natively
+- Cost-Effective: Images processed via inline_data (no file upload needed)
+
+**Why Store Image Placeholders?**
+- Privacy: Avoid storing customer images in database
+- Storage: Images consume significant database space
+- Compliance: Reduces data retention concerns
+- Context: Placeholder maintains conversation flow
+- Performance: Faster database queries without BLOB fields
 
 ---
 
@@ -1136,6 +1321,17 @@ $messages = $messageRepository->getHistory($conversationId);
    - Test database queries before deployment
    - Verify LINE integration with test account
 
+5. **System Prompt Maintenance:**
+   - Test with real user queries regularly
+   - Add examples for common failure patterns
+   - Keep instructions clear and specific
+   - Use CRITICAL/IMPORTANT markers for key rules
+   - Document any prompt changes in PROJECT.md
+   - Force refresh files after updating system-prompt.txt:
+     ```php
+     $chatbot->refreshFiles();
+     ```
+
 ---
 
 ## API Reference
@@ -1143,7 +1339,7 @@ $messages = $messageRepository->getHistory($conversationId);
 ### REST API Endpoints
 
 #### POST /chat
-Send message and get response
+Send message and get response (text only)
 
 **Request:**
 ```json
@@ -1202,6 +1398,61 @@ Delete conversation
   "success": true,
   "message": "Conversation deleted successfully"
 }
+```
+
+#### POST /chat-with-image
+Send message with image and get response
+
+**Request:**
+```json
+{
+  "imageData": "base64_encoded_image_data",
+  "mimeType": "image/jpeg",
+  "message": "What is this product?", // optional
+  "conversationId": "conv_123" // optional
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "response": "This appears to be a circuit breaker. I found these matching products...",
+  "conversationId": "conv_123",
+  "tokensUsed": 450
+}
+```
+
+### SirichaiElectricChatbot API
+
+```php
+// Initialize
+$chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+
+// Text chat
+$response = $chatbot->chat($message, $conversationHistory);
+
+// Image chat
+$response = $chatbot->chatWithImage($imageData, $mimeType, $textMessage, $conversationHistory);
+
+// Refresh uploaded files
+$chatbot->refreshFiles();
+```
+
+**chatWithImage() Parameters:**
+- `$imageData` (string): Raw binary image data
+- `$mimeType` (string): Image MIME type (e.g., 'image/jpeg', 'image/png')
+- `$textMessage` (string, optional): Text message to accompany the image
+- `$conversationHistory` (array, optional): Previous conversation messages
+
+**Response Format:**
+```php
+array(
+  'success' => true,
+  'response' => 'AI response text',
+  'language' => 'th', // or 'en'
+  'tokensUsed' => 450
+)
 ```
 
 ### ConversationManager API
@@ -1320,6 +1571,30 @@ A: DatabaseManager auto-reconnects on health check failure.
 **Q: How do I add new repository methods?**
 A: Add to appropriate repository class, following existing pattern.
 
+**Q: Does the chatbot support image messages?**
+A: Yes! Users can send images via LINE, and the AI will analyze them to identify electrical products and search the catalog.
+
+**Q: What image formats are supported?**
+A: JPEG and PNG are fully supported. Other formats supported by Gemini's vision API should also work.
+
+**Q: How are images stored in the database?**
+A: Images are NOT stored in the database. Only a placeholder text `[ผู้ใช้ส่งรูปภาพ]` is saved to the conversation history for context.
+
+**Q: Can I send images via the REST API?**
+A: Yes, you can use the `/chat-with-image` endpoint with base64 encoded image data.
+
+**Q: What happens if someone sends a non-product image?**
+A: The AI will describe what it sees and politely ask how it can help, maintaining a natural conversation flow.
+
+**Q: Why does the AI list categories but not show actual products?**
+A: This usually means the system prompt needs improvement. The AI should ALWAYS call search_products() when users ask about products. Check that system-prompt.txt has clear instructions about when to search and how to match keywords to category names.
+
+**Q: The AI can't find products when I ask follow-up questions like "only metal ones" or "show me KBSA models". How do I fix this?**
+A: The system prompt needs to explicitly handle follow-up questions and model code queries. Ensure system-prompt.txt includes:
+- Examples of follow-up filtering patterns
+- Instructions for matching model codes (KBSA, KBSW, etc.) to exact category names
+- Clear rule that follow-up product questions should trigger search_products()
+
 ---
 
 ## License & Credits
@@ -1341,5 +1616,5 @@ For issues, questions, or contributions:
 
 ---
 
-**Last Updated:** January 16, 2026
-**Version:** 2.0.0 (Repository Pattern + File API + LINE Integration)
+**Last Updated:** January 28, 2026
+**Version:** 2.1.0 (Repository Pattern + File API + LINE Integration + Image Recognition)
