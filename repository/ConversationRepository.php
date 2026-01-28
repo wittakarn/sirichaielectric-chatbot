@@ -17,6 +17,7 @@ class ConversationRepository extends BaseRepository {
     public function findById($conversationId) {
         $sql = "
             SELECT conversation_id, platform, user_id, max_messages_limit,
+                   is_chatbot_active, UNIX_TIMESTAMP(paused_at) as paused_at,
                    UNIX_TIMESTAMP(created_at) as created_at,
                    UNIX_TIMESTAMP(last_activity) as last_activity
             FROM conversations
@@ -29,6 +30,8 @@ class ConversationRepository extends BaseRepository {
             $conversation['created_at'] = intval($conversation['created_at']);
             $conversation['last_activity'] = intval($conversation['last_activity']);
             $conversation['max_messages_limit'] = intval($conversation['max_messages_limit']);
+            $conversation['is_chatbot_active'] = intval($conversation['is_chatbot_active']);
+            $conversation['paused_at'] = $conversation['paused_at'] ? intval($conversation['paused_at']) : null;
         }
 
         return $conversation;
@@ -186,5 +189,96 @@ class ConversationRepository extends BaseRepository {
     public function countByPlatform($platform) {
         $sql = "SELECT COUNT(*) FROM conversations WHERE platform = ?";
         return intval($this->fetchColumn($sql, array($platform)));
+    }
+
+    /**
+     * Pause chatbot for a conversation (human agent takeover)
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if updated
+     */
+    public function pauseChatbot($conversationId) {
+        $sql = "
+            UPDATE conversations
+            SET is_chatbot_active = 0, paused_at = NOW(), last_activity = NOW()
+            WHERE conversation_id = ?
+        ";
+        return $this->execute($sql, array($conversationId)) > 0;
+    }
+
+    /**
+     * Resume chatbot for a conversation
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if updated
+     */
+    public function resumeChatbot($conversationId) {
+        $sql = "
+            UPDATE conversations
+            SET is_chatbot_active = 1, paused_at = NULL, last_activity = NOW()
+            WHERE conversation_id = ?
+        ";
+        return $this->execute($sql, array($conversationId)) > 0;
+    }
+
+    /**
+     * Check if chatbot is active for a conversation
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if chatbot is active (or conversation doesn't exist yet)
+     */
+    public function isChatbotActive($conversationId) {
+        $sql = "SELECT is_chatbot_active FROM conversations WHERE conversation_id = ? LIMIT 1";
+        $result = $this->fetchColumn($sql, array($conversationId));
+
+        // If conversation doesn't exist, chatbot is active by default
+        if ($result === false) {
+            return true;
+        }
+
+        return intval($result) === 1;
+    }
+
+    /**
+     * Get all paused conversations
+     *
+     * @param int $limit Maximum number of results
+     * @return array List of paused conversations
+     */
+    public function findPausedConversations($limit = 100) {
+        $sql = "
+            SELECT conversation_id, platform, user_id,
+                   UNIX_TIMESTAMP(paused_at) as paused_at,
+                   UNIX_TIMESTAMP(last_activity) as last_activity
+            FROM conversations
+            WHERE is_chatbot_active = 0
+            ORDER BY paused_at DESC
+            LIMIT ?
+        ";
+
+        $conversations = $this->fetchAll($sql, array($limit));
+
+        foreach ($conversations as &$conversation) {
+            $conversation['paused_at'] = $conversation['paused_at'] ? intval($conversation['paused_at']) : null;
+            $conversation['last_activity'] = intval($conversation['last_activity']);
+        }
+
+        return $conversations;
+    }
+
+    /**
+     * Auto-resume chatbot for conversations paused longer than specified time
+     *
+     * @param int $maxPausedMinutes Maximum pause duration in minutes before auto-resume
+     * @return int Number of conversations resumed
+     */
+    public function autoResumeChatbot($maxPausedMinutes = 30) {
+        $sql = "
+            UPDATE conversations
+            SET is_chatbot_active = 1, paused_at = NULL
+            WHERE is_chatbot_active = 0
+              AND paused_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)
+        ";
+        return $this->execute($sql, array($maxPausedMinutes));
     }
 }

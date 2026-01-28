@@ -1,42 +1,99 @@
--- SirichaiElectric Chatbot Database Schema
--- This schema supports persistent conversation storage with token tracking
--- Run this file: mysql -u your_user -p sirichaielectric_chatbot < schema.sql
+-- MySQL dump 10.13  Distrib 5.7.39, for osx11.0 (x86_64)
+--
+-- Host: localhost    Database: chatbotdb
+-- ------------------------------------------------------
+-- Server version	5.7.39
 
--- Create conversations table
-CREATE TABLE IF NOT EXISTS conversations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    conversation_id VARCHAR(100) NOT NULL UNIQUE,
-    platform VARCHAR(20) NOT NULL DEFAULT 'api' COMMENT 'api or line',
-    user_id VARCHAR(100) NULL COMMENT 'LINE user ID for line platform',
-    max_messages_limit INT NOT NULL DEFAULT 50,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_conversation_id (conversation_id),
-    INDEX idx_platform (platform),
-    INDEX idx_user_id (user_id),
-    INDEX idx_last_activity (last_activity)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Create messages table
-CREATE TABLE IF NOT EXISTS messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    conversation_id VARCHAR(100) NOT NULL,
-    role ENUM('user', 'assistant') NOT NULL,
-    content TEXT NOT NULL,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tokens_used INT NOT NULL DEFAULT 0 COMMENT 'Gemini API tokens for this message',
-    sequence_number INT NOT NULL COMMENT 'Message order within conversation',
-    CONSTRAINT fk_conversation FOREIGN KEY (conversation_id)
-        REFERENCES conversations(conversation_id)
-        ON DELETE CASCADE,
-    INDEX idx_conversation_id (conversation_id),
-    INDEX idx_timestamp (timestamp),
-    INDEX idx_sequence (conversation_id, sequence_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+--
+-- Table structure for table `conversations`
+--
 
--- Verification queries (run these to verify schema)
--- SHOW TABLES;
--- DESCRIBE conversations;
--- DESCRIBE messages;
--- SHOW INDEX FROM conversations;
--- SHOW INDEX FROM messages;
+DROP TABLE IF EXISTS `conversations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `conversations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `conversation_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `platform` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'api' COMMENT 'api or line',
+  `user_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'LINE user ID for line platform',
+  `max_messages_limit` int(11) NOT NULL DEFAULT '50',
+  `is_chatbot_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1=chatbot active, 0=paused for human agent',
+  `paused_at` timestamp NULL DEFAULT NULL COMMENT 'Timestamp when chatbot was paused',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_activity` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `conversation_id` (`conversation_id`),
+  KEY `idx_conversation_id` (`conversation_id`),
+  KEY `idx_platform` (`platform`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_last_activity` (`last_activity`),
+  KEY `idx_chatbot_active` (`is_chatbot_active`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `conversations`
+--
+
+LOCK TABLES `conversations` WRITE;
+/*!40000 ALTER TABLE `conversations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `conversations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `messages`
+--
+
+DROP TABLE IF EXISTS `messages`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `messages` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `conversation_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('user','assistant') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `tokens_used` int(11) NOT NULL DEFAULT '0' COMMENT 'Gemini API tokens for this message',
+  `sequence_number` int(11) NOT NULL COMMENT 'Message order within conversation',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation_id` (`conversation_id`),
+  KEY `idx_timestamp` (`timestamp`),
+  KEY `idx_sequence` (`conversation_id`,`sequence_number`),
+  CONSTRAINT `fk_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`conversation_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `messages`
+--
+
+LOCK TABLES `messages` WRITE;
+/*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+/*!40000 ALTER TABLE `messages` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping routines for database 'chatbotdb'
+--
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-01-29  0:22:13

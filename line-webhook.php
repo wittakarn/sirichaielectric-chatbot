@@ -161,6 +161,22 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
     // Use LINE User ID as conversation ID
     $conversationId = 'line_' . $userId;
 
+    // Check for pause/resume commands (text messages only)
+    if ($messageType === 'text') {
+        $messageText = isset($event['message']['text']) ? trim($event['message']['text']) : '';
+        $commandResult = handleChatbotCommand($messageText, $conversationId, $userId, $conversationManager, $accessToken);
+        if ($commandResult !== false) {
+            return; // Command was handled, don't process as regular message
+        }
+    }
+
+    // Check if chatbot is active for this conversation
+    if (!$conversationManager->isChatbotActive($conversationId)) {
+        // Chatbot is paused - don't respond, let human agent handle it
+        error_log("[LINE] Chatbot paused for $conversationId - skipping AI response");
+        return;
+    }
+
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
@@ -384,4 +400,122 @@ function showLoadingAnimation($userId, $seconds, $accessToken) {
     );
 
     return sendLineRequest($url, $data, $accessToken, 'Loading Animation');
+}
+
+/**
+ * Handle chatbot pause/resume commands (user-initiated only)
+ *
+ * Note: Agent commands are handled via Admin API (admin-api.php) since
+ * LINE webhook only receives messages from users, not from agents.
+ *
+ * Commands:
+ * - User pause: "ติดต่อพนักงาน", "/human", "คุยกับพนักงาน"
+ * - User resume: "/bot", "/resume", "เปิดแชทบอท"
+ *
+ * @param string $messageText The message text
+ * @param string $conversationId The conversation ID
+ * @param string $userId The LINE user ID
+ * @param ConversationManager $conversationManager
+ * @param string $accessToken LINE access token
+ * @return bool|string False if not a command, otherwise the command type handled
+ */
+function handleChatbotCommand($messageText, $conversationId, $userId, $conversationManager, $accessToken) {
+    $lowerMessage = mb_strtolower(trim($messageText), 'UTF-8');
+
+    // User pause commands (user wants to talk to human agent)
+    $pauseCommands = array(
+        'ติดต่อพนักงาน',
+        'คุยกับพนักงาน',
+        'ขอคุยกับพนักงาน',
+        'ต้องการคุยกับพนักงาน',
+        '/human',
+        '/agent'
+    );
+
+    // Resume commands (re-enable chatbot)
+    $resumeCommands = array(
+        'เปิดแชทบอท',
+        'เปิดบอท',
+        '/bot',
+        '/resume',
+        '/on',
+        '/chatbot'
+    );
+
+    // Check for pause command
+    foreach ($pauseCommands as $cmd) {
+        if ($lowerMessage === mb_strtolower($cmd, 'UTF-8')) {
+            return handlePauseCommand($conversationId, $userId, $conversationManager, $accessToken);
+        }
+    }
+
+    // Check for resume command
+    foreach ($resumeCommands as $cmd) {
+        if ($lowerMessage === mb_strtolower($cmd, 'UTF-8')) {
+            return handleResumeCommand($conversationId, $userId, $conversationManager, $accessToken);
+        }
+    }
+
+    return false; // Not a command
+}
+
+/**
+ * Handle pause command - user wants to talk to human agent
+ */
+function handlePauseCommand($conversationId, $userId, $conversationManager, $accessToken) {
+    // Check if already paused
+    if (!$conversationManager->isChatbotActive($conversationId)) {
+        $message = "ขณะนี้ท่านกำลังรอพนักงานอยู่แล้วค่ะ กรุณารอสักครู่นะคะ\n\n"
+                 . "You are already waiting for a human agent. Please wait a moment.";
+        sendPushMessage($userId, $message, $accessToken);
+        return 'already_paused';
+    }
+
+    // Pause the chatbot
+    $conversationManager->pauseChatbot($conversationId);
+
+    // Store the pause request in conversation history
+    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ขอติดต่อพนักงาน]', 0);
+
+    $message = "ได้รับคำขอแล้วค่ะ พนักงานจะติดต่อกลับโดยเร็วที่สุด\n"
+             . "ระหว่างนี้แชทบอทจะหยุดตอบชั่วคราวค่ะ\n\n"
+             . "Your request has been received. An agent will contact you soon.\n"
+             . "The chatbot will be paused in the meantime.\n\n"
+             . "💡 พิมพ์ \"/bot\" เพื่อกลับมาใช้แชทบอท";
+
+    sendPushMessage($userId, $message, $accessToken);
+
+    error_log("[LINE] Chatbot paused by user request: $conversationId");
+
+    return 'paused';
+}
+
+/**
+ * Handle resume command - re-enable chatbot
+ */
+function handleResumeCommand($conversationId, $userId, $conversationManager, $accessToken) {
+    // Check if already active
+    if ($conversationManager->isChatbotActive($conversationId)) {
+        $message = "แชทบอทพร้อมให้บริการอยู่แล้วค่ะ มีอะไรให้ช่วยไหมคะ?\n\n"
+                 . "The chatbot is already active. How can I help you?";
+        sendPushMessage($userId, $message, $accessToken);
+        return 'already_active';
+    }
+
+    // Resume the chatbot
+    $conversationManager->resumeChatbot($conversationId);
+
+    // Store the resume in conversation history
+    $conversationManager->addMessage($conversationId, 'assistant', '[แชทบอทกลับมาให้บริการ]', 0);
+
+    $message = "แชทบอทกลับมาให้บริการแล้วค่ะ 🤖\n"
+             . "มีอะไรให้ช่วยไหมคะ?\n\n"
+             . "The chatbot is now active again.\n"
+             . "How can I help you?";
+
+    sendPushMessage($userId, $message, $accessToken);
+
+    error_log("[LINE] Chatbot resumed: $conversationId");
+
+    return 'resumed';
 }

@@ -259,4 +259,91 @@ class ConversationManager {
             return array();
         }
     }
+
+    /**
+     * Pause chatbot for a conversation (human agent takeover)
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if paused successfully
+     */
+    public function pauseChatbot($conversationId) {
+        try {
+            $result = $this->conversationRepository->pauseChatbot($conversationId);
+            if ($result) {
+                error_log("[ConversationManager] Chatbot paused for: $conversationId");
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] pauseChatbot failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Resume chatbot for a conversation
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if resumed successfully
+     */
+    public function resumeChatbot($conversationId) {
+        try {
+            $result = $this->conversationRepository->resumeChatbot($conversationId);
+            if ($result) {
+                error_log("[ConversationManager] Chatbot resumed for: $conversationId");
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] resumeChatbot failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Check if chatbot is active for a conversation
+     *
+     * @param string $conversationId Conversation ID
+     * @return bool True if chatbot is active
+     */
+    public function isChatbotActive($conversationId) {
+        try {
+            return $this->conversationRepository->isChatbotActive($conversationId);
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] isChatbotActive failed: ' . $e->getMessage());
+            return true; // Default to active on error
+        }
+    }
+
+    /**
+     * Get all paused conversations (for admin/agent dashboard)
+     *
+     * @param int $limit Maximum number of results
+     * @return array List of paused conversations
+     */
+    public function getPausedConversations($limit = 100) {
+        try {
+            return $this->conversationRepository->findPausedConversations($limit);
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] getPausedConversations failed: ' . $e->getMessage());
+            return array();
+        }
+    }
+
+    /**
+     * Auto-resume chatbot for conversations paused too long
+     *
+     * @param int $maxPausedMinutes Maximum pause duration in minutes (default 30)
+     * @return int Number of conversations auto-resumed
+     */
+    public function autoResumeChatbot($maxPausedMinutes = 30) {
+        try {
+            $resumed = $this->conversationRepository->autoResumeChatbot($maxPausedMinutes);
+            if ($resumed > 0) {
+                error_log("[ConversationManager] Auto-resumed $resumed conversations after $maxPausedMinutes minutes");
+            }
+            return $resumed;
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] autoResumeChatbot failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
 }

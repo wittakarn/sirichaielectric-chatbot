@@ -43,6 +43,7 @@ Sirichai Electric Chatbot is a conversational AI system powered by Google Gemini
 - LINE Official Account integration
 - Persistent conversation history
 - 95%+ token reduction via File API
+- **Chatbot pause/resume for human agent takeover**
 
 ---
 
@@ -701,6 +702,89 @@ $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
 // Analytics can separate LINE vs API usage
 ```
 
+### 6. Chatbot Pause/Resume (Human Agent Takeover)
+
+**Feature:** Users can request to talk to a human agent, which pauses the chatbot. Agents can resume the chatbot when done.
+
+**How It Works:**
+1. **User Request**: User sends a pause command (e.g., "ติดต่อพนักงาน" or "/human")
+2. **Chatbot Paused**: System marks conversation as paused, stops AI responses
+3. **Human Agent Handles**: Agent responds via LINE Official Account Manager
+4. **Resume Chatbot**: Agent or user sends resume command (e.g., "/bot") to re-enable AI
+
+**User Pause Commands** (shows confirmation to user):
+| Command | Description |
+|---------|-------------|
+| `ติดต่อพนักงาน` | Thai: "Contact staff" |
+| `คุยกับพนักงาน` | Thai: "Talk to staff" |
+| `ขอคุยกับพนักงาน` | Thai: "Request to talk to staff" |
+| `/human` | English command |
+| `/agent` | English command |
+
+**Resume Commands** (re-enable chatbot):
+| Command | Description |
+|---------|-------------|
+| `เปิดแชทบอท` | Thai: "Turn on chatbot" |
+| `เปิดบอท` | Thai: "Turn on bot" |
+| `/bot` | English command |
+| `/resume` | English command |
+| `/on` | English command |
+| `/chatbot` | English command |
+
+**Database Schema:**
+```sql
+-- Added to conversations table
+is_chatbot_active TINYINT(1) NOT NULL DEFAULT 1  -- 1=active, 0=paused
+paused_at TIMESTAMP NULL DEFAULT NULL            -- When paused
+```
+
+**API Methods:**
+```php
+// Pause chatbot for conversation
+$conversationManager->pauseChatbot($conversationId);
+
+// Resume chatbot
+$conversationManager->resumeChatbot($conversationId);
+
+// Check if chatbot is active
+$isActive = $conversationManager->isChatbotActive($conversationId);
+
+// Get all paused conversations (for admin dashboard)
+$paused = $conversationManager->getPausedConversations();
+
+// Auto-resume after timeout (e.g., 30 minutes)
+$resumed = $conversationManager->autoResumeChatbot(30);
+```
+
+**User Flow Example (User requests agent):**
+```
+User:  "ติดต่อพนักงาน"
+Bot:   "ได้รับคำขอแล้วค่ะ พนักงานจะติดต่อกลับโดยเร็วที่สุด..."
+
+[Human agent responds via LINE OA Manager]
+
+User:  "/bot"
+Bot:   "แชทบอทกลับมาให้บริการแล้วค่ะ 🤖 มีอะไรให้ช่วยไหมคะ?"
+```
+
+**Agent Takeover Example (Agent initiates):**
+```
+[Agent sees customer needs help in LINE OA Manager]
+
+Agent: "/off"
+Bot:   "🔔 แชทบอทหยุดทำงานชั่วคราว พนักงานพร้อมให้บริการแล้วค่ะ"
+
+[Agent handles conversation manually]
+
+Agent: "/bot"
+Bot:   "แชทบอทกลับมาให้บริการแล้วค่ะ 🤖 มีอะไรให้ช่วยไหมคะ?"
+```
+
+**Important Notes:**
+- While paused, user messages are still received by webhook but chatbot doesn't respond
+- Human agents respond via LINE Official Account Manager (Chat mode must be enabled)
+- Consider setting up auto-resume after timeout to prevent forgotten paused conversations
+
 ---
 
 ## Configuration
@@ -1218,6 +1302,17 @@ $messages = $messageRepository->getHistory($conversationId);
 - Added matching examples for common query patterns
 - Clarified when to call search_products() vs general conversation
 
+**January 28, 2026 - Chatbot Pause/Resume Feature (Human Agent Takeover)**
+- Added `is_chatbot_active` and `paused_at` columns to conversations table
+- Created migration script: `migrations/001_add_chatbot_active_flag.sql`
+- Added pause/resume methods to `ConversationRepository.php`
+- Added pause/resume API to `ConversationManager.php`
+- Modified `line-webhook.php` to handle pause/resume commands
+- Pause commands: "ติดต่อพนักงาน", "/human", "/pause", "/agent"
+- Resume commands: "เปิดแชทบอท", "/bot", "/resume", "/chatbot"
+- Auto-resume capability after configurable timeout
+- Allows human agents to take over conversations via LINE OA Manager
+
 ### Key Architectural Decisions
 
 **Why Repository Pattern?**
@@ -1590,6 +1685,15 @@ A: The system prompt needs to explicitly handle follow-up questions and model co
 - Instructions for matching model codes (KBSA, KBSW, etc.) to exact category names
 - Clear rule that follow-up product questions should trigger search_products()
 
+**Q: How do I pause the chatbot so a human agent can respond?**
+A: Users can send "ติดต่อพนักงาน" or "/human" to pause the chatbot. The agent then responds via LINE Official Account Manager. To resume, send "/bot" or "เปิดแชทบอท".
+
+**Q: Can I set up auto-resume for paused conversations?**
+A: Yes, call `$conversationManager->autoResumeChatbot(30)` to auto-resume conversations paused for more than 30 minutes. You can set this up as a cron job.
+
+**Q: How do I see which conversations are waiting for human agents?**
+A: Use `$conversationManager->getPausedConversations()` to get a list of all paused conversations. You can build an admin dashboard using this API.
+
 ---
 
 ## License & Credits
@@ -1612,4 +1716,4 @@ For issues, questions, or contributions:
 ---
 
 **Last Updated:** January 28, 2026
-**Version:** 2.1.0 (Repository Pattern + File API + LINE Integration + Image Recognition)
+**Version:** 2.2.0 (Repository Pattern + File API + LINE Integration + Image Recognition + Human Agent Takeover)
