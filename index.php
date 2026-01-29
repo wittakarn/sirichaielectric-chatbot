@@ -8,7 +8,7 @@
 // Error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
-ini_set('log_errors', 1);
+ini_set('error_log', dirname(__FILE__) . '/logs.log');
 
 // Set headers
 header('Content-Type: application/json');

@@ -93,7 +93,7 @@ class ProductAPIService {
      * @return string|null Returns plain text product details, or null on error
      */
     public function searchProducts($criterias) {
-        error_log('[ProductAPI] Searching products with criteria: ' . json_encode($criterias, JSON_UNESCAPED_UNICODE));
+        error_log('[ProductAPI] Searching products with criteria: ' . json_encode($criterias, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         $requestBody = json_encode(array('criterias' => $criterias));
 
