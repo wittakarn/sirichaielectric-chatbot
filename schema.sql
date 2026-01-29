@@ -27,7 +27,7 @@ CREATE TABLE `conversations` (
   `conversation_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `platform` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'api' COMMENT 'api or line',
   `user_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'LINE user ID for line platform',
-  `max_messages_limit` int(11) NOT NULL DEFAULT '50',
+  `max_messages_limit` int(11) NOT NULL DEFAULT '20',
   `is_chatbot_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1=chatbot active, 0=paused for human agent',
   `paused_at` timestamp NULL DEFAULT NULL COMMENT 'Timestamp when chatbot was paused',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

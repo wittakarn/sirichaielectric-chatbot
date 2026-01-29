@@ -85,7 +85,7 @@ class Config {
                 'charset' => 'utf8mb4',
             ),
             'conversation' => array(
-                'maxMessages' => intval($this->getEnv('MAX_MESSAGES_PER_CONVERSATION', '50')),
+                'maxMessages' => intval($this->getEnv('MAX_MESSAGES_PER_CONVERSATION', '20')),
                 'autoResumeTimeoutMinutes' => intval($this->getEnv('AUTO_RESUME_TIMEOUT_MINUTES', '30')),
             ),
             'admin' => array(

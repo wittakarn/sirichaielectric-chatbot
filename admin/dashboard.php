@@ -20,8 +20,8 @@ requireAdminAuth();
 // Initialize configuration
 $config = Config::getInstance();
 $dbConfig = $config->get('database');
-$maxMessages = $config->get('conversation', 'max_messages', 50);
-$lineAccessToken = $config->get('line', 'channel_access_token');
+$maxMessages = $config->get('conversation', 'maxMessages', 20);
+$lineAccessToken = $config->get('line', 'channelAccessToken');
 
 // Initialize services
 $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);
@@ -42,12 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($action) {
             case 'pause':
                 if ($conversationManager->pauseChatbot($conversationId)) {
-                    $conversationManager->addMessage(
-                        $conversationId,
-                        'system',
-                        "[Agent {$adminUsername} paused chatbot]",
-                        0
-                    );
+                    error_log("[Admin Dashboard] Agent {$adminUsername} paused chatbot for: {$conversationId}");
                     $message = "Chatbot paused successfully for conversation: {$conversationId}";
                     $messageType = 'success';
                 } else {
@@ -58,12 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'resume':
                 if ($conversationManager->resumeChatbot($conversationId)) {
-                    $conversationManager->addMessage(
-                        $conversationId,
-                        'system',
-                        "[Agent {$adminUsername} resumed chatbot]",
-                        0
-                    );
+                    error_log("[Admin Dashboard] Agent {$adminUsername} resumed chatbot for: {$conversationId}");
                     $message = "Chatbot resumed successfully for conversation: {$conversationId}";
                     $messageType = 'success';
                 } else {
@@ -73,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'auto-resume':
-                $timeout = $config->get('conversation', 'auto_resume_timeout_minutes', 30);
+                $timeout = $config->get('conversation', 'autoResumeTimeoutMinutes', 30);
                 $count = $conversationManager->autoResumeChatbot($timeout);
                 $message = "Auto-resumed {$count} conversation(s) that were paused for more than {$timeout} minutes";
                 $messageType = 'success';
@@ -88,8 +78,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get paused conversations
 $pausedConversations = $conversationManager->getPausedConversations(100);
 
+// Get active conversations from last 2 days
+$activeConversations = $conversationManager->getActiveConversations(2, 100);
+
 // Fetch LINE display names for paused conversations
 foreach ($pausedConversations as &$conv) {
+    if ($conv['platform'] === 'line' && $conv['user_id']) {
+        $userId = LineProfileService::extractUserIdFromConversationId($conv['conversation_id']);
+        if ($userId) {
+            $displayName = $lineProfileService->getDisplayName($userId);
+            $conv['display_name'] = $displayName ?: 'Unknown';
+        } else {
+            $conv['display_name'] = 'N/A';
+        }
+    } else {
+        $conv['display_name'] = 'N/A';
+    }
+}
+unset($conv); // Break reference
+
+// Fetch LINE display names for active conversations
+foreach ($activeConversations as &$conv) {
     if ($conv['platform'] === 'line' && $conv['user_id']) {
         $userId = LineProfileService::extractUserIdFromConversationId($conv['conversation_id']);
         if ($userId) {
@@ -350,6 +359,32 @@ unset($conv); // Break reference
             color: #999;
             font-family: monospace;
         }
+
+        .badge-active {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-paused {
+            background: #ffc107;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .table-container {
+                overflow-x: scroll;
+            }
+        }
     </style>
 </head>
 <body>
@@ -372,6 +407,10 @@ unset($conv); // Break reference
             <div class="stat-card">
                 <div class="stat-label">Paused Conversations</div>
                 <div class="stat-value"><?php echo count($pausedConversations); ?></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Conversations (Last 2 Days)</div>
+                <div class="stat-value"><?php echo count($activeConversations); ?></div>
             </div>
         </div>
 
@@ -405,7 +444,7 @@ unset($conv); // Break reference
                         <tbody>
                             <?php foreach ($pausedConversations as $conv): ?>
                                 <?php
-                                    $pausedTime = strtotime($conv['paused_at']);
+                                    $pausedTime = intval($conv['paused_at']);
                                     $duration = time() - $pausedTime;
                                     $durationText = '';
                                     if ($duration < 60) {
@@ -438,6 +477,78 @@ unset($conv); // Break reference
                                             <input type="hidden" name="action" value="resume">
                                             <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
                                             <button type="submit" class="btn btn-success btn-sm">Resume Bot</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Active Conversations (Last 2 Days)</h2>
+            </div>
+
+            <?php if (empty($activeConversations)): ?>
+                <div class="empty-state">
+                    <div class="empty-state-icon">💤</div>
+                    <p>No active conversations in the last 2 days.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Conversation ID</th>
+                                <th>Platform</th>
+                                <th>User</th>
+                                <th>Last Activity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($activeConversations as $conv): ?>
+                                <?php
+                                    $lastActivity = intval($conv['last_activity']);
+                                    $timeAgo = time() - $lastActivity;
+                                    $timeAgoText = '';
+                                    if ($timeAgo < 60) {
+                                        $timeAgoText = $timeAgo . 's ago';
+                                    } elseif ($timeAgo < 3600) {
+                                        $timeAgoText = floor($timeAgo / 60) . 'm ago';
+                                    } elseif ($timeAgo < 86400) {
+                                        $timeAgoText = floor($timeAgo / 3600) . 'h ago';
+                                    } else {
+                                        $timeAgoText = floor($timeAgo / 86400) . 'd ago';
+                                    }
+                                ?>
+                                <tr>
+                                    <td style="font-family: monospace; font-size: 12px;"><?php echo htmlspecialchars($conv['conversation_id']); ?></td>
+                                    <td>
+                                        <span class="badge badge-<?php echo $conv['platform']; ?>">
+                                            <?php echo strtoupper($conv['platform']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="user-cell">
+                                        <?php if ($conv['display_name'] !== 'N/A'): ?>
+                                            <div class="user-name"><?php echo htmlspecialchars($conv['display_name']); ?></div>
+                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
+                                        <?php else: ?>
+                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div><?php echo date('Y-m-d H:i:s', $lastActivity); ?></div>
+                                        <div style="font-size: 12px; color: #999;"><?php echo $timeAgoText; ?></div>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: inline;">
+                                            <input type="hidden" name="action" value="pause">
+                                            <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
+                                            <button type="submit" class="btn btn-danger btn-sm">Pause Bot</button>
                                         </form>
                                     </td>
                                 </tr>

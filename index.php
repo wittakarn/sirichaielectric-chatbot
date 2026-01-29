@@ -55,7 +55,7 @@ $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
 // Initialize conversation manager with database
 $dbConfig = $config->get('database');
 $conversationConfig = $config->get('conversation');
-$maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 50;
+$maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
 $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);
 
 // Route the request

@@ -112,7 +112,7 @@ if (isset($events['events']) && is_array($events['events']) && count($events['ev
     // Use custom conversation manager for LINE (stores by LINE User ID)
     $dbConfig = $config->get('database');
     $conversationConfig = $config->get('conversation');
-    $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 50;
+    $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
     $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
 
     foreach ($events['events'] as $event) {

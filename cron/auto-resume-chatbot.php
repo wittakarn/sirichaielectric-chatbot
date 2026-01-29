@@ -21,8 +21,8 @@ try {
     // Initialize configuration
     $config = Config::getInstance();
     $dbConfig = $config->get('database');
-    $maxMessages = $config->get('conversation', 'max_messages', 50);
-    $timeout = $config->get('conversation', 'auto_resume_timeout_minutes', 30);
+    $maxMessages = $config->get('conversation', 'maxMessages', 20);
+    $timeout = $config->get('conversation', 'autoResumeTimeoutMinutes', 30);
 
     echo "[" . date('Y-m-d H:i:s') . "] Configuration loaded. Timeout: {$timeout} minutes\n";
 
