@@ -16,3 +16,11 @@ file-cache.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+
+# Dashboard frontend (React)
+dashboard/dist/
+dashboard/.vite/
+dashboard/.tmp/

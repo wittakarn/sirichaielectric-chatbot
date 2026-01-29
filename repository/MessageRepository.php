@@ -190,6 +190,39 @@ class MessageRepository extends BaseRepository {
     }
 
     /**
+     * Get last N messages in conversation (for monitoring preview)
+     *
+     * @param string $conversationId Conversation ID
+     * @param int $limit Number of recent messages to get (default 6)
+     * @return array List of recent messages
+     */
+    public function getLastNMessages($conversationId, $limit = 6) {
+        $sql = "
+            SELECT id, conversation_id, role, content,
+                   UNIX_TIMESTAMP(timestamp) as timestamp,
+                   tokens_used, sequence_number
+            FROM messages
+            WHERE conversation_id = ?
+            ORDER BY sequence_number DESC
+            LIMIT ?
+        ";
+
+        $messages = $this->fetchAll($sql, array($conversationId, $limit));
+
+        // Reverse to get chronological order (oldest to newest)
+        $messages = array_reverse($messages);
+
+        foreach ($messages as &$message) {
+            $message['id'] = intval($message['id']);
+            $message['timestamp'] = intval($message['timestamp']);
+            $message['tokens_used'] = intval($message['tokens_used']);
+            $message['sequence_number'] = intval($message['sequence_number']);
+        }
+
+        return $messages;
+    }
+
+    /**
      * Find messages by role in conversation
      *
      * @param string $conversationId Conversation ID
