@@ -370,6 +370,70 @@ unset($conv); // Break reference
             color: #333;
         }
 
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .conv-id-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #666;
+            transition: color 0.2s;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            color: #667eea;
+        }
+
+        .copy-btn:active {
+            color: #28a745;
+        }
+
+        .copy-tooltip {
+            position: relative;
+        }
+
+        .copy-tooltip .tooltip-text {
+            visibility: hidden;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 4px 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .copy-tooltip .tooltip-text.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
         @media (max-width: 768px) {
             .stats {
                 grid-template-columns: 1fr;
@@ -414,149 +478,166 @@ unset($conv); // Break reference
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2>Paused Conversations Waiting for Human Agent</h2>
-                <form method="POST" style="display: inline;">
-                    <input type="hidden" name="action" value="auto-resume">
-                    <button type="submit" class="btn btn-primary btn-sm">Auto-Resume Timeout</button>
-                </form>
+        <div class="split-layout">
+            <!-- Left Column: Paused Conversations -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Paused Conversations</h2>
+                    <form method="POST" style="display: inline;">
+                        <input type="hidden" name="action" value="auto-resume">
+                        <button type="submit" class="btn btn-primary btn-sm">Auto-Resume</button>
+                    </form>
+                </div>
+
+                <?php if (empty($pausedConversations)): ?>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✓</div>
+                        <p>No paused conversations. All chatbots are active!</p>
+                    </div>
+                <?php else: ?>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Conversation ID</th>
+                                    <th>Platform</th>
+                                    <th>User</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($pausedConversations as $conv): ?>
+                                    <?php
+                                        $pausedTime = intval($conv['paused_at']);
+                                        $duration = time() - $pausedTime;
+                                        $durationText = '';
+                                        if ($duration < 60) {
+                                            $durationText = $duration . 's';
+                                        } elseif ($duration < 3600) {
+                                            $durationText = floor($duration / 60) . 'm';
+                                        } else {
+                                            $durationText = floor($duration / 3600) . 'h ' . floor(($duration % 3600) / 60) . 'm';
+                                        }
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="conv-id-cell">
+                                                <span style="font-family: monospace; font-size: 11px;" title="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
+                                                    <?php echo htmlspecialchars(substr($conv['conversation_id'], 0, 20)) . '...'; ?>
+                                                </span>
+                                                <button class="copy-btn copy-tooltip" onclick="copyToClipboard('<?php echo htmlspecialchars($conv['conversation_id']); ?>', this)" title="Copy ID">
+                                                    📋
+                                                    <span class="tooltip-text">Copied!</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<?php echo $conv['platform']; ?>">
+                                                <?php echo strtoupper($conv['platform']); ?>
+                                            </span>
+                                        </td>
+                                        <td class="user-cell">
+                                            <?php if ($conv['display_name'] !== 'N/A'): ?>
+                                                <div class="user-name"><?php echo htmlspecialchars($conv['display_name']); ?></div>
+                                            <?php else: ?>
+                                                <div class="user-id" style="font-size: 11px;"><?php echo htmlspecialchars(substr($conv['user_id'] ?: 'N/A', 0, 15)); ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo $durationText; ?></td>
+                                        <td>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="action" value="resume">
+                                                <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
+                                                <button type="submit" class="btn btn-success btn-sm">Resume</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <?php if (empty($pausedConversations)): ?>
-                <div class="empty-state">
-                    <div class="empty-state-icon">✓</div>
-                    <p>No paused conversations. All chatbots are active!</p>
+            <!-- Right Column: Active Conversations -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Active Conversations (2d)</h2>
                 </div>
-            <?php else: ?>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Conversation ID</th>
-                                <th>Platform</th>
-                                <th>User</th>
-                                <th>Paused At</th>
-                                <th>Duration</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pausedConversations as $conv): ?>
-                                <?php
-                                    $pausedTime = intval($conv['paused_at']);
-                                    $duration = time() - $pausedTime;
-                                    $durationText = '';
-                                    if ($duration < 60) {
-                                        $durationText = $duration . 's';
-                                    } elseif ($duration < 3600) {
-                                        $durationText = floor($duration / 60) . 'm';
-                                    } else {
-                                        $durationText = floor($duration / 3600) . 'h ' . floor(($duration % 3600) / 60) . 'm';
-                                    }
-                                ?>
-                                <tr>
-                                    <td style="font-family: monospace; font-size: 12px;"><?php echo htmlspecialchars($conv['conversation_id']); ?></td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $conv['platform']; ?>">
-                                            <?php echo strtoupper($conv['platform']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="user-cell">
-                                        <?php if ($conv['display_name'] !== 'N/A'): ?>
-                                            <div class="user-name"><?php echo htmlspecialchars($conv['display_name']); ?></div>
-                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
-                                        <?php else: ?>
-                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?php echo date('Y-m-d H:i:s', $pausedTime); ?></td>
-                                    <td><?php echo $durationText; ?></td>
-                                    <td>
-                                        <form method="POST" style="display: inline;">
-                                            <input type="hidden" name="action" value="resume">
-                                            <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
-                                            <button type="submit" class="btn btn-success btn-sm">Resume Bot</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2>Active Conversations (Last 2 Days)</h2>
+                <?php if (empty($activeConversations)): ?>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💤</div>
+                        <p>No active conversations in the last 2 days.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Conversation ID</th>
+                                    <th>Platform</th>
+                                    <th>User</th>
+                                    <th>Last Activity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($activeConversations as $conv): ?>
+                                    <?php
+                                        $lastActivity = intval($conv['last_activity']);
+                                        $timeAgo = time() - $lastActivity;
+                                        $timeAgoText = '';
+                                        if ($timeAgo < 60) {
+                                            $timeAgoText = $timeAgo . 's ago';
+                                        } elseif ($timeAgo < 3600) {
+                                            $timeAgoText = floor($timeAgo / 60) . 'm ago';
+                                        } elseif ($timeAgo < 86400) {
+                                            $timeAgoText = floor($timeAgo / 3600) . 'h ago';
+                                        } else {
+                                            $timeAgoText = floor($timeAgo / 86400) . 'd ago';
+                                        }
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="conv-id-cell">
+                                                <span style="font-family: monospace; font-size: 11px;" title="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
+                                                    <?php echo htmlspecialchars(substr($conv['conversation_id'], 0, 20)) . '...'; ?>
+                                                </span>
+                                                <button class="copy-btn copy-tooltip" onclick="copyToClipboard('<?php echo htmlspecialchars($conv['conversation_id']); ?>', this)" title="Copy ID">
+                                                    📋
+                                                    <span class="tooltip-text">Copied!</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<?php echo $conv['platform']; ?>">
+                                                <?php echo strtoupper($conv['platform']); ?>
+                                            </span>
+                                        </td>
+                                        <td class="user-cell">
+                                            <?php if ($conv['display_name'] !== 'N/A'): ?>
+                                                <div class="user-name"><?php echo htmlspecialchars($conv['display_name']); ?></div>
+                                            <?php else: ?>
+                                                <div class="user-id" style="font-size: 11px;"><?php echo htmlspecialchars(substr($conv['user_id'] ?: 'N/A', 0, 15)); ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="font-size: 12px;"><?php echo $timeAgoText; ?></td>
+                                        <td>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="action" value="pause">
+                                                <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
+                                                <button type="submit" class="btn btn-danger btn-sm">Pause</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
-
-            <?php if (empty($activeConversations)): ?>
-                <div class="empty-state">
-                    <div class="empty-state-icon">💤</div>
-                    <p>No active conversations in the last 2 days.</p>
-                </div>
-            <?php else: ?>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Conversation ID</th>
-                                <th>Platform</th>
-                                <th>User</th>
-                                <th>Last Activity</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($activeConversations as $conv): ?>
-                                <?php
-                                    $lastActivity = intval($conv['last_activity']);
-                                    $timeAgo = time() - $lastActivity;
-                                    $timeAgoText = '';
-                                    if ($timeAgo < 60) {
-                                        $timeAgoText = $timeAgo . 's ago';
-                                    } elseif ($timeAgo < 3600) {
-                                        $timeAgoText = floor($timeAgo / 60) . 'm ago';
-                                    } elseif ($timeAgo < 86400) {
-                                        $timeAgoText = floor($timeAgo / 3600) . 'h ago';
-                                    } else {
-                                        $timeAgoText = floor($timeAgo / 86400) . 'd ago';
-                                    }
-                                ?>
-                                <tr>
-                                    <td style="font-family: monospace; font-size: 12px;"><?php echo htmlspecialchars($conv['conversation_id']); ?></td>
-                                    <td>
-                                        <span class="badge badge-<?php echo $conv['platform']; ?>">
-                                            <?php echo strtoupper($conv['platform']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="user-cell">
-                                        <?php if ($conv['display_name'] !== 'N/A'): ?>
-                                            <div class="user-name"><?php echo htmlspecialchars($conv['display_name']); ?></div>
-                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
-                                        <?php else: ?>
-                                            <div class="user-id"><?php echo htmlspecialchars($conv['user_id'] ?: 'N/A'); ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div><?php echo date('Y-m-d H:i:s', $lastActivity); ?></div>
-                                        <div style="font-size: 12px; color: #999;"><?php echo $timeAgoText; ?></div>
-                                    </td>
-                                    <td>
-                                        <form method="POST" style="display: inline;">
-                                            <input type="hidden" name="action" value="pause">
-                                            <input type="hidden" name="conversationId" value="<?php echo htmlspecialchars($conv['conversation_id']); ?>">
-                                            <button type="submit" class="btn btn-danger btn-sm">Pause Bot</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
         </div>
 
         <div class="card">
@@ -587,6 +668,56 @@ unset($conv); // Break reference
     </div>
 
     <script>
+        // Copy to clipboard function
+        function copyToClipboard(text, button) {
+            // Use modern clipboard API if available
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showCopyTooltip(button);
+                }).catch(function(err) {
+                    // Fallback for older browsers
+                    fallbackCopyToClipboard(text, button);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyToClipboard(text, button);
+            }
+        }
+
+        // Fallback copy method for older browsers
+        function fallbackCopyToClipboard(text, button) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.top = "-9999px";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyTooltip(button);
+                }
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // Show tooltip feedback
+        function showCopyTooltip(button) {
+            var tooltip = button.querySelector('.tooltip-text');
+            if (tooltip) {
+                tooltip.classList.add('show');
+                setTimeout(function() {
+                    tooltip.classList.remove('show');
+                }, 1500);
+            }
+        }
+
         // Auto-refresh every 30 seconds to show latest paused conversations
         setTimeout(function() {
             location.reload();
