@@ -437,7 +437,17 @@ class SirichaiElectricChatbot {
                 return "No search criteria provided.";
             }
             $result = $this->productAPI->searchProducts($criterias);
-            return $result !== null ? $result : "No products found.";
+
+            // Add reminder about critical rules
+            if ($result !== null) {
+                $reminder = "\n\n---\nREMINDER - Critical Rules:\n";
+                $reminder .= "- NEVER exceed 3 categories per search (you searched " . count($criterias) . " categories)\n";
+                $reminder .= "- Show max 3 products per category\n";
+                $reminder .= "- Format: Product Name | Price | Unit (no category headers)\n";
+                return $result . $reminder;
+            }
+
+            return "No products found.";
         }
 
         return "Unknown function: " . $functionName;

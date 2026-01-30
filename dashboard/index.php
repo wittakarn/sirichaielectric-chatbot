@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="dist/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="dist/bundle.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="dist/bundle.js"></script>
+</body>
+</html>
