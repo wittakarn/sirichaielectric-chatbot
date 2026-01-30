@@ -28,10 +28,10 @@ class ProductAPIService {
     /**
      * Get catalog summary (categories with product IDs)
      * Uses local cache to avoid repeated API calls
-     * @return string|null Returns plain text catalog, or null on error
+     * @return string|null Returns markdown formatted catalog, or null on error
      */
     public function getCatalogSummary() {
-        $cacheFile = $this->cacheDir . '/catalog-summary-cache.txt';
+        $cacheFile = $this->cacheDir . '/catalog-summary-cache.md';
 
         // Check if cache exists and is valid
         if (file_exists($cacheFile)) {
@@ -90,7 +90,7 @@ class ProductAPIService {
     /**
      * Search products by category names
      * @param array $criterias Array of exact category names from the catalog
-     * @return string|null Returns plain text product details, or null on error
+     * @return string|null Returns markdown formatted product details, or null on error
      */
     public function searchProducts($criterias) {
         error_log('[ProductAPI] Searching products with criteria: ' . json_encode($criterias, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
