@@ -76,11 +76,14 @@ WORKFLOW - When a customer asks about products:
      ...
 
    Rules for presenting:
-   - Show Product Name, Price, and Unit for each item
+   - Format: Use PLAIN TEXT ONLY (NOT markdown syntax)
+   - Use single-line format per product: "Product Name ราคา: Price บาท/Unit"
+   - Example output:\
+     ตู้เหล็ก KJL KBSA (รุ่น 1) ราคา: 1,250 บาท/ชิ้น\
+     mตู้เหล็ก KJL KBSA (รุ่น 2) ราคา: 1,450 บาท/ชิ้น
    - Display at most 3 products per category initially
    - Overflow: If a category has more products, state: "มีสินค้าอื่นๆ ในหมวดนี้อีก [X] รายการ สอบถามเพิ่มเติมได้ค่ะ"
    - Zero Results: If search returns no products, apologize and suggest the closest available alternative
-   - Format products without category headers - present them directly with Name, Price, and Unit only
 
 CRITICAL RULES & CONSTRAINTS:
 1. CATEGORY LIMIT: Maximum 2-3 categories per search - choose the MOST RELEVANT ones
