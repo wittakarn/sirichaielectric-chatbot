@@ -201,11 +201,12 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
             return;
         }
 
-        // Store placeholder in conversation history (images can't be stored in DB)
-        $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0);
-
-        // Get chatbot response with image
+        // Get chatbot response with image first (to capture search criteria)
         $response = $chatbot->chatWithImage($imageData, 'image/jpeg', '', $history);
+
+        // Store placeholder in conversation history with search criteria if available
+        $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+        $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0, $searchCriteria);
     } else {
         // Handle text message
         $messageText = isset($event['message']['text']) ? $event['message']['text'] : '';
@@ -213,11 +214,12 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
             return;
         }
 
-        // Add user message to history (0 tokens for user messages)
-        $conversationManager->addMessage($conversationId, 'user', $messageText, 0);
-
-        // Get chatbot response
+        // Get chatbot response first (to capture search criteria)
         $response = $chatbot->chat($messageText, $history);
+
+        // Add user message to history with search criteria if available
+        $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+        $conversationManager->addMessage($conversationId, 'user', $messageText, 0, $searchCriteria);
     }
 
     $duration = round(microtime(true) - $startTime, 2);
@@ -228,9 +230,9 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
     }
 
     if ($response['success']) {
-        // Add assistant response to history with token tracking
+        // Add assistant response to history with token tracking (no search criteria for assistant)
         $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
-        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed);
+        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed, null);
 
         // Send the actual AI response
         // Use Push API for ALL messages because:
@@ -474,8 +476,8 @@ function handlePauseCommand($conversationId, $userId, $conversationManager, $acc
     // Pause the chatbot
     $conversationManager->pauseChatbot($conversationId);
 
-    // Store the pause request in conversation history
-    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ขอติดต่อพนักงาน]', 0);
+    // Store the pause request in conversation history (no search criteria for system messages)
+    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ขอติดต่อพนักงาน]', 0, null);
 
     $message = "ได้รับคำขอแล้วค่ะ พนักงานจะติดต่อกลับโดยเร็วที่สุด\n"
              . "ระหว่างนี้แชทบอทจะหยุดตอบชั่วคราวค่ะ\n\n"
@@ -505,8 +507,8 @@ function handleResumeCommand($conversationId, $userId, $conversationManager, $ac
     // Resume the chatbot
     $conversationManager->resumeChatbot($conversationId);
 
-    // Store the resume in conversation history
-    $conversationManager->addMessage($conversationId, 'assistant', '[แชทบอทกลับมาให้บริการ]', 0);
+    // Store the resume in conversation history (no search criteria for system messages)
+    $conversationManager->addMessage($conversationId, 'assistant', '[แชทบอทกลับมาให้บริการ]', 0, null);
 
     $message = "แชทบอทกลับมาให้บริการแล้วค่ะ 🤖\n"
              . "มีอะไรให้ช่วยไหมคะ?\n\n"

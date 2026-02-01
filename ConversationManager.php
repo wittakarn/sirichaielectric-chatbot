@@ -65,10 +65,11 @@ class ConversationManager {
      * @param string $role Message role ('user' or 'assistant')
      * @param string $content Message content
      * @param int $tokensUsed Number of tokens used (default 0)
+     * @param string|null $searchCriteria JSON array of search categories (optional)
      * @return bool True on success
      * @throws Exception if database operation fails
      */
-    public function addMessage($conversationId, $role, $content, $tokensUsed = 0) {
+    public function addMessage($conversationId, $role, $content, $tokensUsed = 0, $searchCriteria = null) {
         try {
             $this->conversationRepository->beginTransaction();
 
@@ -88,7 +89,7 @@ class ConversationManager {
 
             // Get next sequence number and create message
             $nextSeq = $this->messageRepository->getNextSequenceNumber($conversationId);
-            $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq);
+            $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq, $searchCriteria);
 
             // Trim old messages
             $this->trimConversation($conversationId);

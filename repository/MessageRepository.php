@@ -68,12 +68,13 @@ class MessageRepository extends BaseRepository {
      * @param string $content Message content
      * @param int $tokensUsed Number of tokens used
      * @param int $sequenceNumber Sequence number in conversation
+     * @param string|null $searchCriteria JSON array of search categories (optional)
      * @return int Inserted message ID
      */
-    public function create($conversationId, $role, $content, $tokensUsed, $sequenceNumber) {
+    public function create($conversationId, $role, $content, $tokensUsed, $sequenceNumber, $searchCriteria = null) {
         $sql = "
-            INSERT INTO messages (conversation_id, role, content, tokens_used, sequence_number)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO messages (conversation_id, role, content, tokens_used, sequence_number, search_criteria)
+            VALUES (?, ?, ?, ?, ?, ?)
         ";
 
         $this->execute($sql, array(
@@ -81,7 +82,8 @@ class MessageRepository extends BaseRepository {
             $role,
             $content,
             intval($tokensUsed),
-            intval($sequenceNumber)
+            intval($sequenceNumber),
+            $searchCriteria
         ));
 
         return intval($this->lastInsertId());

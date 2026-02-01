@@ -66,6 +66,7 @@ CREATE TABLE `messages` (
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `tokens_used` int(11) NOT NULL DEFAULT '0' COMMENT 'Gemini API tokens for this message',
   `sequence_number` int(11) NOT NULL COMMENT 'Message order within conversation',
+  `search_criteria` text COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'JSON array of search categories used by AI',
   PRIMARY KEY (`id`),
   KEY `idx_conversation_id` (`conversation_id`),
   KEY `idx_timestamp` (`timestamp`),

@@ -151,6 +151,7 @@ class SirichaiElectricChatbot {
     public function chatWithImage($imageData, $mimeType, $textMessage = '', $conversationHistory = array()) {
         try {
             $totalTokens = 0;
+            $searchCriteria = null;
 
             // Build conversation contents from history
             $contents = $this->buildConversationHistory($conversationHistory);
@@ -192,6 +193,7 @@ class SirichaiElectricChatbot {
                     'error' => $response['error'],
                     'language' => 'th',
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
@@ -202,6 +204,11 @@ class SirichaiElectricChatbot {
                     $args = isset($call['args']) ? $call['args'] : array();
                     $argsJson = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     error_log('[Chatbot] Image: Calling: ' . $functionName . '(' . $argsJson . ')');
+
+                    // Capture search criteria for logging to database
+                    if ($functionName === 'search_products' && isset($args['criterias'])) {
+                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    }
                 }
 
                 $response = $this->handleFunctionCalls($response, $contents);
@@ -218,6 +225,7 @@ class SirichaiElectricChatbot {
                     'error' => $response['error'],
                     'language' => 'th',
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
@@ -228,6 +236,7 @@ class SirichaiElectricChatbot {
                     'error' => 'Response missing text field',
                     'language' => 'th',
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
@@ -236,6 +245,7 @@ class SirichaiElectricChatbot {
                 'response' => $response['text'],
                 'language' => 'th',
                 'tokensUsed' => $totalTokens,
+                'searchCriteria' => $searchCriteria,
             );
 
         } catch (Exception $e) {
@@ -245,6 +255,7 @@ class SirichaiElectricChatbot {
                 'response' => '',
                 'error' => $e->getMessage(),
                 'tokensUsed' => 0,
+                'searchCriteria' => null,
             );
         }
     }
@@ -253,6 +264,7 @@ class SirichaiElectricChatbot {
         try {
             // Track total tokens used across all API calls
             $totalTokens = 0;
+            $searchCriteria = null;
 
             // Build conversation contents
             $contents = $this->buildConversationHistory($conversationHistory);
@@ -281,17 +293,24 @@ class SirichaiElectricChatbot {
                     'error' => $response['error'],
                     'language' => $this->detectLanguage($message),
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
             // Handle function calls if present
             if (isset($response['functionCalls']) && !empty($response['functionCalls'])) {
                 // Log each function call with readable Thai text
+                // Also capture search_products criteria for logging
                 foreach ($response['functionCalls'] as $call) {
                     $functionName = isset($call['name']) ? $call['name'] : 'unknown';
                     $args = isset($call['args']) ? $call['args'] : array();
                     $argsJson = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     error_log('[Chatbot] Calling: ' . $functionName . '(' . $argsJson . ')');
+
+                    // Capture search criteria for logging to database
+                    if ($functionName === 'search_products' && isset($args['criterias'])) {
+                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    }
                 }
 
                 $response = $this->handleFunctionCalls($response, $contents);
@@ -314,6 +333,7 @@ class SirichaiElectricChatbot {
                     'error' => $response['error'],
                     'language' => $this->detectLanguage($message),
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
@@ -326,6 +346,7 @@ class SirichaiElectricChatbot {
                     'error' => 'Response missing text field',
                     'language' => $this->detectLanguage($message),
                     'tokensUsed' => $totalTokens,
+                    'searchCriteria' => $searchCriteria,
                 );
             }
 
@@ -334,6 +355,7 @@ class SirichaiElectricChatbot {
                 'response' => $response['text'],
                 'language' => $this->detectLanguage($message),
                 'tokensUsed' => $totalTokens,
+                'searchCriteria' => $searchCriteria,
             );
 
         } catch (Exception $e) {
@@ -343,6 +365,7 @@ class SirichaiElectricChatbot {
                 'response' => '',
                 'error' => $e->getMessage(),
                 'tokensUsed' => 0,
+                'searchCriteria' => null,
             );
         }
     }

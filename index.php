@@ -162,16 +162,17 @@ function handleChat($chatbot, $conversationManager) {
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
-    // Add user message to history (0 tokens for user messages)
-    $conversationManager->addMessage($conversationId, 'user', $message, 0);
-
-    // Get chatbot response
+    // Get chatbot response first (to capture search criteria)
     $response = $chatbot->chat($message, $history);
 
+    // Add user message to history with search criteria if available
+    $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+    $conversationManager->addMessage($conversationId, 'user', $message, 0, $searchCriteria);
+
     if ($response['success']) {
-        // Add assistant response to history with token tracking
+        // Add assistant response to history with token tracking (no search criteria for assistant)
         $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
-        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed);
+        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed, null);
 
         echo json_encode(array(
             'success' => true,
