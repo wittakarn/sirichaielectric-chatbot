@@ -62,18 +62,15 @@ Format: `category | category_index`
 - เซอร์กิตเบรกเกอร์ HACO | 3.2
 - เซอร์กิตเบรกเกอร์ HITACHI | 3.2
 - เซอร์กิตเบรกเกอร์ MCB PLUGON BTICINO | 3.2
-- เซอร์กิตเบรกเกอร์ NP PLUGON NANO | 3.2
 - เซอร์กิตเบรกเกอร์ SHINOHAWA | 3.2
 - เซอร์กิตเบรกเกอร์ กันดูด PLUGON BTICINO | 3.2
 - กันดูด SPECIAL-A SAFE-T-CUT | 3.3
 - คอนซูเมอร์ (สำเร็จรูป) DINRAIL NANO | 3.3
 - คอนซูเมอร์ โหลดเซ็นเตอร์ DINRAIL TEC | 3.3
 - คอนซูเมอร์ โหลดเซ็นเตอร์ MCB DINRAIL HIET | 3.3
-- ตู้คอนซูเมอร์ NN-HC NN-HT DINRAIL NANO | 3.3
 - เซอร์กิตเบรกเกอร์ (พิเศษ) DINRAIL CHINT | 3.3
 - เซอร์กิตเบรกเกอร์ (พิเศษ) DINRAIL SCHNEIDER | 3.3
 - เซอร์กิตเบรกเกอร์ IC60H DINRAIL SCHNEIDER | 3.3
-- เซอร์กิตเบรกเกอร์ PMD PLE DINRAIL NANO | 3.3
 - เซอร์กิตเบรกเกอร์ SC1 DINRAIL TEC | 3.3
 - เซอร์กิตเบรกเกอร์ SIEMENS | 3.3
 - เซอร์กิตเบรกเกอร์ SXJI DINRAIL TEC | 3.3
@@ -116,7 +113,6 @@ Format: `category | category_index`
 - แมกเนติก โอเวอร์โหลด (ใหญ่) SCHNEIDER | 4.2
 - แมกเนติก โอเวอร์โหลด EATON | 4.2
 - แมกเนติก โอเวอร์โหลด LC1D09-32M7 ราคาพิเศษ SCHNEIDER | 4.2
-- แมกเนติก โอเวอร์โหลด LC1E LRE SCHNEIDER | 4.2
 - แมกเนติก โอเวอร์โหลด SIEMENS | 4.2
 - อุปกรณ์เสริม [FUJI] | 4.4
 - แมกเนติกสตาร์ทเตอร์ HITACHI | 4.5
@@ -134,9 +130,6 @@ Format: `category | category_index`
 - เบรกเกอร์ 3P [BTICINO] | 5.3
 - กันดูด 3P [เซปทีคัต] | 5.9
 - ตู้คอนซูเมอร์ + กันดูด [เซปทีคัต] | 5.9
-- ตู้โหลดเซ็นเตอร์ PLUG ON [NANO] | 5.9
-- เซอร์กิตเบรกเกอร์ กันดูด (for EV) [NANO] | 5.9
-- เมนสำหรับตู้โหลดเซ็นเตอร์ PLUG ON [NANO] | 5.9
 - เคเบิ้ลเทรย์(ข้างเรียบ) OLD [KJL] | 6.3
 - เคเบิ้ลเทรย์(ข้างเรียบ) งานเบา เจาะรู แบบชุบกัลวาไนซ์ [KJL] | 6.3
 - เคเบิ้ลเทรย์(ข้างเรียบ) งานเบา เจาะรู แบบพ่นสี [KJL] | 6.3
@@ -148,30 +141,22 @@ Format: `category | category_index`
 - ตู้สแตนเลส [TAMCO] | 6.6
 - ตู้เหล็ก CB [TAMCO] | 6.6
 - ตู้เหล็ก CRSG/CRS รุ่นใหม่ IP55 [TAMCO] | 6.6
-- ตู้เหล็ก กันน้ำมีหลังคา 5KSW [5K] | 6.6
 - อะไหล่ ตู้คอนโทรล KJL | 6.6
 - PULLBOX สแตนเลส KBXL KJL | 7.1.9
 - สินค้าชุบกัลวาไนซ์ [SEC] | 7.1.J
 - สินค้าชุบกัลวาไนซ์ | 7.1.Z
 - สินค้าชุบกัลวาไนซ์ SET | 7.1.Z
-- ที่ดัดท่อ หน่วยมิล/นิ้ว SPG NANO | 7.2
 - ท่อร้อยสายไฟ PVC (ตัดแบ่งเศษ) UPC | 7.2
 - ท่อร้อยสายไฟ PVC สีขาว-ดำ + อุปกรณ์ UPC | 7.2
 - ท่อร้อยสายไฟ uPVC สีขาว CLIPSAL | 7.2
-- ท่อร้อยสายไฟสีขาว NNPP NANO | 7.2
 - ท่ออ่อน uPVC สีขาว CLIPSAL | 7.2
 - ท่ออ่อนร้อยสายไฟสีขาว NNCC NANO | 7.2
 - ท่อ่ออน PVC สีขาว-ดำ UPC | 7.2
-- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว (กล่องพักสายไฟ) **หน่วยนิ้ว/มิล NANO | 7.2
-- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว (กล่องพักสายไฟ) NANO | 7.2
 - อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว **หน่วยนิ้ว NANO | 7.2
-- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว-ดำ NANO | 7.2
 - อุปกรณ์ท่อร้อยสายไฟ สีขาว CLIPSAL | 7.2
 - แฮนดี้ พลาสติก [ปรกติ] | 7.2
 - ท่อท่ออ่อน PVC สีขาว BS [ช้าง] | 7.3
 - ท่อร้อยสายไฟ PVC สีขาว BS SCG | 7.3
-- อุปกรณ์ท่อร้อยสายไฟ PVC สีเหลือง (กล่องพักสายไฟ) **หน่วยนิ้ว [NANO] | 7.3
-- กล่องพักสายไฟ สีเหลือง [ช้าง] | 7.A
 - ท่อร้อยสายไฟ EFLEX พิเศษ | 7.A
 - LAMP LED PUSHBUTTON SWTICH TEC | 8.1
 - สวิตช์ IDEC พิเศษ | 8.1
@@ -194,7 +179,6 @@ Format: `category | category_index`
 - สวิทซ์กด 25 รุ่นTB [Tend] | 8.1
 - สวิทซ์กด 25มิล [รุ่นถูก] | 8.1
 - สวิทซ์กด 30มิล รุ่นTB [Tend] | 8.1
-- สวิทซ์กด PUSHBUTTON YW ทั่วไป IDEC | 8.1
 - สวิทซ์กด XB7 [TEC] | 8.1
 - อุปกรณ์เพิ่มเติม (กล่องคอนโทรล XAL) SCHNEIDER | 8.1
 - อุปกรณ์เพิ่มเติม รุ่นT2 [Tend] | 8.1
@@ -202,7 +186,6 @@ Format: `category | category_index`
 - เพิ่มเติมสวิทซืกด แปลก [SCHNEIDER] | 8.1
 - STOPPER TBR [BIGONE] | 8.2
 - TERMINAL [TMS] | 8.2
-- ขั้วต่อสายไฟ PCT | 8.2
 - รางรีลย์ + เทอร์มินอล [CN] | 8.2
 - รางรีเลย์ + รางเทอร์มินอล [BIGONE] | 8.2
 - เต๋ากระเบื้อง ต่อสายไฟ | 8.2
@@ -221,12 +204,7 @@ Format: `category | category_index`
 - เทอร์มินอล [CIKACHI] | 8.2
 - เทอร์มินอล [E-TEN] | 8.2
 - เทอร์มินอล สำเร็จรูป TB25 [BIGONE] | 8.2
-- ปลั๊กเพาเวอร์ 3-4-5ขา (16A-32A) [PCE] | 8.3
-- ปลั๊กเพาเวอร์ [ABB] | 8.3
 - ปลั๊กเพาเวอร์ [CEE] | 8.3
-- ปลั๊กเพาเวอร์ [DAKO] | 8.3
-- ปลั๊กเพาเวอร์ [MENNEKES] | 8.3
-- ปลั๊กเพาเวอร์ กันน้ำ 3-4-5ขา (63A-125A) [PCE] | 8.3
 - เต้ารับอินเตอร์ล็อค [SCAME] | 8.3
 - CAMSWITCH MAINSWITCH [TEND] | 8.4
 - CAMSWITCH [QUBIX] | 8.4
@@ -235,16 +213,6 @@ Format: `category | category_index`
 - มิเตอร์ (50x50) แบบเข็ม [Salzer] | 8.4
 - มิเตอร์ (60x60) แบบเข็ม [Salzer] | 8.4
 - มิเตอร์ (80x80) แบบเข็ม [Salzer] | 8.4
-- CT (Current Transformer) | 8.5
-- CT [QUBIX] | 8.5
-- CT [SCHNEIDER] | 8.5
-- CT รุ่นถอดประกอบได้ DP DAKO | 8.5
-- CT รุ่นถอดประกอบได้ TP [QUBIX] | 8.5
-- พัดลมดูดอากาศตู้คอนโทรล (อุปกรณ์) TEC | 8.6
-- พัดลมดูดอากาศตู้คอนโทรล (อุปกรณ์) [WINDSTORM] | 8.6
-- พัดลมดูดอากาศตู้คอนโทรล TEC | 8.6
-- พัดลมดูดอากาศตู้คอนโทรล [WINDSTORM] | 8.6
-- พัดลมดูดอากาศตู้คอนโทรล ตัวพิเศษ [WINDSTORM] | 8.6
 - พัดลมระบายอากาศตู้คอนโทรล [EMBPOPE] | 8.6
 - SNAP บุชชิ่ง SB [BANDEX] | 8.8
 - SADDLE TIE [BANDEX] | 8.8
@@ -269,11 +237,9 @@ Format: `category | category_index`
 - TOWERLIGHT 60มิล [TEND] | 8.9
 - TOWERLIGHT 70มิล [TEND] | 8.9
 - TOWERLIGHT อุปกรณ์เสริม TEND | 8.9
-- กระดิ่งแดง | 8.9
 - มอเตอร์ไซเรน | 8.9
 - ออด [Tend] | 8.9
 - ไฟหมุน BIGONE | 8.9
-- ไฟหมุน LED BIGONE | 8.9
 - ไฟหมุน REVOLVING WARNING LIGHT DAKO | 8.9
 - ไฟหมุน [PATLITE] | 8.9
 - ไฟหมุน [Tend] | 8.9
@@ -296,7 +262,6 @@ Format: `category | category_index`
 - อุปกรณ์เพิ่มเติม MS / GM | 8.L
 - รีเลย์ + SOCKET กลม OMRON { 8PFA 11PFA P3G-08 P3GA-11 P2CF US-08 } | 9.1
 - ลิมิตสวิทซ์ (LIMIT SWITCH) ทั้งหมด [QUBIX] | 9.2
-- ลิมิตสวิทซ์ [SCHNEIDER] | 9.2
 - GENERAL TIMER H3CR-A [OMRON] | 9.3
 - GENERAL TIMER H3CR-A8 220V NET [OMRON] | 9.3
 - OFF-DELAY TIMER H3CR-H [OMRON] | 9.3
@@ -322,10 +287,6 @@ Format: `category | category_index`
 - Proximity Sensors [SCHNEIDER] | 9.6
 - Proximity Sensors ทั้งหมด [Omron] | 9.6
 - Phase Proctect [WIP] | 9.7
-- HOUR METER [CCS] | 9.8
-- HOUR METER [RISESUN] | 9.8
-- HOUR METER [SALZER] | 9.8
-- HOUR METER [SHINOHAWA] | 9.8
 - FLOATLESS OMRON | 9.9
 - Floatless ตัวซื้อ NET [Omron] | 9.9
 - สวิตช์ลูกลอย DAESAN | 9.9
@@ -471,16 +432,13 @@ Format: `category | category_index`
 - DC-AC SURGE PROTECTIVE [FEEO] | K
 - เครื่องชาร์จรถไฟฟ้า SCHNEIDER | K
 - AC RCBO MCB FEEO | K.
-- AC SURGE SPD [NANO] | K.
 - AC-DC SURGE SPD ABB | K.
 - AC-DC SURGE SPD LW | K.
 - AC-DC SURGE SPD TEC | K.
 - AC-DC SURGE SPD ZOII | K.
 - ATS CSQ | K.
 - DC MCB FPV-63 เซอร์กิตเบรกเกอร์ [FEEO] | K.
-- DC MCB NANO | K.
 - DC RCBO FRD2-63 เซอร์กิตเบรกเกอร์กันดูด [FEEO] | K.
-- DC SURGE SPD [NANO] | K.
 - MC4 FEEO | K.
 - RAPID SHUTDOWN | K.
 - RCCB EV SOLAR A9R A9Z เซอร์กิตเบรกเกอร์กันดูด SCHNEIDER | K.
@@ -687,7 +645,6 @@ Format: `category | category_index`
 - สวิทซ์ ปลั๊ก BTICINO MAGIC ADVANCE | [3.1.3
 - กระดิ่งทูโทน NANO | [3.1.5
 - กล่องฝาปิดกันน้ำ หน้ากากกันน้ำ NANO | [3.1.5
-- ชุดปลั๊กพร้อมสวิตช์ควบคุม NANO | [3.1.5
 - สวิตช์ ปลั๊ก เต้ารับ สีขาว NANO | [3.1.5
 - สวิตช์ ปลั๊ก เต้ารับ สีขาว NANO { เพิ่มเติม } | [3.1.5
 - สวิตช์ ปลั๊ก เต้ารับ สีดำ NANO | [3.1.5
@@ -695,7 +652,7 @@ Format: `category | category_index`
 - หน้ากาก สีขาว NANO | [3.1.5
 - หน้ากาก สีดำ NANO | [3.1.5
 - หน้ากาก สแตนเลส อะคริลิค สีขาว สีดำ NANO | [3.1.5
-- กันฟ้าผ่า Surge Protection SCHNEIDER | [3.2.1
+- ชุดปลั๊กพร้อมสวิตช์ควบคุม NANO | [3.1.5]
 - ตู้คอนซูมเมอร์ CONSUMER S9HCL SCHENEIDER { พิเศษ } | [3.2.1
 - ตู้คอนซูมเมอร์ CONSUMER S9HCL SCHNEIDER | [3.2.1
 - ตู้คอนซูเมอร์ โหลดเซ็นเตอร์ MCB PLUGON EASY9 SCHNEIDER | [3.2.1
@@ -707,6 +664,11 @@ Format: `category | category_index`
 - เซอร์กิตเบรกเกอร์ NET 1P PLUGON SCHNEIDER | [3.2.1
 - เซอร์กิตเบรกเกอร์ กันดูด RCBO PLUGON SCHNEIDER | [3.2.1
 - เซอร์กิตเบรกเกอร์ กันดูด RCBO PLUGON SCHNEIDER { พิเศษ } | [3.2.1
+- AC SURGE PROTECTION DEVICE SCHNEIDER { กันฟ้าผ่า AC SPD } | [3.2.1]
+- เซอร์กิตเบรกเกอร์ PLUGON NP NANO { MCB } | [3.2.7]
+- เซอร์กิตเบรกเกอร์ กันดูด PLUGON RCBO NR NANO { MCB } | [3.2.7]
+- ตู้โหลดเซ็นเตอร์ 3P PLUGON NLP-C125MF NANO | [3.2.Z]
+- เบรกเกอร์ MCCB สำหรับ ตู้โหลดเซ็นเตอร์ 3P PLUGON NNBM-125S NANO | [3.2.Z]
 - เซอร์กิตเบรกเกอร์ IC60N-C120N DINRAIL SCHNEIDER | [3.3.1
 - เซอร์กิตเบรกเกอร์ IK60N DINRAIL SCHNEIDER | [3.3.1
 - เซอร์กิตเบรกเกอร์ MCB DINRAIL MITSUBISHI | [3.3.1
@@ -716,6 +678,9 @@ Format: `category | category_index`
 - เซอร์กิตเบรกเกอร์ กันดูด RCBO ABB { DINRAIL MCB } | [3.3.2
 - เซอร์กิตเบรกเกอร์ กันดูด RCBO ABB { DINRAIL MCB พิเศษ } | [3.3.2
 - เซอร์กิตเบรกเกอร์ กันดูด RCBO RCCB ABB { MCB DINRAIL  } | [3.3.2
+- ตู้คอนซูเมอร์ NN-HC NN-HT DINRAIL NANO | [3.3.7]
+- เซอร์กิตเบรกเกอร์ DINRAIL PMD NANO { MCB } | [3.3.7]
+- เซอร์กิตเบรกเกอร์ กันดูด DINRAIL RCBO PLE NANO { MCB } | [3.3.7]
 - ปลั๊กพ่วง PANASONIC | [3.5
 - ปลั๊กแปลง 2ขา [NANO] | [3.5
 - BOX ยาง พร้อมปลั๊กกราวด์คู่ NANO | [3.5.5
@@ -730,16 +695,16 @@ Format: `category | category_index`
 - มิเตอร์วัดไฟฟ้า HOLLY | [3.A
 - มิเตอร์วัดไฟฟ้า ดิจิตอล MITSUBISHI | [3.A.1
 - มิเตอร์วัดไฟฟ้า ดิจิตอล รุ่นมาตราฐาน MITSUBISHI | [3.A.1
-- เซฟตี้เบรกเกอร์ SAFETY BREAKER 2P PANASONIC | [3.B
 - เซฟตี้เบรกเกอร์ SAFETY BREAKER 2P TEC | [3.B
 - เซฟตี้เบรกเกอร์ SAFETY BREAKER CHANG | [3.B
 - เซฟตี้เบรกเกอร์ SAFETY BREAKER HACO | [3.B
 - เซฟตี้เบรกเกอร์ SAFETY BREAKER KYOKUTO | [3.B
-- เซฟตี้เบรกเกอร์ SAFETY BREAKER NANO | [3.B
-- เซฟตี้เบรกเกอร์ SAFETY BREAKER กันดูด RCBO 2P NANO | [3.B
-- เซฟตี้เบรกเกอร์ SAFETY BREAKER กันดูด RCBO 2P PANASONIC | [3.B
-- เซฟตี้เบรกเกอร์ กันดูด RCBO 2P FUJIYAMA | [3.B
-- เซฟตี้เบรกเกอร์ SAFETY BREAKER BTICINO | [3.B.7
+- เซฟตี้เบรกเกอร์ 2P PANASONIC { BS-111 SAFETY BREAKER } | [3.B.1]
+- เซฟตี้เบรกเกอร์ กันดูด RCBO 2P PANASONIC { BJS SAFETY BREAKER } | [3.B.1]
+- เซฟตี้เบรกเกอร์ 2P NANO { SFL SF SAFETY BREAKER } | [3.B.5]
+- เซฟตี้เบรกเกอร์ กันดูด RCBO 2P NANO { BL-BFV SAFETY BREAKER } | [3.B.5]
+- เซฟตี้เบรกเกอร์ 2P BTICINO { BSBN SAFETY BREAKER } | [3.B.7]
+- เซฟตี้เบรกเกอร์ กันดูด RCBO 2P FUJIYAMA { SAFETY BREAKER FJ- } | [3.B.Z]
 - TIMER ไทม์เมอร์ 24HR BEC | [3.C
 - TIMER ไทม์เมอร์ 24HR BTICINO | [3.C
 - TIMER ไทม์เมอร์ 24HR CCS | [3.C
@@ -755,7 +720,8 @@ Format: `category | category_index`
 - สวิตช์แสงแดด HOME | [3.D
 - สวิตช์แสงแดด SELCON KAGASEL | [3.D
 - สวิตช์แสงแดด กันกุล GUNKUL | [3.D
-- Box ลอย กล่องลอยพลาสติก สีขาว สีดำ NANO | [3.Z
+- BOX ลอย กล่องลอยพลาสติก สีขาว NANO { 2x4นิ้ว NANO-403-1 } | [3.Z.0]
+- BOX ลอย กล่องลอยพลาสติก สีขาว สีดำ NANO { 2x4นิ้ว 4x4นิ้ว NANO-403-1B NANO-404-1 NANO-404-1B } | [3.Z.0]
 - เบรกเกอร์ NF32 NF63 NF125 NF250 MITSUBISHI { SPECIAL MCCB 10KA 30KA 50KA 36KA 75KA } | [4.1.1]
 - เบรกเกอร์ NF32 NF63 NF125 NF250 MITSUBISHI { STANDARD MCCB 5KA 7.5KA 10KA 25KA 30KA 40KA } | [4.1.1]
 - เบรกเกอร์ NF400 NF630 NF800 MITSUBISHI { SPECIAL MCCB 40KA 85KA 50KA 70KA } | [4.1.1]
@@ -785,6 +751,7 @@ Format: `category | category_index`
 - โอเวอร์โหลด TH-N120 TH-N220 TH-N400 OVERLOAD MITSUBISHI { ขนาดใหญ่ } | [4.2.1
 - โอเวอร์โหลด TH-T18 TH-T25 TH-T50 TH-T65 TH-T100 OVERLOAD MITSUBISHI { ขนาดเล็ก } | [4.2.1
 - แมกเนติก S-N MAGNETIC MITSUBISHI { SPECIAL 380V ขนาดใหญ่ } | [4.2.1]
+- แมกเนติก โอเวอร์โหลด LC1E LRE LAEN SCHNEIDER | [4.2.2]
 - แมกเนติก 220V AF ABB { ขนาดใหญ่ STANDARD 220V } | [4.2.3
 - โอเวอร์โหลด OVERLOAD ABB { ขนาดเล็ก } | [4.2.3
 - โอเวอร์โหลด OVERLOAD ABB { ขนาดใหญ่ } | [4.2.3
@@ -813,24 +780,25 @@ Format: `category | category_index`
 - รางเดินสายไฟ สีขาว พลาสติกPVC PRI | [6.5.1
 - รางเดินสายไฟ หลังเต๋า ฝาอลูมิเนียม ฐานพลาสติกPVC PRI | [6.5.1
 - รางเดินสายไฟ สีขาว พลาสติกPVC NANO | [6.5.Y
-- ตู้สแตนเลส KBLQ KBLR KJL | [6.6.1
 - ตู้เหล็ก KBJ KJL { KBJW KBJA KBJB KBJC KBJD KBJF KBJG } | [6.6.1
-- ตู้เหล็ก กันน้ำ ฝา1ชั้นกระจก KBSA KBSB KJL | [6.6.1
-- ตู้เหล็ก กันน้ำมีหลังคา KBSW KJL | [6.6.1
 - ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้ากระจก KBSG KJL | [6.6.1
-- ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้าทึบ KBSD KJL | [6.6.1
 - ตู้เหล็ก กันน้ำมีหลังคา หลังคาเสมอฝา KBJR KJL | [6.6.1
 - ตู้เหล็ก กันน้ำไม่มีหลังคา KBJQ KJL | [6.6.1
 - ตู้เหล็ก กันน้ำไม่มีหลังคา KBSN KJL | [6.6.1
 - ตู้เหล็ก กันน้ำไม่มีหลังคา KBVQ KJL | [6.6.1
 - ตู้เหล็ก ธรรมดา KBSS KJL | [6.6.1
-- ตู้เหล็ก ธรรมดา แบบบาง KBSE KJL | [6.6.1
+- ตู้สแตนเลส KBLQ KBLR KJL | [6.6.1]
+- ตู้เหล็ก กันน้ำ ฝา1ชั้นกระจก KBSA KBSB KJL | [6.6.1]
+- ตู้เหล็ก กันน้ำมีหลังคา KBSW KJL | [6.6.1]
+- ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้าทึบ KBSD KJL | [6.6.1]
+- ตู้เหล็ก ธรรมดา แบบบาง KBSE KJL | [6.6.1]
 - ตู้ไฟสวิทซ์บรอด ตู้เหล็ก CE CES CESG TAMCO | [6.6.2
-- ตู้สแตนเลส DA-S DS-S DSG-S DENCO | [6.6.3
 - ตู้เหล็ก กันน้ำมีหลังคา ฝา2ชั้น หน้ากระจก DSG DENCO | [6.6.3
 - ตู้เหล็ก กันน้ำมีหลังคา หลังคาเสมอฝา DS DENCO | [6.6.3
+- ตู้สแตนเลส DA-S DS-S DSG-S DENCO | [6.6.3]
 - ตู้ไฟสวิทซ์บรอด ตู้เหล็ก MCTT NANO | [6.6.5
 - ตู้เหล็ก ธรรมดา 5KSS 5K | [6.6.Z
+- ตู้เหล็ก กันน้ำมีหลังคา 5KSW 5K | [6.6.Z]
 - ตู้ไฟสวิตช์บรอด ตู้เหล็ก DA DENCO | [6.63
 - ตู้พลาสติก กันน้ำ NNP NANO { ขนาด1 } | [6.7.1
 - ตู้พลาสติก กันน้ำ NNP NANO { ขนาด2 } | [6.7.1
@@ -953,28 +921,60 @@ Format: `category | category_index`
 - แคล้มฟันจระเข้ ชุบกัลวาไนซ์ HDG { SEC } | [7.1.H
 - แคล้มโอม ชุบกัลวาไนซ์ HDG { SEC } | [7.1.H
 - แฮนดี้บ๊อกซ์ สแควบ๊อกซ์ อ๊อกตาก้อนบ๊อกซ์ ชุบกัลวาไนซ์ HDG { SEC } | [7.1.H
+- ที่ดัดท่อ สปริงดัดท่อ SPG NANO { หน่วยนิ้ว หน่วยมิล } | [7.2.0]
+- ท่อร้อยสายไฟ สีขาว NNPP NANO { หน่วยมิลลิเมตร mm. } | [7.2.0]
+- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว NANO { หน่วยนิ้ว INCH ข้อต่อตรง NNCU คอนเนคเตอร์ NNCN แคล้มก้ามปู NNMC } | [7.2.0]
+- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว NANO { หน่วยมิลลิเมตร mm. ข้อต่อตรง NNCU คอนเนคเตอร์ NNCN แคล้มก้ามปู NNMC } | [7.2.0]
+- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว สีดำ NANO { ข้อต่อโค้ง NNIE NNBC ข้อต่อ3ทาง NNIT } | [7.2.0]
+- อุปกรณ์ท่อร้อยสายไฟ PVC สีขาว กล่องพักสายไฟ NANO { 2x4นิ้ว 4x4นิ้ว หน่วยมิลลิเมตร mm. หน่วยนิ้ว INCH } | [7.2.Z]
 - ข้อต่อโค้ง UPVC สีเหลือง SCG { 3/8 - 2นิ้ว } | [7.3.1
 - ท่อร้อยสายไฟ UPVC สีเหลือง SCG { 2-1/2 - 4นิ้ว } | [7.3.1
 - ท่อร้อยสายไฟ UPVC สีเหลือง SCG { 3/8 - 2นิ้ว } | [7.3.1
 - ท่ออ่อนลูกฟูก UPVC สีเหลือง SCG *ตัดเศษ | [7.3.1
 - ท่ออ่อนลูกฟูก UPVC สีเหลือง SCG { 3/8 - 1นิ้ว } | [7.3.1
 - อุปกรณ์ท่อร้อยสายไฟ UPVC สีเหลือง ข้อต่อตรง แคล้มก้ามปู คอนเนคเตอร์ ข้อต่อ 3ทาง SCG { 3/8 - 2 | [7.3.1
-- ท่อร้อยสายไฟ UPVC สีเหลือง NNPY NANO { 3/8 - 1นิ้ว } | [7.3.Z
-- ท่ออ่อนลูกฟูก UPVC สีเหลือง NNCY NANO { 3/8 - 1นิ้ว } | [7.3.Z
-- อุปกรณ์ ท่อร้อยสายไฟ UPVC สีเหลือง ข้อต่อตรง NNCU แคล้มก้ามปู NNMC คอนเนคเตอร์ NNCN ข้อต่อโค | [7.3.Z.
+- กล่องพักสายไฟ สีเหลือง 2x4นิ้ว 4x4นิ้ว ช้าง SCG NPI | [7.3.A]
+- ท่อร้อยสายไฟ UPVC สีเหลือง NNPY NANO { 3/8 - 1นิ้ว } | [7.3.Z]
+- ท่ออ่อนลูกฟูก UPVC สีเหลือง NNCY NANO { 3/8 - 1นิ้ว } | [7.3.Z]
+- อุปกรณ์ท่อร้อยสายไฟ PVC สีเหลือง กล่องพักสายไฟ 2x4นิ้ว 4x4นิ้ว NANO { หน่วยนิ้ว INCH } | [7.3.Z]
+- อุปกรณ์ท่อร้อยสายไฟ UPVC สีเหลือง NANO { หน่วยนิ้ว INCH ข้อต่อตรง NNCU คอนเนคเตอร์ NNCN แคล้มก้ามปู NNMC } | [7.3.Z]
+- อุปกรณ์ท่อร้อยสายไฟ UPVC สีเหลือง NANO { หน่วยนิ้ว INCH ข้อโค้ง HB90 ข้อต่อ3าง NNT NNBC } | [7.3.Z]
 - ข้อต่อตรง A B C ปากแตร  ท่อร้อยสายไฟ ฝังดิน HDPE | [7.4.9
 - ข้อต่อโค้ง ท่อร้อยสายไฟ ฝังดิน HDPE | [7.4.9
 - ท่อร้อยสายไฟ ฝังดิน HDPE (ม้วน 100เมตร, ม้วน 50เมตร) | [7.4.9
 - ท่อร้อยสายไฟ ฝังดิน HDPE *ตัดเศษ | [7.4.9
 - ท่อร้อยสายไฟ ฝังดิน HDPE *สั่งตัดจากโรงงาน รอ2วัน | [7.4.9
 - ฝาปิด ปลายท่อ ท่อร้อยสายไฟ ฝังดิน HDPE { NET } | [7.4.9
+- สวิตช์กด PUSH BUTTON SWITCH YW IDEC { มาตราฐาน } | [8.1.3]
 - สวิตช์กด 22มิล ABB | [8.1.4
-- DIGITAL MULTI-FUNCTION METER SINOTIMER { SDM มัลติฟังก์ชั่นมิเตอร์ Volt แรงดันไฟฟ้า Power Watt วัดพลังงาน วัดไฟฟ้า kWh ความถี่ Volt Amp AC220V } | [8.4
-- มิเตอร์วัดค่าพลังงาน HIET { ENERGY KWH METER } | [8.4
-- VOLT AMP HZ DIGITAL METER 96x96mm QUBIX | [8.4.1
-- VOLT AMP KWH METER 96x96mm แบบเข็ม QUBIX { SD-96 } | [8.4.1
-- สวิตซ์ควบคุม CNTD { CBSN CBSY CPB CMR } | [8.7.9
+- ขั้วต่อสายไฟ PCT KVF2002 { ตลับหนีบสายไฟ ขั้วต่อสายไฟ กันน้ำ } | [8.2.1]
+- ปลั๊กเพาเวอร์ 3ขา 4ขา 5ขา (16A-32A) PCE | [8.3.4]
+- ปลั๊กเพาเวอร์ กันน้ำ 3ขา 4ขา 5ขา (63A-125A) PCE | [8.3.4]
+- ปลั๊กเพาเวอร์ MENNEKES | [8.3.6]
+- ปลั๊กเพาเวอร์ 3ขา 4ขา 5ขา (16A-32A-63A-125A) DAKO | [8.3.9]
+- ปลั๊กเพาเวอร์ ABB | [8.3]
+- HOUR METER QUBIX { ฮาวมิเตอร์ MH48 } | [8.4.1]
+- VOLT AMP HZ DIGITAL METER 96x96mm QUBIX | [8.4.1]
+- VOLT AMP KWH METER 96x96mm แบบเข็ม QUBIX { SD-96 } | [8.4.1]
+- DIGITAL MULTI-FUNCTION METER SINOTIMER { SDM มัลติฟังก์ชั่นมิเตอร์ Volt แรงดันไฟฟ้า Power Watt วัดพลังงาน วัดไฟฟ้า kWh ความถี่ Volt Amp AC220V } | [8.4.5]
+- HOUR METER DAKO { HM } | [8.4.A]
+- HOUR METER SHINOHAWA { HM } | [8.4.Y]
+- HOUR METER CCS { HM } | [8.4.Z]
+- มิเตอร์วัดค่าพลังงาน HIET { ENERGY KWH METER } | [8.4.Z]
+- CT CURRENT TRANSFORMER รุ่นถอดประกอบได้ QUBIX { ซีที TP-12 TP-58 TP-812 TP-816 } | [8.5.3]
+- CT CURRENT TRANSFORMER BIGONE { ซีที MSQ-40 MSQ-60 MSQ-100 MSQ-130 } | [8.5.6]
+- CT CURRENT TRANSFORMER QUBIX { ซีที MSQ-30 MSQ-40 MSQ-60 MSQ-100 CP62/SW CP62/30 CP62/40 CP86/60 } | [8.5.8]
+- CT CURRENT TRANSFORMER รุ่นถอดประกอบได้ DAKO { ซีที DP-23 DP-58 DP-812 DP-816 } | [8.5.A]
+- CT CURRENT TRANSFORMER SCHNEIDER { ซีที METSECT5CC } | [8.5.B]
+- พัดลมดูดอากาศตู้คอนโทรล WINDSTORM | [8.6.1]
+- พัดลมดูดอากาศตู้คอนโทรล WINDSTORM { รุ่นพิเศษ กันน้ำ ทนความร้อน } | [8.6.1]
+- พัดลมดูดอากาศตู้คอนโทรล อุปกรณ์ WINDSTORM | [8.6.1]
+- พัดลมดูดอากาศตู้คอนโทรล TEC { WB123 TE123 WB155 TE155 WB157 TE157 WB175 TE175 } | [8.6.Z]
+- พัดลมดูดอากาศตู้คอนโทรล อุปกรณ์ TEC | [8.6.Z]
+- สวิตซ์ควบคุม CNTD { CBSN CBSY CPB CMR } | [8.7.9]
 - ไส้ไก่ สีดำ PRI | [8.8
+- ไฟหมุน ROTARY WARNING LED BIGONE | [8.9.0]
+- กระดิ่งแดง RED BELL { DAKO } | [8.9.9]
 - HRC FUSE LINK ฟิวส์ใบมีด | [8.B
 - ฐานฟิวส์คอนโทรล AC 10x38mm ABB { BASE FUSE } | [8.B
 - ฟิวส์ใบมีด NH00 OEZ { BASE FUSE } | [8.B
@@ -1008,8 +1008,9 @@ Format: `category | category_index`
 - รีเลย์ RELAY CNTD { CKE-2CS CKE-4CS CYF08A-E CYF14A-E} | [9.1.Z
 - ลิมิตสวิตช์ LIMIT SWITCH OMRON { V Z D4MC HL WL SS SHL ZC ZE D4N } | [9.2.1
 - ลิมิตสวิตช์ LIMITSWITCH TEND { TM TZ TAP } | [9.2.2
-- ลิมิตสวิตซ์ LIMIT SWITCH CNTD | [9.2.9
+- ลิมิตสวิตช์ LIMIT SWITCH SCHNEIDER { XCM XCK ZCE ZCY ZCM } | [9.2.5]
 - ลิมิตสวิตซ์ LIMIT SWITCH CNTD **OLD | [9.2.9
+- ลิมิตสวิตซ์ LIMIT SWITCH CNTD { CM13 CM17 CZ-71 CZ-73 TZ-81 CWL } | [9.2.9]
 - ลิมิตสวิตช์ LIMIT SWITCH DAKO { CM CZ TZ CWLCA CWLD CWLNJ } | [9.2.Z
 - TEMPERATURE CONTROLLER FOTEK { MT } | [9.4.3
 - TEMPERATURE CONTROLLER FOTEK { NT } | [9.4.3
@@ -1028,12 +1029,18 @@ Format: `category | category_index`
 - PHASE PROTECTION RELAY ENTES | [9.7.6
 - PHASE PROTECTOR TERMOSTAT POWER METER SINOTIMER | [9.7.8
 - PHASE PROTECTION RELAY ZOII | [9.7.9
-- HOUR METER DAKO { HM } | [9.8.A
 - แคลมป์ 2สกรู { เล็ก } | [A.6
 - แคลมป์ 2สกรู { ใหญ่ } | [A.6
 - คาปาซิเตอร์ CLMD + แมกเนติก + RVC ABB HITACHI | [B.1.2
 - POWER METER ABB | [B.4
+- เซอร์กิตเบรกเกอร์ DC MCB DC-PDC NANO { SOLAR CELL EV 2P 500VDC, 3P 750VDC, 4P 1000VDC } | [K.5.A]
+- DC SURGE PROTECTIVE FSP-D40 FEEO { SPD } | [K.7.1]
+- AC SURGE PROTECTION DEVICE NANO { SOLAR CELL EV กันฟ้าผ่า AC SPD } | [K.7.A]
+- DC SURGE PROTECTIVE DEVICE NANO { SOLAR CELL EV SPD } | [K.7.A]
+- ฐานฟิวส์ ลูกฟิวส์ 1000VDC NANO { SOLAR CELL EV DC-FH32-1000V SOLARZH-PV } | [K.8.A]
 - ฟิวส์คอนโทรล SOLAR DC 1000VDC 10x38mm TEC { CFPV-32X CF-10PV } | [K.8.Z
+- DC ISOLATOR SWITCH DC-ISW44C32 NANO { SOLAR CELL EV } | [K.9.A]
+- เซอร์กิตเบรกเกอร์ กันดูด (for EV) RCCB TYPE-B NANO { SOLAR CELL EV MCB } | [K.A.A]
 - MAIN SWITCH VCF SCHNEIDER | [Y]
 - พัดลม อุตสาหกรรม VENZ | [Y]
 - สินค้า TEMPCONTROLLER [CN] | [Y]

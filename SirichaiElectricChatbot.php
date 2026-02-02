@@ -461,13 +461,8 @@ class SirichaiElectricChatbot {
             }
             $result = $this->productAPI->searchProducts($criterias);
 
-            // Add reminder about critical rules
             if ($result !== null) {
-                $reminder = "\n\n---\nREMINDER - Critical Rules:\n";
-                $reminder .= "- NEVER exceed 3 categories per search (you searched " . count($criterias) . " categories)\n";
-                $reminder .= "- Show max 3 products per category\n";
-                $reminder .= "- Format: Product Name | Price | Unit (no category headers)\n";
-                return $result . $reminder;
+                return $result;
             }
 
             return "No products found.";
@@ -561,14 +556,14 @@ class SirichaiElectricChatbot {
                     'functionDeclarations' => array(
                         array(
                             'name' => 'search_products',
-                            'description' => 'Search for products by exact category names from the catalog file. Returns product name, price, and unit grouped by category.',
+                            'description' => 'Search for products by exact category names from the catalog file. Returns product name, price, and unit grouped by category. CRITICAL: Copy complete category names including all text inside {}, [], () - these contain brand/model codes. Never exceed 3 categories.',
                             'parameters' => array(
                                 'type' => 'object',
                                 'properties' => array(
                                     'criterias' => array(
                                         'type' => 'array',
                                         'items' => array('type' => 'string'),
-                                        'description' => 'Array of exact category names from the catalog file. Limit to 3 most relevant categories.'
+                                        'description' => 'Array of EXACT category names from catalog (the part before " | "). Must include ALL special characters: {}, [], () and their contents. Maximum 3 categories.'
                                     )
                                 ),
                                 'required' => array('criterias')
