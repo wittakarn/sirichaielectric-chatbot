@@ -15,24 +15,49 @@ class LineWebhookUtils {
      * @return bool True if bot was mentioned, false otherwise
      */
     public static function isBotMentioned($message, $botUserId = '') {
-        // No mention object = not mentioned
-        if (!isset($message['mention']['mentionees'])) {
-            return false;
-        }
-
-        foreach ($message['mention']['mentionees'] as $mentionee) {
-            // Method 1: Check isSelf flag (easiest and most reliable)
-            if (isset($mentionee['isSelf']) && $mentionee['isSelf'] === true) {
+        // Method 1: Check if message starts with "zx" (case-insensitive, works on LINE Desktop)
+        if (isset($message['text'])) {
+            $text = trim(strtolower($message['text']));
+            if (substr($text, 0, 2) === 'zx') {
                 return true;
             }
+        }
 
-            // Method 2: Check userId (backup method)
-            if (!empty($botUserId) && isset($mentionee['userId']) && $mentionee['userId'] === $botUserId) {
-                return true;
+        // Method 2: Check mention object (native LINE mention, doesn't work on Desktop)
+        if (isset($message['mention']['mentionees'])) {
+            foreach ($message['mention']['mentionees'] as $mentionee) {
+                // Check isSelf flag (easiest and most reliable)
+                if (isset($mentionee['isSelf']) && $mentionee['isSelf'] === true) {
+                    return true;
+                }
+
+                // Check userId (backup method)
+                if (!empty($botUserId) && isset($mentionee['userId']) && $mentionee['userId'] === $botUserId) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Remove "zx" prefix from message text (if present)
+     *
+     * @param string $text The message text
+     * @return string Message text with "zx" prefix removed
+     */
+    public static function removeZxPrefix($text) {
+        $text = trim($text);
+        $textLower = strtolower($text);
+
+        // Check if starts with "zx" (case-insensitive)
+        if (substr($textLower, 0, 2) === 'zx') {
+            // Remove "zx" and trim any whitespace after it
+            return trim(substr($text, 2));
+        }
+
+        return $text;
     }
 
     /**

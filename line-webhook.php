@@ -211,10 +211,13 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botU
             return;
         }
 
-        // Get chatbot response first (to capture search criteria)
-        $response = $chatbot->chat($messageText, $history);
+        // Remove "zx" prefix if present (used for mentioning bot on LINE Desktop)
+        $cleanedMessage = LineWebhookUtils::removeZxPrefix($messageText);
 
-        // Add user message to history with search criteria if available
+        // Get chatbot response first (to capture search criteria)
+        $response = $chatbot->chat($cleanedMessage, $history);
+
+        // Add user message to history with search criteria if available (store original message)
         $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
         $conversationManager->addMessage($conversationId, 'user', $messageText, 0, $searchCriteria);
     }
