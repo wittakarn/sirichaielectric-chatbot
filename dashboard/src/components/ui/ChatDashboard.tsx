@@ -9,7 +9,7 @@ const ChatDashboard: React.FC = () => {
         refetchInterval: 10000, // Auto-refresh every 10 seconds
     })
 
-    return <div>Chat Dashboard Component</div>;
+    return <div>{JSON.stringify(data)}</div>;
 }
 
 export default ChatDashboard;
