@@ -11,9 +11,11 @@ class DashboardController {
     private $dashboardService;
 
     public function __construct() {
-        global $dbConfig;
-        $dbManager = new DatabaseManager($dbConfig);
-        $this->dashboardService = new DashboardService($dbManager);
+        $config = Config::getInstance();
+        $dbConfig = $config->get('database');
+        $dbManager = DatabaseManager::getInstance($dbConfig);
+        $pdo = $dbManager->getConnection();
+        $this->dashboardService = new DashboardService($pdo);
     }
 
     /**
