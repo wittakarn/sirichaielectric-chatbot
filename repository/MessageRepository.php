@@ -68,12 +68,13 @@ class MessageRepository extends BaseRepository {
      * @param string $content Message content
      * @param int $tokensUsed Number of tokens used
      * @param int $sequenceNumber Sequence number in conversation
+     * @param string|null $searchCriteria JSON array of search categories (optional)
      * @return int Inserted message ID
      */
-    public function create($conversationId, $role, $content, $tokensUsed, $sequenceNumber) {
+    public function create($conversationId, $role, $content, $tokensUsed, $sequenceNumber, $searchCriteria = null) {
         $sql = "
-            INSERT INTO messages (conversation_id, role, content, tokens_used, sequence_number)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO messages (conversation_id, role, content, tokens_used, sequence_number, search_criteria)
+            VALUES (?, ?, ?, ?, ?, ?)
         ";
 
         $this->execute($sql, array(
@@ -81,7 +82,8 @@ class MessageRepository extends BaseRepository {
             $role,
             $content,
             intval($tokensUsed),
-            intval($sequenceNumber)
+            intval($sequenceNumber),
+            $searchCriteria
         ));
 
         return intval($this->lastInsertId());
@@ -115,27 +117,32 @@ class MessageRepository extends BaseRepository {
     }
 
     /**
-     * Delete oldest messages keeping only recent N messages
+     * Delete oldest messages keeping only recent N messages and/or messages within date range
      *
      * @param string $conversationId Conversation ID
      * @param int $keepCount Number of recent messages to keep
+     * @param int $olderThanDays Delete messages older than N days (default 3)
      * @return int Number of deleted messages
      */
-    public function deleteOldest($conversationId, $keepCount) {
+    public function deleteOldest($conversationId, $keepCount, $olderThanDays = 3) {
+        // Delete messages that are both outside the keep count OR older than specified days
         $sql = "
             DELETE FROM messages
             WHERE conversation_id = ?
-            AND id NOT IN (
-                SELECT id FROM (
-                    SELECT id FROM messages
-                    WHERE conversation_id = ?
-                    ORDER BY sequence_number DESC
-                    LIMIT ?
-                ) as recent_messages
+            AND (
+                id NOT IN (
+                    SELECT id FROM (
+                        SELECT id FROM messages
+                        WHERE conversation_id = ?
+                        ORDER BY sequence_number DESC
+                        LIMIT ?
+                    ) as recent_messages
+                )
+                OR timestamp < DATE_SUB(NOW(), INTERVAL ? DAY)
             )
         ";
 
-        return $this->execute($sql, array($conversationId, $conversationId, $keepCount));
+        return $this->execute($sql, array($conversationId, $conversationId, $keepCount, $olderThanDays));
     }
 
     /**
@@ -187,6 +194,39 @@ class MessageRepository extends BaseRepository {
         }
 
         return $message;
+    }
+
+    /**
+     * Get last N messages in conversation (for monitoring preview)
+     *
+     * @param string $conversationId Conversation ID
+     * @param int $limit Number of recent messages to get (default 6)
+     * @return array List of recent messages
+     */
+    public function getLastNMessages($conversationId, $limit = 6) {
+        $sql = "
+            SELECT id, conversation_id, role, content,
+                   UNIX_TIMESTAMP(timestamp) as timestamp,
+                   tokens_used, sequence_number
+            FROM messages
+            WHERE conversation_id = ?
+            ORDER BY sequence_number DESC
+            LIMIT ?
+        ";
+
+        $messages = $this->fetchAll($sql, array($conversationId, $limit));
+
+        // Reverse to get chronological order (oldest to newest)
+        $messages = array_reverse($messages);
+
+        foreach ($messages as &$message) {
+            $message['id'] = intval($message['id']);
+            $message['timestamp'] = intval($message['timestamp']);
+            $message['tokens_used'] = intval($message['tokens_used']);
+            $message['sequence_number'] = intval($message['sequence_number']);
+        }
+
+        return $messages;
     }
 
     /**

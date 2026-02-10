@@ -8,7 +8,7 @@
 // Error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
-ini_set('log_errors', 1);
+ini_set('error_log', dirname(__FILE__) . '/logs.log');
 
 // Set headers
 header('Content-Type: application/json');
@@ -55,7 +55,7 @@ $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
 // Initialize conversation manager with database
 $dbConfig = $config->get('database');
 $conversationConfig = $config->get('conversation');
-$maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 50;
+$maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
 $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);
 
 // Route the request
@@ -162,16 +162,17 @@ function handleChat($chatbot, $conversationManager) {
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
-    // Add user message to history (0 tokens for user messages)
-    $conversationManager->addMessage($conversationId, 'user', $message, 0);
-
-    // Get chatbot response
+    // Get chatbot response first (to capture search criteria)
     $response = $chatbot->chat($message, $history);
 
+    // Add user message to history with search criteria if available
+    $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+    $conversationManager->addMessage($conversationId, 'user', $message, 0, $searchCriteria);
+
     if ($response['success']) {
-        // Add assistant response to history with token tracking
+        // Add assistant response to history with token tracking (no search criteria for assistant)
         $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
-        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed);
+        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed, null);
 
         echo json_encode(array(
             'success' => true,

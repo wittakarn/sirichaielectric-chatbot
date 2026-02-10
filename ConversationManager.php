@@ -23,12 +23,12 @@ class ConversationManager {
     /**
      * Constructor
      *
-     * @param int $maxMessages Maximum messages to keep per conversation (default 50)
+     * @param int $maxMessages Maximum messages to keep per conversation (default 20)
      * @param string $platform Platform identifier ('api' or 'line')
      * @param array $dbConfig Database configuration array
      * @throws Exception if database connection fails
      */
-    public function __construct($maxMessages = 50, $platform = 'api', $dbConfig = null) {
+    public function __construct($maxMessages = 20, $platform = 'api', $dbConfig = null) {
         $this->maxMessagesPerConversation = $maxMessages;
         $this->platform = $platform;
 
@@ -65,10 +65,11 @@ class ConversationManager {
      * @param string $role Message role ('user' or 'assistant')
      * @param string $content Message content
      * @param int $tokensUsed Number of tokens used (default 0)
+     * @param string|null $searchCriteria JSON array of search categories (optional)
      * @return bool True on success
      * @throws Exception if database operation fails
      */
-    public function addMessage($conversationId, $role, $content, $tokensUsed = 0) {
+    public function addMessage($conversationId, $role, $content, $tokensUsed = 0, $searchCriteria = null) {
         try {
             $this->conversationRepository->beginTransaction();
 
@@ -88,7 +89,7 @@ class ConversationManager {
 
             // Get next sequence number and create message
             $nextSeq = $this->messageRepository->getNextSequenceNumber($conversationId);
-            $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq);
+            $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq, $searchCriteria);
 
             // Trim old messages
             $this->trimConversation($conversationId);
@@ -344,6 +345,22 @@ class ConversationManager {
         } catch (PDOException $e) {
             error_log('[ConversationManager] autoResumeChatbot failed: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get active conversations from recent days
+     *
+     * @param int $days Number of days to look back (default 2)
+     * @param int $limit Maximum number of results
+     * @return array List of active conversations
+     */
+    public function getActiveConversations($days = 2, $limit = 100) {
+        try {
+            return $this->conversationRepository->findActiveRecent($days, $limit);
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] getActiveConversations failed: ' . $e->getMessage());
+            return array();
         }
     }
 }

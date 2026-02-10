@@ -165,7 +165,7 @@ sirichaielectric-chatbot/
 **Benefits:**
 - Conversations survive server restarts
 - Cross-session continuity for LINE users
-- 50-message context window (up from 10)
+- 20-message context window (up from 10)
 - Token usage tracking per message
 - Platform separation (LINE vs API analytics)
 
@@ -175,7 +175,7 @@ sirichaielectric-chatbot/
 - conversation_id (VARCHAR 100, UNIQUE)
 - platform ('api' or 'line')
 - user_id (LINE user ID if applicable)
-- max_messages_limit (default 50)
+- max_messages_limit (default 20)
 - created_at, last_activity timestamps
 
 #### `messages` Table
@@ -324,7 +324,7 @@ CREATE TABLE conversations (
     conversation_id VARCHAR(100) NOT NULL UNIQUE,
     platform VARCHAR(20) NOT NULL DEFAULT 'api',
     user_id VARCHAR(100) NULL,
-    max_messages_limit INT NOT NULL DEFAULT 50,
+    max_messages_limit INT NOT NULL DEFAULT 20,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_conversation_id (conversation_id),
@@ -824,7 +824,7 @@ DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 
 # Conversation
-MAX_MESSAGES_PER_CONVERSATION=50
+MAX_MESSAGES_PER_CONVERSATION=20
 ```
 
 ### Config Loader (`config.php`)
@@ -1214,7 +1214,7 @@ Enable detailed logging:
 // In index.php or line-webhook.php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-ini_set('log_errors', 1);
+ini_set('error_log', dirname(__FILE__) . '/logs.log');
 ini_set('error_log', '/path/to/debug.log');
 ```
 
@@ -1380,7 +1380,7 @@ $messages = $messageRepository->getHistory($conversationId);
    - Only call `refreshFiles()` when content changes
 
 2. **Trim conversations:**
-   - Keep max messages limit reasonable (50 recommended)
+   - Keep max messages limit reasonable (20 recommended)
    - Run cleanup for old conversations
 
 3. **Index optimization:**
@@ -1647,7 +1647,7 @@ A: Files auto-expire after 48 hours. Cleanup is optional, mainly for testing.
 A: Yes! Just update LINE credentials in `.env`.
 
 **Q: How do I change the max message limit?**
-A: Update `MAX_MESSAGES_PER_CONVERSATION` in `.env` (default 50).
+A: Update `MAX_MESSAGES_PER_CONVERSATION` in `.env` (default 20).
 
 **Q: Can I deploy this on shared hosting?**
 A: Yes, if it supports PHP 5.6+, MySQL 5.7+, and curl.

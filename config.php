@@ -85,7 +85,12 @@ class Config {
                 'charset' => 'utf8mb4',
             ),
             'conversation' => array(
-                'maxMessages' => intval($this->getEnv('MAX_MESSAGES_PER_CONVERSATION', '50')),
+                'maxMessages' => intval($this->getEnv('MAX_MESSAGES_PER_CONVERSATION', '20')),
+                'autoResumeTimeoutMinutes' => intval($this->getEnv('AUTO_RESUME_TIMEOUT_MINUTES', '30')),
+            ),
+            'admin' => array(
+                'username' => $this->getEnv('ADMIN_USERNAME', ''),
+                'password_hash' => $this->getEnv('ADMIN_PASSWORD_HASH', ''),
             ),
         );
     }
@@ -100,11 +105,20 @@ class Config {
         return $value !== false && $value !== '' ? $value : $default;
     }
 
-    public function get($section = null) {
+    public function get($section = null, $key = null, $default = null) {
         if ($section === null) {
             return $this->config;
         }
-        return isset($this->config[$section]) ? $this->config[$section] : null;
+
+        if ($key === null) {
+            return isset($this->config[$section]) ? $this->config[$section] : null;
+        }
+
+        if (isset($this->config[$section][$key])) {
+            return $this->config[$section][$key];
+        }
+
+        return $default;
     }
 
     public function validate() {

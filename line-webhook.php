@@ -8,7 +8,7 @@
 // Error reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+ini_set('error_log', dirname(__FILE__) . '/logs.log');
 
 // Allow unlimited execution time for background processing
 set_time_limit(0);
@@ -20,6 +20,7 @@ require_once __DIR__ . '/ProductAPIService.php';
 require_once __DIR__ . '/GeminiFileManager.php';
 require_once __DIR__ . '/SirichaiElectricChatbot.php';
 require_once __DIR__ . '/ConversationManager.php';
+require_once __DIR__ . '/utils/LineWebhookUtils.php';
 
 // Initialize configuration
 try {
@@ -51,7 +52,7 @@ $signature = isset($_SERVER['HTTP_X_LINE_SIGNATURE']) ? $_SERVER['HTTP_X_LINE_SI
 $verifySignature = getenv('VERIFY_LINE_SIGNATURE') !== 'false';
 
 if ($verifySignature) {
-    if (!verifySignature($body, $signature, $channelSecret)) {
+    if (!LineWebhookUtils::verifySignature($body, $signature, $channelSecret)) {
         error_log('[LINE Webhook] Invalid signature');
         http_response_code(403);
         exit;
@@ -112,12 +113,15 @@ if (isset($events['events']) && is_array($events['events']) && count($events['ev
     // Use custom conversation manager for LINE (stores by LINE User ID)
     $dbConfig = $config->get('database');
     $conversationConfig = $config->get('conversation');
-    $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 50;
+    $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
     $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
+
+    // Get bot user ID from webhook data for mention detection
+    $botUserId = LineWebhookUtils::getBotUserId($events);
 
     foreach ($events['events'] as $event) {
         try {
-            handleEvent($event, $chatbot, $conversationManager, $channelAccessToken);
+            handleEvent($event, $chatbot, $conversationManager, $channelAccessToken, $botUserId);
         } catch (Exception $e) {
             error_log('[LINE Webhook] ERROR: ' . $e->getMessage());
             error_log('[LINE Webhook] Stack trace: ' . $e->getTraceAsString());
@@ -126,7 +130,7 @@ if (isset($events['events']) && is_array($events['events']) && count($events['ev
             if (isset($event['source']['userId'])) {
                 $userId = $event['source']['userId'];
                 $errorMsg = "ขออภัยครับ ขณะนี้ระบบมีปัญหา กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานโดยตรงครับ\n\nSorry, the system is experiencing issues. Please try again or contact our team directly.";
-                sendPushMessage($userId, $errorMsg, $channelAccessToken);
+                LineWebhookUtils::sendPushMessage($userId, $errorMsg, $channelAccessToken);
             }
         }
     }
@@ -136,30 +140,23 @@ exit;
 
 // ===== Helper Functions =====
 
-function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
-    $eventType = isset($event['type']) ? $event['type'] : '';
+function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botUserId = '') {
+    // Check if we should respond to this event
+    $responseInfo = LineWebhookUtils::shouldRespondToEvent($event, $botUserId);
 
-    // Only handle message events
-    if ($eventType !== 'message') {
-        return;
+    if ($responseInfo === false) {
+        return; // Don't respond
     }
 
-    $messageType = isset($event['message']['type']) ? $event['message']['type'] : '';
+    // Extract response info
+    $userId = $responseInfo['userId'];
+    $conversationId = $responseInfo['conversationId'];
+    $sourceType = $responseInfo['sourceType'];
+    $messageType = $responseInfo['messageType'];
+    $groupId = isset($responseInfo['groupId']) ? $responseInfo['groupId'] : null;
 
-    // Only handle text and image messages
-    if ($messageType !== 'text' && $messageType !== 'image') {
-        return;
-    }
-
-    $replyToken = isset($event['replyToken']) ? $event['replyToken'] : '';
-    $userId = isset($event['source']['userId']) ? $event['source']['userId'] : '';
-
-    if (empty($replyToken) || empty($userId)) {
-        return;
-    }
-
-    // Use LINE User ID as conversation ID
-    $conversationId = 'line_' . $userId;
+    // Determine reply target: for groups/rooms, reply to group; for direct chat, reply to user
+    $replyTo = ($sourceType === 'group' || $sourceType === 'room') && !empty($groupId) ? $groupId : $userId;
 
     // Check for pause/resume commands (text messages only)
     if ($messageType === 'text') {
@@ -182,7 +179,7 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
 
     // Show loading animation (instead of sending a message)
     // This gives us up to 60 seconds to process the request
-    showLoadingAnimation($userId, 60, $accessToken);
+    LineWebhookUtils::showLoadingAnimation($replyTo, 60, $accessToken);
 
     $startTime = microtime(true);
 
@@ -194,18 +191,19 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
         }
 
         // Download image from LINE Content API
-        $imageData = downloadLineContent($messageId, $accessToken);
+        $imageData = LineWebhookUtils::downloadLineContent($messageId, $accessToken);
         if ($imageData === false) {
             error_log('[LINE] ERROR: Failed to download image ' . $messageId);
-            sendPushMessage($userId, "ขออภัยครับ ไม่สามารถรับรูปภาพได้ กรุณาลองส่งใหม่อีกครั้งครับ\n\nSorry, we couldn't receive the image. Please try sending it again.", $accessToken);
+            LineWebhookUtils::sendPushMessage($replyTo, "ขออภัยครับ ไม่สามารถรับรูปภาพได้ กรุณาลองส่งใหม่อีกครั้งครับ\n\nSorry, we couldn't receive the image. Please try sending it again.", $accessToken);
             return;
         }
 
-        // Store placeholder in conversation history (images can't be stored in DB)
-        $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0);
-
-        // Get chatbot response with image
+        // Get chatbot response with image first (to capture search criteria)
         $response = $chatbot->chatWithImage($imageData, 'image/jpeg', '', $history);
+
+        // Store placeholder in conversation history with search criteria if available
+        $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+        $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0, $searchCriteria);
     } else {
         // Handle text message
         $messageText = isset($event['message']['text']) ? $event['message']['text'] : '';
@@ -213,11 +211,15 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
             return;
         }
 
-        // Add user message to history (0 tokens for user messages)
-        $conversationManager->addMessage($conversationId, 'user', $messageText, 0);
+        // Remove "zx" prefix if present (used for mentioning bot on LINE Desktop)
+        $cleanedMessage = LineWebhookUtils::removeZxPrefix($messageText);
 
-        // Get chatbot response
-        $response = $chatbot->chat($messageText, $history);
+        // Get chatbot response first (to capture search criteria)
+        $response = $chatbot->chat($cleanedMessage, $history);
+
+        // Add user message to history with search criteria if available (store original message)
+        $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
+        $conversationManager->addMessage($conversationId, 'user', $messageText, 0, $searchCriteria);
     }
 
     $duration = round(microtime(true) - $startTime, 2);
@@ -228,9 +230,9 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
     }
 
     if ($response['success']) {
-        // Add assistant response to history with token tracking
+        // Add assistant response to history with token tracking (no search criteria for assistant)
         $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
-        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed);
+        $conversationManager->addMessage($conversationId, 'assistant', $response['response'], $tokensUsed, null);
 
         // Send the actual AI response
         // Use Push API for ALL messages because:
@@ -238,11 +240,11 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
         // 2. We're already using Push API for loading animation
         // 3. Push API is more reliable for async processing
         $replyMessage = $response['response'];
-        $messages = splitMessage($replyMessage, 4900);
+        $messages = LineWebhookUtils::splitMessage($replyMessage, 4900);
 
-        // Send all messages via Push API
+        // Send all messages via Push API (to group if group mention, to user if direct chat)
         for ($i = 0; $i < count($messages); $i++) {
-            $result = sendPushMessage($userId, $messages[$i], $accessToken);
+            $result = LineWebhookUtils::sendPushMessage($replyTo, $messages[$i], $accessToken);
             if (!$result) {
                 error_log('[LINE] ERROR: Push message ' . $i . ' failed');
             }
@@ -257,149 +259,8 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken) {
             $errorMsg = "ขออภัยครับ ขณะนี้ระบบมีปัญหา กรุณาลองใหม่อีกครั้งหรือติดต่อทีมงานโดยตรงครับ\n\nSorry, the system is experiencing issues. Please try again or contact our team directly.";
         }
 
-        sendPushMessage($userId, $errorMsg, $accessToken);
+        LineWebhookUtils::sendPushMessage($replyTo, $errorMsg, $accessToken);
     }
-}
-
-function splitMessage($text, $maxLength = 4900) {
-    $messages = array();
-
-    if (strlen($text) <= $maxLength) {
-        $messages[] = $text;
-        return $messages;
-    }
-
-    // Split by paragraphs
-    $paragraphs = explode("\n\n", $text);
-    $currentMessage = '';
-
-    foreach ($paragraphs as $paragraph) {
-        if (strlen($currentMessage . $paragraph) > $maxLength) {
-            if (!empty($currentMessage)) {
-                $messages[] = trim($currentMessage);
-                $currentMessage = '';
-            }
-
-            // If single paragraph is too long, split by sentences
-            if (strlen($paragraph) > $maxLength) {
-                $sentences = preg_split('/([.!?]\s+)/', $paragraph, -1, PREG_SPLIT_DELIM_CAPTURE);
-                foreach ($sentences as $sentence) {
-                    if (strlen($currentMessage . $sentence) > $maxLength && !empty($currentMessage)) {
-                        $messages[] = trim($currentMessage);
-                        $currentMessage = $sentence;
-                    } else {
-                        $currentMessage .= $sentence;
-                    }
-                }
-            } else {
-                $currentMessage = $paragraph . "\n\n";
-            }
-        } else {
-            $currentMessage .= $paragraph . "\n\n";
-        }
-    }
-
-    if (!empty($currentMessage)) {
-        $messages[] = trim($currentMessage);
-    }
-
-    return $messages;
-}
-
-function verifySignature($body, $signature, $secret) {
-    if (empty($signature) || empty($secret)) {
-        return false;
-    }
-
-    $hash = base64_encode(hash_hmac('sha256', $body, $secret, true));
-    return hash_equals($signature, $hash);
-}
-
-function sendLineRequest($url, $data, $accessToken, $logPrefix) {
-    $headers = array(
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $accessToken
-    );
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-    $result = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Accept 2xx status codes (200, 202, etc.)
-    if ($httpCode < 200 || $httpCode >= 300) {
-        error_log('[LINE] ' . $logPrefix . ' failed: HTTP ' . $httpCode . ', Response: ' . $result);
-        return false;
-    }
-
-    return true;
-}
-
-function sendPushMessage($userId, $message, $accessToken) {
-    $url = 'https://api.line.me/v2/bot/message/push';
-
-    $data = array(
-        'to' => $userId,
-        'messages' => array(
-            array(
-                'type' => 'text',
-                'text' => $message
-            )
-        )
-    );
-
-    return sendLineRequest($url, $data, $accessToken, 'Push');
-}
-
-function downloadLineContent($messageId, $accessToken) {
-    $url = 'https://api-data.line.me/v2/bot/message/' . $messageId . '/content';
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'Authorization: Bearer ' . $accessToken
-    ));
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-    $result = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($result === false) {
-        error_log('[LINE] Content download cURL error: ' . $error);
-        return false;
-    }
-
-    if ($httpCode !== 200) {
-        error_log('[LINE] Content download failed: HTTP ' . $httpCode);
-        return false;
-    }
-
-    error_log('[LINE] Downloaded content: ' . strlen($result) . ' bytes');
-    return $result;
-}
-
-function showLoadingAnimation($userId, $seconds, $accessToken) {
-    $url = 'https://api.line.me/v2/bot/chat/loading/start';
-
-    // Ensure seconds is between 5 and 60
-    $seconds = max(5, min(60, $seconds));
-
-    $data = array(
-        'chatId' => $userId,
-        'loadingSeconds' => $seconds
-    );
-
-    return sendLineRequest($url, $data, $accessToken, 'Loading Animation');
 }
 
 /**
@@ -467,15 +328,15 @@ function handlePauseCommand($conversationId, $userId, $conversationManager, $acc
     if (!$conversationManager->isChatbotActive($conversationId)) {
         $message = "ขณะนี้ท่านกำลังรอพนักงานอยู่แล้วค่ะ กรุณารอสักครู่นะคะ\n\n"
                  . "You are already waiting for a human agent. Please wait a moment.";
-        sendPushMessage($userId, $message, $accessToken);
+        LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
         return 'already_paused';
     }
 
     // Pause the chatbot
     $conversationManager->pauseChatbot($conversationId);
 
-    // Store the pause request in conversation history
-    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ขอติดต่อพนักงาน]', 0);
+    // Store the pause request in conversation history (no search criteria for system messages)
+    $conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ขอติดต่อพนักงาน]', 0, null);
 
     $message = "ได้รับคำขอแล้วค่ะ พนักงานจะติดต่อกลับโดยเร็วที่สุด\n"
              . "ระหว่างนี้แชทบอทจะหยุดตอบชั่วคราวค่ะ\n\n"
@@ -483,7 +344,7 @@ function handlePauseCommand($conversationId, $userId, $conversationManager, $acc
              . "The chatbot will be paused in the meantime.\n\n"
              . "💡 พิมพ์ \"/bot\" เพื่อกลับมาใช้แชทบอท";
 
-    sendPushMessage($userId, $message, $accessToken);
+    LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
 
     error_log("[LINE] Chatbot paused by user request: $conversationId");
 
@@ -498,22 +359,22 @@ function handleResumeCommand($conversationId, $userId, $conversationManager, $ac
     if ($conversationManager->isChatbotActive($conversationId)) {
         $message = "แชทบอทพร้อมให้บริการอยู่แล้วค่ะ มีอะไรให้ช่วยไหมคะ?\n\n"
                  . "The chatbot is already active. How can I help you?";
-        sendPushMessage($userId, $message, $accessToken);
+        LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
         return 'already_active';
     }
 
     // Resume the chatbot
     $conversationManager->resumeChatbot($conversationId);
 
-    // Store the resume in conversation history
-    $conversationManager->addMessage($conversationId, 'assistant', '[แชทบอทกลับมาให้บริการ]', 0);
+    // Store the resume in conversation history (no search criteria for system messages)
+    $conversationManager->addMessage($conversationId, 'assistant', '[แชทบอทกลับมาให้บริการ]', 0, null);
 
     $message = "แชทบอทกลับมาให้บริการแล้วค่ะ 🤖\n"
              . "มีอะไรให้ช่วยไหมคะ?\n\n"
              . "The chatbot is now active again.\n"
              . "How can I help you?";
 
-    sendPushMessage($userId, $message, $accessToken);
+    LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
 
     error_log("[LINE] Chatbot resumed: $conversationId");
 

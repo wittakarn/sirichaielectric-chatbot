@@ -281,4 +281,66 @@ class ConversationRepository extends BaseRepository {
         ";
         return $this->execute($sql, array($maxPausedMinutes));
     }
+
+    /**
+     * Get active conversations from the last N days
+     *
+     * @param int $days Number of days to look back (default 2)
+     * @param int $limit Maximum number of results
+     * @return array List of active conversations
+     */
+    public function findActiveRecent($days = 2, $limit = 100) {
+        $sql = "
+            SELECT conversation_id, platform, user_id,
+                   UNIX_TIMESTAMP(created_at) as created_at,
+                   UNIX_TIMESTAMP(last_activity) as last_activity
+            FROM conversations
+            WHERE is_chatbot_active = 1
+              AND last_activity >= DATE_SUB(NOW(), INTERVAL ? DAY)
+            ORDER BY last_activity DESC
+            LIMIT ?
+        ";
+
+        $conversations = $this->fetchAll($sql, array($days, $limit));
+
+        foreach ($conversations as &$conversation) {
+            $conversation['created_at'] = intval($conversation['created_at']);
+            $conversation['last_activity'] = intval($conversation['last_activity']);
+        }
+
+        return $conversations;
+    }
+
+    /**
+     * Get recent conversations for monitoring (simple version)
+     *
+     * @param int $limit Number of conversations to return (default 6)
+     * @return array List of conversations
+     */
+    public function findRecentForMonitoring($limit = 6) {
+        $sql = "
+            SELECT
+                conversation_id,
+                platform,
+                user_id,
+                is_chatbot_active,
+                UNIX_TIMESTAMP(paused_at) as paused_at,
+                UNIX_TIMESTAMP(created_at) as created_at,
+                UNIX_TIMESTAMP(last_activity) as last_activity
+            FROM conversations
+            ORDER BY last_activity DESC
+            LIMIT ?
+        ";
+
+        $conversations = $this->fetchAll($sql, array($limit));
+
+        foreach ($conversations as &$conversation) {
+            $conversation['created_at'] = intval($conversation['created_at']);
+            $conversation['last_activity'] = intval($conversation['last_activity']);
+            $conversation['is_chatbot_active'] = intval($conversation['is_chatbot_active']);
+            $conversation['paused_at'] = $conversation['paused_at'] ? intval($conversation['paused_at']) : null;
+        }
+
+        return $conversations;
+    }
 }
