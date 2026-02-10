@@ -238,10 +238,23 @@ class LineWebhookUtils {
      */
     public static function verifySignature($body, $signature, $secret) {
         if (empty($signature) || empty($secret)) {
+            error_log('[LINE Signature] Verification failed: ' . (empty($signature) ? 'signature is empty' : 'secret is empty'));
             return false;
         }
 
+        // Compute the HMAC-SHA256 signature
         $hash = base64_encode(hash_hmac('sha256', $body, $secret, true));
+
+        // Detailed debug logging
+        // error_log('[LINE Signature] ===== Signature Verification Debug =====');
+        // error_log('[LINE Signature] Body length: ' . strlen($body) . ' bytes');
+        // error_log('[LINE Signature] Body preview: ' . $body);
+        // error_log('[LINE Signature] Secret length: ' . strlen($secret) . ' chars');
+        // error_log('[LINE Signature] Secret preview: ' . $secret);
+        // error_log('[LINE Signature] Computed hash: ' . $hash);
+        // error_log('[LINE Signature] Received signature: ' . $signature);
+        // error_log('[LINE Signature] Match: ' . ($hash === $signature ? 'YES' : 'NO'));
+
         return hash_equals($signature, $hash);
     }
 
