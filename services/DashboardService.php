@@ -10,9 +10,9 @@ class DashboardService {
     private $conversationRepo;
     private $messageRepo;
 
-    public function __construct($dbManager) {
-        $this->conversationRepo = new ConversationRepository($dbManager);
-        $this->messageRepo = new MessageRepository($dbManager);
+    public function __construct($pdo) {
+        $this->conversationRepo = new ConversationRepository($pdo);
+        $this->messageRepo = new MessageRepository($pdo);
     }
 
     /**
