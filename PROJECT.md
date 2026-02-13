@@ -787,6 +787,291 @@ Bot:   "แชทบอทกลับมาให้บริการแล้
 
 ---
 
+## Gemini Function Calling Architecture
+
+### How Function Calling Works
+
+Gemini API uses a **two-step conversational flow** for function calling. The AI doesn't execute functions directly - instead, it requests your code to execute them and returns the results.
+
+#### The Two-Step Process
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 1: Gemini Decides to Call a Function                      │
+└─────────────────────────────────────────────────────────────────┘
+
+User: "มีตู้เหล็ก KJL รุ่นไหนบ้าง" (What KJL metal cabinets do you have?)
+     ↓
+Your PHP Code → Sends to Gemini API with function declarations
+     ↓
+Gemini AI analyzes: "I need product data to answer this. I should call search_products()"
+     ↓
+Gemini Response: {
+  "functionCalls": [{
+    "name": "search_products",
+    "args": {"criterias": ["ตู้เหล็ก KJL KBSA"]}
+  }]
+}
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 2: Execute Function and Send Results Back                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Your PHP Code: Executes search_products() → Gets product data from API
+     ↓
+Your PHP Code → Sends conversation + function results back to Gemini
+     ↓
+Gemini AI: "Now I have the data! Let me format a nice response."
+     ↓
+Gemini Response: {
+  "text": "ตู้เหล็ก KJL KBSA มี 3 รุ่น:\n\nตู้เหล็ก KJL KBSA (รุ่น 1) ราคา: 1,250 บาท/ชิ้น..."
+}
+     ↓
+Return final response to user
+```
+
+### Available Functions
+
+#### 1. search_products()
+
+**Purpose:** Search for products by category names from the catalog
+
+**When to Use:**
+- Customer asks about specific products, prices, or availability
+- Requests to see products from a category or brand
+- Mentions model codes or series (KBSA, KBSW, KJL, etc.)
+- Asks follow-up filtering questions ("only metal", "show me X brand")
+
+**Parameters:**
+```php
+array(
+  'criterias' => array(
+    'ตู้เหล็ก KJL KBSA { รุ่น KBSA-100 }',
+    'สายไไฟ 2.5 ตร.มม.'
+  )
+)
+```
+
+**Returns:** Markdown formatted product list with name, price, and unit
+
+**Example:**
+```
+# PRODUCTS
+## ตู้เหล็ก KJL KBSA
+- ตู้เหล็ก KJL KBSA (รุ่น 1) | 1,250 | ชิ้น
+- ตู้เหล็ก KJL KBSA (รุ่น 2) | 1,450 | ชิ้น
+```
+
+#### 2. search_product_detail()
+
+**Purpose:** Get detailed specifications for a specific product (weight, size, quantity per pack)
+
+**When to Use:**
+- Customer asks about product weight, dimensions, or size
+- Asks how many pieces come in a pack/box
+- Wants detailed specifications beyond name and price
+- Thai keywords: "น้ำหนักเท่าไหร่", "ขนาด", "มีกี่ชิ้นต่อแพ็ค"
+
+**Parameters:**
+```php
+array(
+  'productName' => '[422112*1] แมกเนติก LC1D12M7 220V 1NO+1NC SCHNEIDER {MAGNETIC CONTACTOR LC1-D12M7 | LC1D12M7 SCHNEIDER}'
+)
+```
+
+**Important:** Use the EXACT product name from `search_products()` results
+
+**Returns:** JSON with detailed product specifications
+
+**Example Usage Flow:**
+```
+Customer: "มีตู้เหล็ก KJL รุ่นไหนบ้าง"
+Bot: [Calls search_products(), shows 3 products]
+
+Customer: "รุ่นแรกน้ำหนักเท่าไหร่"
+Bot: [Calls search_product_detail() with exact product name]
+Bot: "น้ำหนัก: 2.5 กก., ขนาด: 30x40x15 ซม., บรรจุ 1 ชิ้น/กล่อง"
+```
+
+### Code Implementation
+
+#### Function Declaration (SirichaiElectricChatbot.php lines 554-589)
+
+```php
+$requestBody['tools'] = array(
+    array(
+        'functionDeclarations' => array(
+            array(
+                'name' => 'search_products',
+                'description' => 'Search for products by exact category names...',
+                'parameters' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'criterias' => array(
+                            'type' => 'array',
+                            'items' => array('type' => 'string'),
+                            'description' => 'Array of EXACT category names...'
+                        )
+                    ),
+                    'required' => array('criterias')
+                )
+            ),
+            array(
+                'name' => 'search_product_detail',
+                'description' => 'Get detailed information for a specific product...',
+                'parameters' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'productName' => array(
+                            'type' => 'string',
+                            'description' => 'The EXACT product name as it appears in search results.'
+                        )
+                    ),
+                    'required' => array('productName')
+                )
+            )
+        )
+    )
+);
+```
+
+#### Function Execution (SirichaiElectricChatbot.php lines 470-486)
+
+```php
+private function executeFunction($functionName, $args) {
+    if ($functionName === 'search_products') {
+        $criterias = isset($args['criterias']) ? $args['criterias'] : array();
+        $result = $this->productAPI->searchProducts($criterias);
+        return $result !== null ? $result : "No products found.";
+    }
+
+    if ($functionName === 'search_product_detail') {
+        $productName = isset($args['productName']) ? $args['productName'] : '';
+        $result = $this->productAPI->getProductDetail($productName);
+        return $result !== null ? $result : "Product details not found.";
+    }
+
+    return "Unknown function: " . $functionName;
+}
+```
+
+#### Conversation Flow (SirichaiElectricChatbot.php lines 375-451)
+
+```php
+private function handleFunctionCalls($response, $originalContents) {
+    // Step 1: Build conversation with function call request
+    $contents = $originalContents;
+
+    // Add Gemini's function call to conversation
+    $contents[] = array(
+        'role' => 'model',
+        'parts' => [cleanedFunctionCallParts]
+    );
+
+    // Step 2: Execute the actual function
+    foreach ($response['functionCalls'] as $call) {
+        $result = $this->executeFunction($call['name'], $call['args']);
+
+        $functionResponseParts[] = array(
+            'functionResponse' => array(
+                'name' => $call['name'],
+                'response' => array('content' => $result)
+            )
+        );
+    }
+
+    // Step 3: Add function results to conversation
+    $contents[] = array(
+        'role' => 'user',
+        'parts' => $functionResponseParts
+    );
+
+    // Step 4: Call Gemini again with results
+    $finalResponse = $this->callGeminiWithFunctions($contents, true);
+
+    return $finalResponse;
+}
+```
+
+### Why This Design?
+
+**Gemini doesn't execute functions** - it's just a language model! It can only:
+1. **Understand** that it needs external data
+2. **Request** a function call with proper arguments
+3. **Use** the results you provide to formulate an answer
+
+Your PHP code acts as the bridge that:
+- Declares what functions are available
+- Executes the actual function calls against your APIs
+- Passes results back to Gemini for final response formatting
+
+### Helper Methods
+
+#### Extract Search Criteria (SirichaiElectricChatbot.php lines 458-468)
+
+```php
+/**
+ * Extract search criteria from function call for logging purposes
+ * Centralized logic to avoid duplication (DRY principle)
+ */
+private function extractSearchCriteria($functionName, $args) {
+    if ($functionName === 'search_products' && isset($args['criterias'])) {
+        return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+    }
+
+    if ($functionName === 'search_product_detail' && isset($args['productName'])) {
+        return json_encode(array('productName' => $args['productName']), JSON_UNESCAPED_UNICODE);
+    }
+
+    return null;
+}
+```
+
+This method is used in the foreach loops (lines 209-212 and 311-314) to capture search criteria for database logging and analytics.
+
+### Adding New Functions
+
+To add a new function (e.g., `check_inventory`):
+
+1. **Add function declaration** in `callGeminiWithFunctions()`:
+```php
+array(
+    'name' => 'check_inventory',
+    'description' => 'Check inventory status for a product',
+    'parameters' => array(
+        'type' => 'object',
+        'properties' => array(
+            'productId' => array(
+                'type' => 'string',
+                'description' => 'Product ID to check'
+            )
+        ),
+        'required' => array('productId')
+    )
+)
+```
+
+2. **Add execution handler** in `executeFunction()`:
+```php
+if ($functionName === 'check_inventory') {
+    $productId = isset($args['productId']) ? $args['productId'] : '';
+    $result = $this->productAPI->checkInventory($productId);
+    return $result !== null ? $result : "Inventory unavailable.";
+}
+```
+
+3. **Add to extractSearchCriteria()** (if logging needed):
+```php
+if ($functionName === 'check_inventory' && isset($args['productId'])) {
+    return json_encode(array('productId' => $args['productId']), JSON_UNESCAPED_UNICODE);
+}
+```
+
+4. **Update system-prompt.txt** with usage instructions
+
+---
+
 ## Configuration
 
 ### Environment Variables (`.env`)
@@ -1313,6 +1598,17 @@ $messages = $messageRepository->getHistory($conversationId);
 - Auto-resume capability after configurable timeout
 - Allows human agents to take over conversations via LINE OA Manager
 
+**February 13, 2026 - Product Detail Function & Code Refactoring**
+- Added `search_product_detail()` function for detailed product specifications
+- Created `getProductDetail()` method in `ProductAPIService.php`
+- Integrated with endpoint: `https://shop.sirichaielectric.com/services/get-product-by-name.php`
+- Provides weight, size, dimensions, quantity per pack, and other specs
+- Refactored duplicate search criteria logging logic into `extractSearchCriteria()` method
+- Applied DRY principle to reduce code duplication in function call handling
+- Updated `system-prompt.txt` with usage guidelines for product detail queries
+- Added comprehensive function calling architecture documentation to PROJECT.md
+- Customers can now ask specific questions like "น้ำหนักเท่าไหร่" or "มีกี่ชิ้นต่อแพ็ค"
+
 ### Key Architectural Decisions
 
 **Why Repository Pattern?**
@@ -1693,6 +1989,15 @@ A: Yes, call `$conversationManager->autoResumeChatbot(30)` to auto-resume conver
 
 **Q: How do I see which conversations are waiting for human agents?**
 A: Use `$conversationManager->getPausedConversations()` to get a list of all paused conversations. You can build an admin dashboard using this API.
+
+**Q: What's the difference between search_products() and search_product_detail()?**
+A: `search_products()` returns a list of products with names and prices from categories. `search_product_detail()` provides detailed specifications (weight, size, quantity per pack) for a specific product. Use search_products() for browsing, then search_product_detail() when customers ask for more details.
+
+**Q: How do I add a new function for the AI to call?**
+A: See the "Adding New Functions" section under "Gemini Function Calling Architecture". You need to: (1) add function declaration, (2) add execution handler, (3) optionally add logging support, and (4) update system-prompt.txt with usage instructions.
+
+**Q: Why refactor the search criteria extraction?**
+A: The original code had duplicate `if/elseif` blocks in two locations (lines 209-213 and 311-315). By extracting into a `extractSearchCriteria()` method, we follow the DRY (Don't Repeat Yourself) principle, making the code easier to maintain and extend when adding new functions.
 
 ---
 

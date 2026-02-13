@@ -206,8 +206,9 @@ class SirichaiElectricChatbot {
                     error_log('[Chatbot] Image: Calling: ' . $functionName . '(' . $argsJson . ')');
 
                     // Capture search criteria for logging to database
-                    if ($functionName === 'search_products' && isset($args['criterias'])) {
-                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    $criteria = $this->extractSearchCriteria($functionName, $args);
+                    if ($criteria !== null) {
+                        $searchCriteria = $criteria;
                     }
                 }
 
@@ -308,8 +309,9 @@ class SirichaiElectricChatbot {
                     error_log('[Chatbot] Calling: ' . $functionName . '(' . $argsJson . ')');
 
                     // Capture search criteria for logging to database
-                    if ($functionName === 'search_products' && isset($args['criterias'])) {
-                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    $criteria = $this->extractSearchCriteria($functionName, $args);
+                    if ($criteria !== null) {
+                        $searchCriteria = $criteria;
                     }
                 }
 
@@ -449,6 +451,24 @@ class SirichaiElectricChatbot {
         return $finalResponse;
     }
 
+    /**
+     * Extract search criteria from function call for logging purposes
+     * @param string $functionName Name of the function being called
+     * @param array $args Function arguments
+     * @return string|null JSON-encoded search criteria, or null if not a search function
+     */
+    private function extractSearchCriteria($functionName, $args) {
+        if ($functionName === 'search_products' && isset($args['criterias'])) {
+            return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($functionName === 'search_product_detail' && isset($args['productName'])) {
+            return json_encode(array('productName' => $args['productName']), JSON_UNESCAPED_UNICODE);
+        }
+
+        return null;
+    }
+
     private function executeFunction($functionName, $args) {
         if ($this->productAPI === null) {
             return "Product API service not available.";
@@ -466,6 +486,20 @@ class SirichaiElectricChatbot {
             }
 
             return "No products found.";
+        }
+
+        if ($functionName === 'search_product_detail') {
+            $productName = isset($args['productName']) ? $args['productName'] : '';
+            if (empty($productName)) {
+                return "No product name provided.";
+            }
+            $result = $this->productAPI->getProductDetail($productName);
+
+            if ($result !== null) {
+                return $result;
+            }
+
+            return "Product details not found.";
         }
 
         return "Unknown function: " . $functionName;
@@ -568,6 +602,20 @@ class SirichaiElectricChatbot {
                                 ),
                                 'required' => array('criterias')
                             )
+                        ),
+                        array(
+                            'name' => 'search_product_detail',
+                            'description' => 'Get detailed product specifications (weight, size, thickness, quantity per pack). CRITICAL: (1) MUST use EXACT product name from search_products() results - NEVER use customer\'s informal name directly, (2) If you don\'t have exact product name from previous search_products(), call search_products() FIRST to get it, (3) ALWAYS call this function for spec questions - NEVER say "information not available" without trying. Trigger keywords: น้ำหนัก/weight, หนา/thickness, ขนาด/size/dimensions, กี่ชิ้นต่อแพ็ค/quantity per pack.',
+                            'parameters' => array(
+                                'type' => 'object',
+                                'properties' => array(
+                                    'productName' => array(
+                                        'type' => 'string',
+                                        'description' => 'EXACT complete product name from search_products() results. Must include ALL characters: brackets [], braces {}, parentheses (), numbers, Thai/English text. NEVER use customer\'s informal product name. Example correct: "รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL". Example WRONG: "KWSS2038-10" or "LC1D12M7".'
+                                    )
+                                ),
+                                'required' => array('productName')
+                            )
                         )
                     )
                 )
@@ -631,6 +679,16 @@ class SirichaiElectricChatbot {
 
         // Log token usage for this API call and get token count
         $tokensUsed = $this->logTokenUsage($data, $includeFunctions ? 'Initial Call' : 'Follow-up Call');
+
+        // Check if response has content
+        if (!isset($data['candidates'][0]['content']['parts']) || empty($data['candidates'][0]['content']['parts'])) {
+            error_log('[Chatbot] ERROR: Empty model response - possible token limit exceeded');
+            error_log('[Chatbot] Token count: ' . (isset($data['usageMetadata']['promptTokenCount']) ? $data['usageMetadata']['promptTokenCount'] : 'unknown'));
+            return array(
+                'success' => false,
+                'error' => 'AI returned empty response. The conversation may be too long. Please start a new conversation.',
+            );
+        }
 
         // Check for function calls
         if (isset($data['candidates'][0]['content']['parts'])) {
