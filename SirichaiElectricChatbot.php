@@ -682,11 +682,36 @@ class SirichaiElectricChatbot {
 
         // Check if response has content
         if (!isset($data['candidates'][0]['content']['parts']) || empty($data['candidates'][0]['content']['parts'])) {
-            error_log('[Chatbot] ERROR: Empty model response - possible token limit exceeded');
-            error_log('[Chatbot] Token count: ' . (isset($data['usageMetadata']['promptTokenCount']) ? $data['usageMetadata']['promptTokenCount'] : 'unknown'));
+            // Log the actual response structure for debugging
+            error_log('[Chatbot] ERROR: Empty model response');
+            error_log('[Chatbot] Full response: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
+
+            // Try to get actual error reason from API response
+            $errorMessage = 'AI returned empty response';
+
+            // Check for finish reason which often contains the actual error
+            if (isset($data['candidates'][0]['finishReason'])) {
+                $finishReason = $data['candidates'][0]['finishReason'];
+                $errorMessage .= ': ' . $finishReason;
+
+                // Add helpful context based on finish reason
+                if ($finishReason === 'MAX_TOKENS') {
+                    $errorMessage .= '. The conversation is too long. Please start a new conversation.';
+                } elseif ($finishReason === 'SAFETY') {
+                    $errorMessage .= '. Content was blocked by safety filters.';
+                } elseif ($finishReason === 'RECITATION') {
+                    $errorMessage .= '. Content was blocked due to recitation concerns.';
+                }
+            }
+
+            // Check if there's a prompt feedback error
+            if (isset($data['promptFeedback']['blockReason'])) {
+                $errorMessage .= '. Block reason: ' . $data['promptFeedback']['blockReason'];
+            }
+
             return array(
                 'success' => false,
-                'error' => 'AI returned empty response. The conversation may be too long. Please start a new conversation.',
+                'error' => $errorMessage,
             );
         }
 
