@@ -1,9 +1,11 @@
 # Sirichai Electric Chatbot - Complete Project Documentation
 
-**Last Updated:** January 28, 2026
+**Last Updated:** February 15, 2026
 **Database:** chatbotdb (MySQL)
 **PHP Version:** 5.6+
 **Architecture:** Repository Pattern + File API + LINE Integration + Image Recognition
+
+> **Quick AI Context:** See [claude.md](claude.md) for condensed context optimized for AI-assisted development
 
 ---
 
@@ -1142,13 +1144,16 @@ The project includes a comprehensive integration test script that verifies the c
 
 **Test Script:** `test-chatbot.php`
 
-**What it tests:**
-1. First query: Product search (e.g., "มี รางวายเวย์ KWSS2038 KJL ไหม")
-2. Follow-up query: Product detail question (e.g., "หนาเท่าไหร่ ใช้ทำอะไร")
+**What it tests (5-question conversation):**
+1. **Product search:** "มี รางวายเวย์ KWSS2038 KJL ไหม" - Tests catalog search with function calling
+2. **Follow-up details:** "หนาเท่าไหร่ ใช้ทำอะไร" - Tests fuzzy search for product specifications
+3. **Electrical calculations:** "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" - Tests general technical knowledge + product suggestions
+4. **Multiple brands query:** "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" - Tests multi-category search and brand listing
+5. **Specific product pricing:** "ขอราคา thw 1x2.5 yazaka หน่อย" - Tests informal queries and price extraction
 
 **Usage:**
 ```bash
-# Run the test
+# Run the test (requires MySQL to be running)
 ./test-chatbot.php
 
 # Or with full path to PHP
@@ -1160,10 +1165,11 @@ The project includes a comprehensive integration test script that verifies the c
 2. ✓ Clears conversations table
 3. ✓ Clears logs.log
 4. ✓ Removes file-cache.json (forces fresh file upload)
-5. ✓ Asks first question and verifies AI response
-6. ✓ Asks follow-up question and verifies AI response
-7. ✓ Saves test conversation to database
-8. ✓ Reports success/failure with colored output
+5. ✓ Asks all 5 questions in sequence
+6. ✓ Verifies AI response for each question
+7. ✓ Tracks token usage for each query
+8. ✓ Saves test conversation to database
+9. ✓ Reports success/failure with colored output
 
 **Expected Output:**
 ```

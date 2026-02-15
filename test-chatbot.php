@@ -5,10 +5,12 @@
  *
  * This test script:
  * 1. Clears all test data (messages table, logs, file cache)
- * 2. Tests the chatbot with a three-question conversation:
+ * 2. Tests the chatbot with a five-question conversation:
  *    - Q1: "มี รางวายเวย์ KWSS2038 KJL ไหม" (product search)
  *    - Q2: "หนาเท่าไหร่ ใช้ทำอะไร" (follow-up detail question)
  *    - Q3: "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" (general electrical engineering question)
+ *    - Q4: "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" (multiple brands query)
+ *    - Q5: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
  * 3. Verifies AI can answer all questions successfully
  *
  * Usage: php test-chatbot.php
@@ -80,6 +82,14 @@ $questions = array(
     array(
         'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
         'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
+    ),
+    array(
+        'question' => 'โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง',
+        'expectation' => 'AI should be able to provide multiple brands of waterproof dustproof lamps'
+    ),
+    array(
+        'question' => 'ขอราคา thw 1x2.5 yazaka หน่อย',
+        'expectation' => 'AI should be able to provide product price for specific THW cable'
     )
 );
 
@@ -225,6 +235,8 @@ try {
         printSuccess("✓ Initial product search");
         printSuccess("✓ Follow-up detail question");
         printSuccess("✓ General electrical engineering question");
+        printSuccess("✓ Multiple brands query");
+        printSuccess("✓ Specific product price query");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

@@ -2,6 +2,8 @@
 
 This file provides context for Claude AI when working on this codebase.
 
+> **For comprehensive documentation:** See [PROJECT.md](PROJECT.md) (2,100+ lines covering architecture, setup, troubleshooting, and development history)
+
 ## Project Overview
 
 **Name:** Sirichai Electric Chatbot
@@ -30,7 +32,12 @@ This file provides context for Claude AI when working on this codebase.
 - `system-prompt.txt` - AI behavior instructions (uploaded to Gemini File API)
 
 ### 4. Testing
-- `test-chatbot.php` - Integration test for multi-turn conversations
+- `test-chatbot.php` - Integration test with 5-question conversation:
+  1. Product search (function calling)
+  2. Follow-up details (fuzzy search)
+  3. Electrical calculations (general knowledge + product suggestions)
+  4. Multiple brands query (multi-category search)
+  5. Specific pricing (informal query handling)
 - `test-file-api.php` - File API integration test
 
 ## Database Schema
@@ -79,7 +86,13 @@ Gemini uses two-step conversational flow:
 
 **Available Functions:**
 - `search_products(criterias[])` - Search products by category names
-- `search_product_detail(productName)` - Get detailed specs (weight, size, qty/pack)
+- `search_product_detail(productName)` - Get detailed specs (weight, size, qty/pack) with fuzzy matching
+
+### Fuzzy Search for Product Details
+- **Implementation:** `ProductAPIService::getProductDetail()` uses fuzzy matching on partial product names
+- **Backend SQL:** Splits product name into keywords and uses `LIKE %keyword%` matching
+- **AI Workflow:** AI can directly call `search_product_detail()` with keywords from conversation context
+- **Benefits:** Eliminates redundant `search_products()` calls for follow-up questions, saves ~50-100 tokens per query
 
 ### LINE Integration
 - Async processing (responds HTTP 200 immediately, processes in background)
@@ -112,18 +125,21 @@ Gemini uses two-step conversational flow:
    - System prompt text → Direct in `systemInstruction` parameter (~5KB)
    - Product catalog → File API upload (~101KB)
    - This combination provides fast responses with caching
-3. **Implemented Option 3** from INVESTIGATION_SUMMARY.md:
-   - Updated system prompt to ALWAYS call `search_products()` first
-   - Even for follow-up questions, AI searches first to get exact product name
-   - Then calls `search_product_detail()` with exact name
+3. **Fuzzy Search Implementation (February 15, 2026):**
+   - Backend `getProductByName()` uses partial keyword matching
+   - AI workflow updated to extract product keywords from context
+   - Eliminates "Always Search First" requirement for follow-up questions
+   - System prompt simplified from verbose Option A/B to single clear instruction
 
 **Results:**
 - ✅ First queries work correctly (product search)
-- ✅ Follow-up queries work correctly (product details)
+- ✅ Follow-up queries work correctly (fuzzy search for product details)
 - ✅ General electrical engineering questions work correctly
-- ✅ Test script passes all three test questions
+- ✅ Multiple brands query works correctly
+- ✅ Specific product pricing works correctly
+- ✅ Test script passes all 5 test questions
 - ✅ Response time: ~5 seconds per query
-- ✅ Token usage: ~66K tokens per conversation turn (with caching)
+- ✅ Token usage: ~34K-73K tokens per query (with caching)
 - ✅ AI can calculate electrical parameters AND suggest relevant products
 
 ## Environment Setup
@@ -166,7 +182,9 @@ AUTO_RESUME_TIMEOUT_MINUTES=30
 
 ### Running Tests
 ```bash
-# Integration test (clears DB, tests 2 questions)
+# Integration test (clears DB, tests 5 questions)
+# Q1: Product search, Q2: Follow-up details, Q3: Electrical calculations
+# Q4: Multiple brands, Q5: Specific pricing
 ./test-chatbot.php
 
 # File API test
@@ -357,4 +375,4 @@ public function getCustomData($conversationId) {
 ---
 
 **Last Updated:** February 15, 2026
-**Version:** 2.2.0
+**Version:** 2.3.0 - Fuzzy Search & 5-Question Test Suite

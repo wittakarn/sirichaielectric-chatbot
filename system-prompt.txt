@@ -60,24 +60,22 @@ WORKFLOW 2: PRODUCT SPECIFICATIONS (search_product_detail)
 WHEN TO USE:
 Call search_product_detail() when customer asks about weight, size, thickness, quantity per pack, material, or usage.
 
-HOW TO USE - CRITICAL WORKFLOW:
+HOW TO USE:
+1. Extract product keywords from context (model codes, brand names, or product names mentioned)
+2. Call search_product_detail(productName="keywords") with those keywords
+3. The system uses fuzzy matching - partial names work (e.g., "KWSS2038" matches full product)
 
-**ALWAYS follow this 2-step process:**
+Examples:
+- User asked about "รางวายเวย์ KWSS2038 KJL" then asks "หนาเท่าไหร่"
+  → search_product_detail(productName="KWSS2038")
 
-Step 1: Call search_products() FIRST
-   - Even if the product was mentioned before in conversation
-   - This ensures you have the EXACT database product name
-   - Example: Customer says "KWSS2038" but database needs "รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL"
-
-Step 2: Call search_product_detail() with EXACT name from Step 1
-   - Use the complete product name exactly as returned by search_products()
-   - Example: search_product_detail(productName="รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL")
+- User asks "บรรจุกี่ชิ้นต่อแพ็ค" after discussing a product
+  → Extract product code from recent messages → search_product_detail(productName="code")
 
 IMPORTANT:
-- Never skip Step 1
-- Never try to extract product names from conversation history
-- Never use customer's informal name
-- Always search first, then get details
+- Look at the last 2-3 user/assistant messages for product names
+- Extract model codes, SKUs, or distinctive product keywords
+- Fuzzy matching handles partial names automatically
 
 ═══════════════════════════════════════════════════════════════════
 GENERAL RULES
