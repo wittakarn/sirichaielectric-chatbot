@@ -125,6 +125,7 @@ sirichaielectric-chatbot/
 │
 ├── Testing & Utilities
 │   ├── test-file-api.php           # File API test script
+│   ├── test-chatbot.php            # Integration test for chatbot
 │   └── view-cache-stats.php        # Cache statistics viewer
 │
 └── Documentation
@@ -1134,6 +1135,98 @@ Contains AI behavior instructions, role definition, and workflow. Referenced as 
 ---
 
 ## Testing & Monitoring
+
+### Integration Testing
+
+The project includes a comprehensive integration test script that verifies the chatbot can handle multi-turn conversations correctly.
+
+**Test Script:** `test-chatbot.php`
+
+**What it tests:**
+1. First query: Product search (e.g., "มี รางวายเวย์ KWSS2038 KJL ไหม")
+2. Follow-up query: Product detail question (e.g., "หนาเท่าไหร่ ใช้ทำอะไร")
+
+**Usage:**
+```bash
+# Run the test
+./test-chatbot.php
+
+# Or with full path to PHP
+/Applications/MAMP/bin/php/php7.4.33/bin/php test-chatbot.php
+```
+
+**What the test does:**
+1. ✓ Clears messages table
+2. ✓ Clears conversations table
+3. ✓ Clears logs.log
+4. ✓ Removes file-cache.json (forces fresh file upload)
+5. ✓ Asks first question and verifies AI response
+6. ✓ Asks follow-up question and verifies AI response
+7. ✓ Saves test conversation to database
+8. ✓ Reports success/failure with colored output
+
+**Expected Output:**
+```
+=====================================
+CHATBOT INTEGRATION TEST
+=====================================
+
+▶ Loading configuration...
+✓ Configuration loaded
+
+▶ Clearing messages table...
+✓ Messages table cleared (count: 0)
+
+▶ Clearing conversations table...
+✓ Conversations table cleared (count: 0)
+
+▶ Clearing logs.log...
+✓ logs.log cleared
+
+▶ Removing file-cache.json...
+✓ file-cache.json removed
+
+▶ Initializing chatbot services...
+✓ Chatbot initialized
+
+=====================================
+RUNNING CONVERSATION TEST
+=====================================
+
+ℹ Conversation ID: test_1234567890
+
+─────────────────────────────────────
+▶ Question 1: "มี รางวายเวย์ KWSS2038 KJL ไหม"
+ℹ Expected: AI should search for products and return product details with price
+✓ AI responded successfully
+Answer: ทางเรามีรางวายเวย์ KWSS2038-10 KJL ขนาด 2"x3" (50x75) ยาว 2.4เมตร สีขาว ราคา 365.00 บาท/เส้น ค่ะ
+ℹ Tokens used: 32786
+
+─────────────────────────────────────
+▶ Question 2: "หนาเท่าไหร่ ใช้ทำอะไร"
+ℹ Expected: AI should provide thickness and usage information
+✓ AI responded successfully
+Answer: รางวายเวย์ KWSS2038-10 KJL นี้มีความหนา 0.6 มม. ค่ะ...
+ℹ Tokens used: 33124
+
+=====================================
+TEST RESULTS
+=====================================
+
+✓ All tests PASSED!
+✓ The chatbot successfully answered both questions:
+✓ ✓ Initial product search
+✓ ✓ Follow-up detail question
+
+ℹ Test conversation saved with ID: test_1234567890
+ℹ Check logs.log for detailed API interactions
+```
+
+**When to run this test:**
+- After updating system-prompt.txt
+- After implementing Option 1, 2, or 3 from INVESTIGATION_SUMMARY.md
+- Before deploying to production
+- To verify the follow-up question bug is fixed
 
 ### API Testing
 
