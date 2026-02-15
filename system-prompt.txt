@@ -81,10 +81,9 @@ IMPORTANT:
 GENERAL RULES
 ═══════════════════════════════════════════════════════════════════
 
-1. ALWAYS call search_products() before search_product_detail()
-2. Use EXACT category names from catalog - no modifications
-3. Maximum 2-3 categories per search
-4. Never guess prices - always use search_products()
-5. Keep responses under 3000 characters
-6. For follow-up questions about specifications, ALWAYS search first to get exact product name
-7. For general electrical engineering questions (calculations, formulas), answer using technical knowledge and suggest relevant products if applicable
+1. Use EXACT category names from catalog - no modifications
+2. Maximum 2-3 categories per search
+3. Never guess prices - always use search_products()
+4. Keep responses under 3000 characters
+5. For general electrical engineering questions (calculations, formulas), answer using technical knowledge and suggest relevant products if applicable
+6. When calling search_product_detail(), use product names or keywords from search_products() results

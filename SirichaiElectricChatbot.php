@@ -440,20 +440,70 @@ class SirichaiElectricChatbot {
         );
 
         // Call Gemini again with function results
-        // Keep function declarations available in case Gemini wants to call more functions
         error_log('[Chatbot] Calling Gemini again with function results...');
-        $finalResponse = $this->callGeminiWithFunctions($contents, true);
+        $response = $this->callGeminiWithFunctions($contents, true);
 
-        // Log what type of response we got
-        if (isset($finalResponse['functionCalls'])) {
-            error_log('[Chatbot] WARNING: Gemini called another function after getting results!');
-        } elseif (isset($finalResponse['text'])) {
-            error_log('[Chatbot] Got final text response (' . strlen($finalResponse['text']) . ' chars)');
-        } else {
-            error_log('[Chatbot] ERROR: Unexpected response type - keys: ' . json_encode(array_keys($finalResponse), JSON_UNESCAPED_UNICODE));
+        // Handle chained function calls (e.g., search_products → search_product_detail)
+        // Allow up to 2 additional function calls to prevent infinite loops
+        $additionalCallsRemaining = 2;
+
+        while ($this->isAnotherFunctionCall($response) && $additionalCallsRemaining > 0) {
+            $attemptNumber = 3 - $additionalCallsRemaining;
+            error_log('[Chatbot] AI called another function (attempt #' . $attemptNumber . ')');
+
+            // Execute the next function in the chain
+            $response = $this->handleFunctionCalls($response, $contents);
+            $additionalCallsRemaining--;
         }
 
-        return $finalResponse;
+        // Check final response type
+        if ($this->isAnotherFunctionCall($response)) {
+            // Still trying to call functions after max attempts - stop to prevent infinite loop
+            error_log('[Chatbot] ERROR: Too many chained function calls - stopping');
+            return $this->createErrorResponse('Too many function calls - possible infinite loop', $response);
+        }
+
+        if ($this->hasTextResponse($response)) {
+            error_log('[Chatbot] Got final text response (' . strlen($response['text']) . ' chars)');
+            return $response;
+        }
+
+        // Unexpected response type
+        error_log('[Chatbot] ERROR: Unexpected response - keys: ' . json_encode(array_keys($response), JSON_UNESCAPED_UNICODE));
+        return $response;
+    }
+
+    /**
+     * Check if response contains another function call
+     * @param array $response Response from Gemini API
+     * @return bool True if response has function calls
+     */
+    private function isAnotherFunctionCall($response) {
+        return isset($response['functionCalls']);
+    }
+
+    /**
+     * Check if response has text content
+     * @param array $response Response from Gemini API
+     * @return bool True if response has text field
+     */
+    private function hasTextResponse($response) {
+        return isset($response['text']);
+    }
+
+    /**
+     * Create error response with text field
+     * @param string $errorMessage Error message to include
+     * @param array $originalResponse Original response for token count
+     * @return array Error response array
+     */
+    private function createErrorResponse($errorMessage, $originalResponse) {
+        return array(
+            'success' => false,
+            'text' => 'ขออภัยค่ะ ระบบประมวลผลข้อมูลไม่สำเร็จ กรุณาลองถามใหม่อีกครั้งหรือติดต่อพนักงานเพื่อขอความช่วยเหลือค่ะ',
+            'error' => $errorMessage,
+            'tokensUsed' => isset($originalResponse['tokensUsed']) ? $originalResponse['tokensUsed'] : 0
+        );
     }
 
     /**
