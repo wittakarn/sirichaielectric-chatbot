@@ -5,10 +5,11 @@
  *
  * This test script:
  * 1. Clears all test data (messages table, logs, file cache)
- * 2. Tests the chatbot with a two-question conversation:
+ * 2. Tests the chatbot with a three-question conversation:
  *    - Q1: "มี รางวายเวย์ KWSS2038 KJL ไหม" (product search)
  *    - Q2: "หนาเท่าไหร่ ใช้ทำอะไร" (follow-up detail question)
- * 3. Verifies AI can answer both questions successfully
+ *    - Q3: "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" (general electrical engineering question)
+ * 3. Verifies AI can answer all questions successfully
  *
  * Usage: php test-chatbot.php
  */
@@ -75,6 +76,10 @@ $questions = array(
     array(
         'question' => 'หนาเท่าไหร่ ใช้ทำอะไร',
         'expectation' => 'AI should provide thickness and usage information'
+    ),
+    array(
+        'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
+        'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
     )
 );
 
@@ -216,9 +221,10 @@ try {
 
     if ($allTestsPassed) {
         printSuccess("All tests PASSED!");
-        printSuccess("The chatbot successfully answered both questions:");
+        printSuccess("The chatbot successfully answered all questions:");
         printSuccess("✓ Initial product search");
         printSuccess("✓ Follow-up detail question");
+        printSuccess("✓ General electrical engineering question");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

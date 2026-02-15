@@ -14,6 +14,7 @@ class SirichaiElectricChatbot {
     private $fileManager;
     private $systemPromptFileUri;
     private $catalogFileUri;
+    private $systemPromptText;
 
     public function __construct($config, $productAPI = null) {
         $this->config = $config;
@@ -52,31 +53,35 @@ class SirichaiElectricChatbot {
     private function uploadContextFiles() {
         error_log('[Chatbot] === Initializing File API Context ===');
 
-        // Upload system prompt file
+        /**
+         * HYBRID FILE API APPROACH (Fixed Empty Response Bug - Feb 15, 2026)
+         *
+         * Why this approach:
+         * - Uploading BOTH system prompt and catalog as File API files caused empty responses
+         * - Sending 106KB directly in systemInstruction caused 60s+ timeouts
+         *
+         * Solution:
+         * 1. System Prompt (~5KB) → Direct text in systemInstruction (fast, no caching needed)
+         * 2. Product Catalog (~101KB) → File API upload (enables caching, reduces tokens)
+         *
+         * Benefits:
+         * - Fast response times (~5 seconds)
+         * - Proper caching for large catalog
+         * - Avoids empty response bug from dual File API upload
+         */
+
+        // Load system prompt text for direct use in systemInstruction
         $promptFile = __DIR__ . '/system-prompt.txt';
-        $promptContent = '';
         if (file_exists($promptFile)) {
-            $promptContent = file_get_contents($promptFile);
+            $this->systemPromptText = file_get_contents($promptFile);
         } else {
-            $promptContent = "You are a helpful customer service assistant for ONE Electric.";
+            $this->systemPromptText = "You are a helpful customer service assistant for Sirichai Electric.";
         }
+        error_log('[Chatbot] ✓ System Prompt loaded (' . strlen($this->systemPromptText) . ' bytes)');
 
-        $promptResult = $this->fileManager->getOrUploadFile(
-            'system-prompt',
-            $promptContent,
-            'System Prompt'
-        );
+        // Upload ONLY catalog file to File API (system prompt goes in systemInstruction)
+        $this->systemPromptFileUri = null;
 
-        if ($promptResult['success']) {
-            $this->systemPromptFileUri = $promptResult['fileUri'];
-            $cacheStatus = isset($promptResult['cached']) && $promptResult['cached'] ? 'CACHED' : 'UPLOADED';
-            error_log('[Chatbot] ✓ System Prompt: ' . $cacheStatus . ' - ' . $promptResult['name']);
-        } else {
-            error_log('[Chatbot] ✗ System Prompt: FAILED - ' . $promptResult['error']);
-            $this->systemPromptFileUri = null;
-        }
-
-        // Upload catalog file if available
         if (!empty($this->catalogSummary)) {
             $catalogResult = $this->fileManager->getOrUploadFile(
                 'catalog-summary',
@@ -97,7 +102,7 @@ class SirichaiElectricChatbot {
             error_log('[Chatbot] ⊘ Product Catalog: SKIPPED (no data)');
         }
 
-        error_log('[Chatbot] === File API Context Ready ===');
+        error_log('[Chatbot] === File API Context Ready (hybrid mode) ===');
     }
 
     /**
@@ -537,35 +542,21 @@ class SirichaiElectricChatbot {
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
-        // Build systemInstruction - ONLY TEXT ALLOWED (no files!)
-        // Files must be added to user messages instead
-        $systemInstructionText = 'You are a helpful customer service assistant for Sirichai Electric. Follow the instructions and use the product catalog information provided in the context. IMPORTANT: Always respond in the same language the customer uses. If they write in English, respond in English. If they write in Thai, respond in Thai.';
+        // Build systemInstruction from system-prompt.txt (catalog file will be added to user message)
+        $systemInstructionText = !empty($this->systemPromptText) ? $this->systemPromptText : 'You are a helpful customer service assistant for Sirichai Electric. Follow the instructions and use the product catalog information provided in the context. IMPORTANT: Always respond in the same language the customer uses. If they write in English, respond in English. If they write in Thai, respond in Thai.';
 
-        // Add file references to the FIRST user message (not systemInstruction!)
-        // This allows Gemini to cache files while following API requirements
-        if (($this->systemPromptFileUri || $this->catalogFileUri) && !empty($contents) && $contents[0]['role'] === 'user') {
-            // Build file parts to prepend
-            $fileParts = array();
-
-            if ($this->systemPromptFileUri) {
-                $fileParts[] = array(
-                    'file_data' => array(
-                        'file_uri' => $this->systemPromptFileUri,
-                        'mime_type' => 'text/plain'
-                    )
-                );
-            }
-
-            if ($this->catalogFileUri) {
-                $fileParts[] = array(
+        // Add catalog file reference to the FIRST user message (if available)
+        if ($this->catalogFileUri && !empty($contents) && $contents[0]['role'] === 'user') {
+            $fileParts = array(
+                array(
                     'file_data' => array(
                         'file_uri' => $this->catalogFileUri,
                         'mime_type' => 'text/plain'
                     )
-                );
-            }
+                )
+            );
 
-            // Prepend files to the first user message parts
+            // Prepend catalog file to the first user message parts
             $contents[0]['parts'] = array_merge($fileParts, $contents[0]['parts']);
         }
 

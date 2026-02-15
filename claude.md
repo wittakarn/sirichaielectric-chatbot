@@ -96,24 +96,35 @@ Gemini uses two-step conversational flow:
 
 ## Critical Issues (INVESTIGATION_SUMMARY.md)
 
-### Fixed Issue
-✅ **First Query Empty Response** - Simplified system prompt from 269 lines to 72 lines
+### Fixed Issues
 
-### Current Issue
-❌ **Follow-up Query Empty Response**
+✅ **Empty Response Bug** - SOLVED (February 15, 2026)
 
-**Problem:** AI returns empty response with `finishReason: STOP` on follow-up questions
+**Problem:** AI returned empty response with `finishReason: STOP` on both first and follow-up queries
 
-**Root Cause:** Product names lost during formatting
-1. `search_products()` returns exact DB name: `รางวายเวย์ 2"x3" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL`
-2. AI formats for humans: `ทางเรามีรางวายเวย์ KWSS2038-10 KJL ขนาด...` (exact name lost)
-3. Follow-up needs exact name for `search_product_detail()` but only has formatted sentence
-4. Model gets confused → empty response
+**Root Causes:**
+1. System prompt too long and complex (269 lines, 18KB) - overwhelming the model
+2. Both system prompt AND catalog uploaded as File API files - caused caching issues
 
-**Proposed Solutions:**
-1. **Option 1 (Recommended):** Store product names in `messages.product_names` JSON column
-2. **Option 2:** Include `[PRODUCT:name]` markers in responses
-3. **Option 3 (Simplest):** Update system prompt to always search first, even for follow-ups
+**Solution Applied:**
+1. **Simplified system-prompt.txt** from 269 lines → 92 lines (66% reduction)
+2. **Hybrid File API Approach:**
+   - System prompt text → Direct in `systemInstruction` parameter (~5KB)
+   - Product catalog → File API upload (~101KB)
+   - This combination provides fast responses with caching
+3. **Implemented Option 3** from INVESTIGATION_SUMMARY.md:
+   - Updated system prompt to ALWAYS call `search_products()` first
+   - Even for follow-up questions, AI searches first to get exact product name
+   - Then calls `search_product_detail()` with exact name
+
+**Results:**
+- ✅ First queries work correctly (product search)
+- ✅ Follow-up queries work correctly (product details)
+- ✅ General electrical engineering questions work correctly
+- ✅ Test script passes all three test questions
+- ✅ Response time: ~5 seconds per query
+- ✅ Token usage: ~66K tokens per conversation turn (with caching)
+- ✅ AI can calculate electrical parameters AND suggest relevant products
 
 ## Environment Setup
 
