@@ -6,8 +6,8 @@
  */
 
 require_once __DIR__ . '/DatabaseManager.php';
-require_once __DIR__ . '/repository/ConversationRepository.php';
-require_once __DIR__ . '/repository/MessageRepository.php';
+require_once __DIR__ . '/../repository/ConversationRepository.php';
+require_once __DIR__ . '/../repository/MessageRepository.php';
 
 class ConversationManager {
     private $maxMessagesPerConversation;

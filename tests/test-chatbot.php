@@ -1,4 +1,4 @@
-#!/Applications/MAMP/bin/php/php7.4.33/bin/php
+#!/usr/bin/env php
 <?php
 /**
  * Chatbot Integration Test
@@ -20,15 +20,15 @@
 // Set error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
-ini_set('error_log', __DIR__ . '/logs.log');
+ini_set('error_log', __DIR__ . '/../logs.log');
 
 // Load dependencies
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/DatabaseManager.php';
-require_once __DIR__ . '/ConversationManager.php';
-require_once __DIR__ . '/ProductAPIService.php';
-require_once __DIR__ . '/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/GeminiFileManager.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../chatbot/DatabaseManager.php';
+require_once __DIR__ . '/../chatbot/ConversationManager.php';
+require_once __DIR__ . '/../services/ProductAPIService.php';
+require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
+require_once __DIR__ . '/../chatbot/GeminiFileManager.php';
 
 // ANSI color codes for terminal output
 class Color {
@@ -126,7 +126,7 @@ try {
 
     // Step 4: Clear logs.log
     printStep("Clearing logs.log...");
-    $logsFile = __DIR__ . '/logs.log';
+    $logsFile = __DIR__ . '/../logs.log';
     if (file_exists($logsFile)) {
         file_put_contents($logsFile, '');
         printSuccess("logs.log cleared");
@@ -136,7 +136,7 @@ try {
 
     // Step 5: Remove file-cache.json
     printStep("Removing file-cache.json...");
-    $cacheFile = __DIR__ . '/file-cache.json';
+    $cacheFile = __DIR__ . '/../file-cache.json';
     if (file_exists($cacheFile)) {
         unlink($cacheFile);
         printSuccess("file-cache.json removed");

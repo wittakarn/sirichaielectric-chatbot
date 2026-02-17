@@ -11,8 +11,8 @@
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../ConversationManager.php';
-require_once __DIR__ . '/../LineProfileService.php';
+require_once __DIR__ . '/../chatbot/ConversationManager.php';
+require_once __DIR__ . '/../services/LineProfileService.php';
 
 // Require authentication
 requireAdminAuth();

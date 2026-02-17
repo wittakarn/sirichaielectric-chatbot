@@ -16,7 +16,7 @@ class ProductAPIService {
         $this->config = $config;
         $this->catalogSummaryUrl = $config['catalogSummaryUrl'];
         $this->productSearchUrl = $config['productSearchUrl'];
-        $this->cacheDir = __DIR__ . '/cache';
+        $this->cacheDir = __DIR__ . '/../cache';
         $this->cacheDuration = 86400; // 24 hours
 
         // Create cache directory if it doesn't exist

@@ -4,7 +4,7 @@
  */
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../DatabaseManager.php';
+require_once __DIR__ . '/../chatbot/DatabaseManager.php';
 require_once __DIR__ . '/../services/DashboardService.php';
 
 class DashboardController {

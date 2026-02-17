@@ -24,10 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Include required files
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/ProductAPIService.php';
-require_once __DIR__ . '/GeminiFileManager.php';
-require_once __DIR__ . '/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/ConversationManager.php';
+require_once __DIR__ . '/services/ProductAPIService.php';
+require_once __DIR__ . '/chatbot/GeminiFileManager.php';
+require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
+require_once __DIR__ . '/chatbot/ConversationManager.php';
 
 // Initialize configuration
 try {

@@ -71,7 +71,7 @@ class SirichaiElectricChatbot {
          */
 
         // Load system prompt text for direct use in systemInstruction
-        $promptFile = __DIR__ . '/system-prompt.txt';
+        $promptFile = __DIR__ . '/../system-prompt.txt';
         if (file_exists($promptFile)) {
             $this->systemPromptText = file_get_contents($promptFile);
         } else {
