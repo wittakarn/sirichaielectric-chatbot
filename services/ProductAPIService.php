@@ -169,4 +169,50 @@ class ProductAPIService {
         return $response;
     }
 
+    /**
+     * Generate a fast quotation PDF from product list
+     * @param array $quotaDetail Array of objects with productName and amount
+     * @param string $priceType Price type: 'vc', 'a', or 'b'
+     * @return string|null Returns PDF download URL, or null on error
+     */
+    public function generateFastQuotation($quotaDetail, $priceType) {
+        error_log('[ProductAPI] Generating fast quotation with ' . count($quotaDetail) . ' products, priceType: ' . $priceType);
+
+        $quotationUrl = 'http://shop.sirichaielectric.com/configuration/server/rest/generate-fast-quotation.php';
+
+        $requestBody = json_encode(array(
+            'quotaDetail' => $quotaDetail,
+            'priceType' => $priceType
+        ), JSON_UNESCAPED_UNICODE);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $quotationUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($requestBody)
+        ));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            error_log('[ProductAPI] cURL error: ' . $error);
+            return null;
+        }
+
+        if ($httpCode !== 200) {
+            error_log('[ProductAPI] HTTP error: ' . $httpCode);
+            return null;
+        }
+
+        error_log('[ProductAPI] Quotation generated successfully');
+        return $response;
+    }
+
 }

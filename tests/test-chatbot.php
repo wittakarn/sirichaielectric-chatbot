@@ -70,33 +70,42 @@ function printResponse($label, $response) {
 }
 
 // Test configuration
+// Each question has a 'group' - questions in the same group share conversation history (follow-up test).
+// When the group changes, conversation history is cleared (independent test).
 $testConversationId = 'test_' . time();
 $questions = array(
     array(
+        'group' => 'A',
         'question' => 'มี รางวายเวย์ KWSS2038 KJL ไหม',
         'expectation' => 'AI should search for products and return product details with price'
     ),
     array(
+        'group' => 'A',
         'question' => 'หนาเท่าไหร่ ใช้ทำอะไร',
         'expectation' => 'AI should provide thickness and usage information'
     ),
     array(
+        'group' => 'B',
         'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
         'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
     ),
     array(
+        'group' => 'C',
         'question' => 'โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง',
         'expectation' => 'AI should be able to provide multiple brands of waterproof dustproof lamps'
     ),
     array(
+        'group' => 'D',
         'question' => 'ขอราคา thw 1x2.5 yazaka หน่อย',
         'expectation' => 'AI should be able to provide product price for specific THW cable'
     ),
     array(
+        'group' => 'E',
         'question' => 'สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่',
         'expectation' => 'AI should search for product weight details and calculate total weight for 400 meters'
     ),
     array(
+        'group' => 'F',
         'question' => 'ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
         'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
     )
@@ -164,19 +173,28 @@ try {
     // Step 7: Run conversation test
     printHeader("RUNNING CONVERSATION TEST");
     printInfo("Conversation ID: $testConversationId");
-    printInfo("Q1-Q2: Conversation with history (follow-up test)");
-    printInfo("Q3-Q6: Independent questions (no history)");
+    printInfo("Questions in the same group share history (follow-up test)");
+    printInfo("New group = fresh conversation (independent test)");
 
     $allTestsPassed = true;
     $conversationHistory = array();
+    $currentGroup = null;
 
     foreach ($questions as $index => $testCase) {
         $questionNum = $index + 1;
         $question = $testCase['question'];
         $expectation = $testCase['expectation'];
 
+        $group = $testCase['group'];
+
+        // Clear history when group changes
+        if ($group !== $currentGroup) {
+            $conversationHistory = array();
+            $currentGroup = $group;
+        }
+
         echo "\n" . Color::BOLD . "─────────────────────────────────────" . Color::RESET . "\n";
-        printStep("Question $questionNum: \"$question\"");
+        printStep("Q$questionNum [Group $group]: \"$question\"");
         printInfo("Expected: $expectation");
 
         // Add user message to conversation
@@ -221,21 +239,15 @@ try {
             isset($response['searchCriteria']) ? $response['searchCriteria'] : null
         );
 
-        // Update conversation history ONLY for Q1-Q2 (follow-up test)
-        // Q3-Q6 should be independent (clear history)
-        if ($questionNum <= 2) {
-            $conversationHistory[] = array(
-                'role' => 'user',
-                'content' => $question
-            );
-            $conversationHistory[] = array(
-                'role' => 'assistant',
-                'content' => $response['response']
-            );
-        } else {
-            // Clear history for Q3 onwards (independent questions)
-            $conversationHistory = array();
-        }
+        // Accumulate conversation history within the same group
+        $conversationHistory[] = array(
+            'role' => 'user',
+            'content' => $question
+        );
+        $conversationHistory[] = array(
+            'role' => 'assistant',
+            'content' => $response['response']
+        );
 
         // Small delay between questions
         if ($questionNum < count($questions)) {

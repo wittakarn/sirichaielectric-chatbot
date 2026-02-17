@@ -521,6 +521,13 @@ class SirichaiElectricChatbot {
             return json_encode(array('productName' => $args['productName']), JSON_UNESCAPED_UNICODE);
         }
 
+        if ($functionName === 'generate_quotation') {
+            return json_encode(array(
+                'quotaDetail' => isset($args['quotaDetail']) ? $args['quotaDetail'] : array(),
+                'priceType' => isset($args['priceType']) ? $args['priceType'] : ''
+            ), JSON_UNESCAPED_UNICODE);
+        }
+
         return null;
     }
 
@@ -555,6 +562,26 @@ class SirichaiElectricChatbot {
             }
 
             return "Product details not found.";
+        }
+
+        if ($functionName === 'generate_quotation') {
+            $quotaDetail = isset($args['quotaDetail']) ? $args['quotaDetail'] : array();
+            $priceType = isset($args['priceType']) ? $args['priceType'] : '';
+
+            if (empty($quotaDetail)) {
+                return "No products provided for quotation.";
+            }
+            if (!in_array($priceType, array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'))) {
+                return "ไม่สามารถสร้างใบเสนอราคาได้ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น";
+            }
+
+            $result = $this->productAPI->generateFastQuotation($quotaDetail, $priceType);
+
+            if ($result !== null) {
+                return $result;
+            }
+
+            return "Failed to generate quotation.";
         }
 
         return "Unknown function: " . $functionName;
@@ -656,6 +683,39 @@ class SirichaiElectricChatbot {
                                     )
                                 ),
                                 'required' => array('productName')
+                            )
+                        ),
+                        array(
+                            'name' => 'generate_quotation',
+                            'description' => 'Generate a fast quotation PDF from products discussed in the conversation. CRITICAL: ONLY call this function when user explicitly says "AI สร้างใบเสนอราคาด้วยเรท" followed by a valid price type. If user asks to create a quotation WITHOUT specifying a valid price type, DO NOT call this function - reject the request immediately.',
+                            'parameters' => array(
+                                'type' => 'object',
+                                'properties' => array(
+                                    'quotaDetail' => array(
+                                        'type' => 'array',
+                                        'items' => array(
+                                            'type' => 'object',
+                                            'properties' => array(
+                                                'productName' => array(
+                                                    'type' => 'string',
+                                                    'description' => 'EXACT product name from search_products() results discussed in the conversation'
+                                                ),
+                                                'amount' => array(
+                                                    'type' => 'number',
+                                                    'description' => 'Quantity of the product. Use the amount discussed in conversation, or ask the user if not specified.'
+                                                )
+                                            ),
+                                            'required' => array('productName', 'amount')
+                                        ),
+                                        'description' => 'Array of products with their names and quantities from the conversation history'
+                                    ),
+                                    'priceType' => array(
+                                        'type' => 'string',
+                                        'enum' => array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'),
+                                        'description' => 'Price type extracted from user message'
+                                    )
+                                ),
+                                'required' => array('quotaDetail', 'priceType')
                             )
                         )
                     )
