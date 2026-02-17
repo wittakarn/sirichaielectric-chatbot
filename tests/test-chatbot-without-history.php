@@ -8,7 +8,7 @@
  * - Q2: "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" (multiple brands query)
  * - Q3: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
  * - Q4: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
- * - Q5: "ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
+ * - Q5: "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
  *
  * Each question is sent with no conversation history.
  *
@@ -87,7 +87,7 @@ $questions = array(
         'expectation' => 'AI should search for product weight details and calculate total weight for 400 meters'
     ),
     array(
-        'question' => 'ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
+        'question' => 'ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
         'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
     )
 );

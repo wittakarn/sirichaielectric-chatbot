@@ -5,9 +5,9 @@
  *
  * Simulates a full customer quotation workflow in a single conversation:
  * - Q1: "มีเบรกเกอร์ abb ไหม" (product search)
- * - Q2: "เอา ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว" (product selection)
+ * - Q2: "เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว" (product selection)
  * - Q3: "ใช้กับสายไฟไหนได้บ้าง" (compatibility question)
- * - Q4: "เอา สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" (accessory selection)
+ * - Q4: "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" (accessory selection)
  * - Q5: "สรุปรายการ พร้อมราคาให้หน่อย" (summary with pricing)
  * - Q6: "ออกใบเสนอราคาได้เลย" (quotation without rate - expect rejection)
  * - Q7: "ออกใบเสนอราคา ด้วยเรท c" (quotation with rate - expect PDF link)
@@ -75,7 +75,7 @@ $questions = array(
         'expectation' => 'AI should search for ABB circuit breaker products and return results'
     ),
     array(
-        'question' => 'เอา ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว',
+        'question' => 'เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว',
         'expectation' => 'AI should acknowledge the product selection with quantity 2'
     ),
     array(
@@ -83,7 +83,7 @@ $questions = array(
         'expectation' => 'AI should recommend compatible wire/cable for the selected breaker'
     ),
     array(
-        'question' => 'เอา สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น',
+        'question' => 'เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น',
         'expectation' => 'AI should acknowledge the cable selection with quantity 1'
     ),
     array(
