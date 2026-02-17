@@ -9,6 +9,8 @@ class ProductAPIService {
     private $config;
     private $catalogSummaryUrl;
     private $productSearchUrl;
+    private $productDetailUrl;
+    private $quotationUrl;
     private $cacheDir;
     private $cacheDuration; // in seconds
 
@@ -16,6 +18,8 @@ class ProductAPIService {
         $this->config = $config;
         $this->catalogSummaryUrl = $config['catalogSummaryUrl'];
         $this->productSearchUrl = $config['productSearchUrl'];
+        $this->productDetailUrl = $config['productDetailUrl'];
+        $this->quotationUrl = $config['quotationUrl'];
         $this->cacheDir = __DIR__ . '/../cache';
         $this->cacheDuration = 86400; // 24 hours
 
@@ -135,12 +139,10 @@ class ProductAPIService {
     public function getProductDetail($productName) {
         error_log('[ProductAPI] Getting product detail for: ' . $productName);
 
-        $productDetailUrl = 'https://shop.sirichaielectric.com/services/get-product-by-name.php';
-
         $requestBody = json_encode(array('productName' => $productName));
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $productDetailUrl);
+        curl_setopt($ch, CURLOPT_URL, $this->productDetailUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
@@ -178,15 +180,13 @@ class ProductAPIService {
     public function generateFastQuotation($quotaDetail, $priceType) {
         error_log('[ProductAPI] Generating fast quotation with ' . count($quotaDetail) . ' products, priceType: ' . $priceType);
 
-        $quotationUrl = 'http://shop.sirichaielectric.com/configuration/server/rest/generate-fast-quotation.php';
-
         $requestBody = json_encode(array(
             'quotaDetail' => $quotaDetail,
             'priceType' => $priceType
         ), JSON_UNESCAPED_UNICODE);
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $quotationUrl);
+        curl_setopt($ch, CURLOPT_URL, $this->quotationUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);

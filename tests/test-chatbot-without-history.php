@@ -1,20 +1,18 @@
 #!/usr/bin/env php
 <?php
 /**
- * Chatbot Integration Test
+ * Chatbot Integration Test - Independent Questions (No Conversation History)
  *
- * This test script:
- * 1. Clears all test data (messages table, logs, file cache)
- * 2. Tests the chatbot with a six-question conversation:
- *    - Q1: "มี รางวายเวย์ KWSS2038 KJL ไหม" (product search)
- *    - Q2: "หนาเท่าไหร่ ใช้ทำอะไร" (follow-up detail question)
- *    - Q3: "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" (general electrical engineering question)
- *    - Q4: "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" (multiple brands query)
- *    - Q5: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
- *    - Q6: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
- * 3. Verifies AI can answer all questions successfully
+ * Tests that the chatbot can handle standalone questions correctly:
+ * - Q1: "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" (general electrical engineering question)
+ * - Q2: "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" (multiple brands query)
+ * - Q3: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
+ * - Q4: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
+ * - Q5: "ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
  *
- * Usage: php test-chatbot.php
+ * Each question is sent with no conversation history.
+ *
+ * Usage: php test-chatbot-without-history.php
  */
 
 // Set error reporting for debugging
@@ -69,70 +67,33 @@ function printResponse($label, $response) {
     echo Color::MAGENTA . $label . ": " . Color::RESET . Color::WHITE . $response . Color::RESET . "\n";
 }
 
-// Test configuration
-// Each question has a 'group' - questions in the same group share conversation history (follow-up test).
-// When the group changes, conversation history is cleared (independent test).
-$testConversationId = 'test_' . time();
+// Each question is independent - no shared history
+$testConversationId = 'test_no_history_' . time();
 $questions = array(
     array(
-        'group' => 'A',
-        'question' => 'มี รางวายเวย์ KWSS2038 KJL ไหม',
-        'expectation' => 'AI should search for products and return product details with price'
-    ),
-    array(
-        'group' => 'A',
-        'question' => 'หนาเท่าไหร่ ใช้ทำอะไร',
-        'expectation' => 'AI should provide thickness and usage information'
-    ),
-    array(
-        'group' => 'B',
         'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
         'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
     ),
     array(
-        'group' => 'C',
         'question' => 'โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง',
         'expectation' => 'AI should be able to provide multiple brands of waterproof dustproof lamps'
     ),
     array(
-        'group' => 'D',
         'question' => 'ขอราคา thw 1x2.5 yazaka หน่อย',
         'expectation' => 'AI should be able to provide product price for specific THW cable'
     ),
     array(
-        'group' => 'E',
         'question' => 'สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่',
         'expectation' => 'AI should search for product weight details and calculate total weight for 400 meters'
     ),
     array(
-        'group' => 'F',
         'question' => 'ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
         'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
-    ),
-    array(
-        'group' => 'G',
-        'question' => 'มีเบรกเกอร์ abb ไหม',
-        'expectation' => 'AI should search for ABB circuit breaker products and return results'
-    ),
-    array(
-        'group' => 'G',
-        'question' => 'เอา ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว',
-        'expectation' => 'AI should acknowledge the product selection with quantity 2'
-    ),
-    array(
-        'group' => 'G',
-        'question' => 'ใช้กับสายไฟไหนได้บ้าง',
-        'expectation' => 'AI should recommend compatible wire/cable for the selected breaker'
-    ),
-    array(
-        'group' => 'G',
-        'question' => 'เอา สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น',
-        'expectation' => 'AI should acknowledge the cable selection with quantity 1'
     )
 );
 
 try {
-    printHeader("CHATBOT INTEGRATION TEST");
+    printHeader("CHATBOT TEST - INDEPENDENT QUESTIONS (NO HISTORY)");
 
     // Step 1: Load configuration
     printStep("Loading configuration...");
@@ -167,17 +128,7 @@ try {
         printInfo("logs.log does not exist (will be created on first log)");
     }
 
-    // Step 5: Remove file-cache.json
-    printStep("Removing file-cache.json...");
-    $cacheFile = __DIR__ . '/../file-cache.json';
-    if (file_exists($cacheFile)) {
-        unlink($cacheFile);
-        printSuccess("file-cache.json removed");
-    } else {
-        printInfo("file-cache.json does not exist");
-    }
-
-    // Step 6: Initialize services
+    // Step 5: Initialize services
     printStep("Initializing chatbot services...");
     $conversationManager = new ConversationManager(
         $config->get('conversation', 'maxMessages', 20),
@@ -190,31 +141,20 @@ try {
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
     printSuccess("Chatbot initialized");
 
-    // Step 7: Run conversation test
-    printHeader("RUNNING CONVERSATION TEST");
+    // Step 6: Run tests
+    printHeader("RUNNING TESTS");
     printInfo("Conversation ID: $testConversationId");
-    printInfo("Questions in the same group share history (follow-up test)");
-    printInfo("New group = fresh conversation (independent test)");
+    printInfo("Each question is sent with no conversation history");
 
     $allTestsPassed = true;
-    $conversationHistory = array();
-    $currentGroup = null;
 
     foreach ($questions as $index => $testCase) {
         $questionNum = $index + 1;
         $question = $testCase['question'];
         $expectation = $testCase['expectation'];
 
-        $group = $testCase['group'];
-
-        // Clear history when group changes
-        if ($group !== $currentGroup) {
-            $conversationHistory = array();
-            $currentGroup = $group;
-        }
-
         echo "\n" . Color::BOLD . "─────────────────────────────────────" . Color::RESET . "\n";
-        printStep("Q$questionNum [Group $group]: \"$question\"");
+        printStep("Q$questionNum: \"$question\"");
         printInfo("Expected: $expectation");
 
         // Add user message to conversation
@@ -226,8 +166,8 @@ try {
             null
         );
 
-        // Get AI response
-        $response = $chatbot->chat($question, $conversationHistory);
+        // Get AI response with empty history (independent question)
+        $response = $chatbot->chat($question, array());
 
         // Check response
         if (!$response['success']) {
@@ -259,30 +199,18 @@ try {
             isset($response['searchCriteria']) ? $response['searchCriteria'] : null
         );
 
-        // Accumulate conversation history within the same group
-        $conversationHistory[] = array(
-            'role' => 'user',
-            'content' => $question
-        );
-        $conversationHistory[] = array(
-            'role' => 'assistant',
-            'content' => $response['response']
-        );
-
         // Small delay between questions
         if ($questionNum < count($questions)) {
             sleep(2);
         }
     }
 
-    // Step 8: Final results
+    // Step 7: Final results
     printHeader("TEST RESULTS");
 
     if ($allTestsPassed) {
         printSuccess("All tests PASSED!");
-        printSuccess("The chatbot successfully answered all questions:");
-        printSuccess("✓ Initial product search");
-        printSuccess("✓ Follow-up detail question");
+        printSuccess("The chatbot successfully handled all independent questions:");
         printSuccess("✓ General electrical engineering question");
         printSuccess("✓ Multiple brands query");
         printSuccess("✓ Specific product price query");

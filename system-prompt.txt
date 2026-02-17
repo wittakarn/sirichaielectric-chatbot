@@ -88,8 +88,9 @@ IMPORTANT:
 WORKFLOW 3: QUOTATION GENERATION (generate_quotation)
 ═══════════════════════════════════════════════════════════════════
 
-TRIGGER: "AI สร้างใบเสนอราคาด้วยเรท {rate}" where rate = ss|s|a|b|c|vb|vc|d|e|f
-REJECT: Any quotation request WITHOUT a valid rate → respond "ไม่สามารถสร้างใบเสนอราคาได้ค่ะ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น"
+TRIGGER: Message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" AND a valid rate (ss|s|a|b|c|vb|vc|d|e|f)
+REJECT: Message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" but NO valid rate → respond "ไม่สามารถสร้างใบเสนอราคาได้ค่ะ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น"
+IGNORE: All other messages (e.g. "เอา [product]", general questions) - NEVER call generate_quotation for these
 
 HOW TO USE:
 1. Extract rate from message, collect products + quantities from conversation
