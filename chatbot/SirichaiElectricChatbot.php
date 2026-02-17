@@ -14,6 +14,7 @@ class SirichaiElectricChatbot {
     private $fileManager;
     private $systemPromptFileUri;
     private $catalogFileUri;
+    private $systemPromptText;
 
     public function __construct($config, $productAPI = null) {
         $this->config = $config;
@@ -52,31 +53,35 @@ class SirichaiElectricChatbot {
     private function uploadContextFiles() {
         error_log('[Chatbot] === Initializing File API Context ===');
 
-        // Upload system prompt file
-        $promptFile = __DIR__ . '/system-prompt.txt';
-        $promptContent = '';
+        /**
+         * HYBRID FILE API APPROACH (Fixed Empty Response Bug - Feb 15, 2026)
+         *
+         * Why this approach:
+         * - Uploading BOTH system prompt and catalog as File API files caused empty responses
+         * - Sending 106KB directly in systemInstruction caused 60s+ timeouts
+         *
+         * Solution:
+         * 1. System Prompt (~5KB) → Direct text in systemInstruction (fast, no caching needed)
+         * 2. Product Catalog (~101KB) → File API upload (enables caching, reduces tokens)
+         *
+         * Benefits:
+         * - Fast response times (~5 seconds)
+         * - Proper caching for large catalog
+         * - Avoids empty response bug from dual File API upload
+         */
+
+        // Load system prompt text for direct use in systemInstruction
+        $promptFile = __DIR__ . '/../system-prompt.txt';
         if (file_exists($promptFile)) {
-            $promptContent = file_get_contents($promptFile);
+            $this->systemPromptText = file_get_contents($promptFile);
         } else {
-            $promptContent = "You are a helpful customer service assistant for ONE Electric.";
+            $this->systemPromptText = "You are a helpful customer service assistant for Sirichai Electric.";
         }
+        error_log('[Chatbot] ✓ System Prompt loaded (' . strlen($this->systemPromptText) . ' bytes)');
 
-        $promptResult = $this->fileManager->getOrUploadFile(
-            'system-prompt',
-            $promptContent,
-            'System Prompt'
-        );
+        // Upload ONLY catalog file to File API (system prompt goes in systemInstruction)
+        $this->systemPromptFileUri = null;
 
-        if ($promptResult['success']) {
-            $this->systemPromptFileUri = $promptResult['fileUri'];
-            $cacheStatus = isset($promptResult['cached']) && $promptResult['cached'] ? 'CACHED' : 'UPLOADED';
-            error_log('[Chatbot] ✓ System Prompt: ' . $cacheStatus . ' - ' . $promptResult['name']);
-        } else {
-            error_log('[Chatbot] ✗ System Prompt: FAILED - ' . $promptResult['error']);
-            $this->systemPromptFileUri = null;
-        }
-
-        // Upload catalog file if available
         if (!empty($this->catalogSummary)) {
             $catalogResult = $this->fileManager->getOrUploadFile(
                 'catalog-summary',
@@ -97,7 +102,7 @@ class SirichaiElectricChatbot {
             error_log('[Chatbot] ⊘ Product Catalog: SKIPPED (no data)');
         }
 
-        error_log('[Chatbot] === File API Context Ready ===');
+        error_log('[Chatbot] === File API Context Ready (hybrid mode) ===');
     }
 
     /**
@@ -206,8 +211,9 @@ class SirichaiElectricChatbot {
                     error_log('[Chatbot] Image: Calling: ' . $functionName . '(' . $argsJson . ')');
 
                     // Capture search criteria for logging to database
-                    if ($functionName === 'search_products' && isset($args['criterias'])) {
-                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    $criteria = $this->extractSearchCriteria($functionName, $args);
+                    if ($criteria !== null) {
+                        $searchCriteria = $criteria;
                     }
                 }
 
@@ -308,8 +314,9 @@ class SirichaiElectricChatbot {
                     error_log('[Chatbot] Calling: ' . $functionName . '(' . $argsJson . ')');
 
                     // Capture search criteria for logging to database
-                    if ($functionName === 'search_products' && isset($args['criterias'])) {
-                        $searchCriteria = json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+                    $criteria = $this->extractSearchCriteria($functionName, $args);
+                    if ($criteria !== null) {
+                        $searchCriteria = $criteria;
                     }
                 }
 
@@ -433,20 +440,88 @@ class SirichaiElectricChatbot {
         );
 
         // Call Gemini again with function results
-        // Keep function declarations available in case Gemini wants to call more functions
         error_log('[Chatbot] Calling Gemini again with function results...');
-        $finalResponse = $this->callGeminiWithFunctions($contents, true);
+        $response = $this->callGeminiWithFunctions($contents, true);
 
-        // Log what type of response we got
-        if (isset($finalResponse['functionCalls'])) {
-            error_log('[Chatbot] WARNING: Gemini called another function after getting results!');
-        } elseif (isset($finalResponse['text'])) {
-            error_log('[Chatbot] Got final text response (' . strlen($finalResponse['text']) . ' chars)');
-        } else {
-            error_log('[Chatbot] ERROR: Unexpected response type - keys: ' . json_encode(array_keys($finalResponse), JSON_UNESCAPED_UNICODE));
+        // Handle chained function calls (e.g., search_products → search_product_detail)
+        // Allow up to 2 additional function calls to prevent infinite loops
+        $additionalCallsRemaining = 2;
+
+        while ($this->isAnotherFunctionCall($response) && $additionalCallsRemaining > 0) {
+            $attemptNumber = 3 - $additionalCallsRemaining;
+            error_log('[Chatbot] AI called another function (attempt #' . $attemptNumber . ')');
+
+            // Execute the next function in the chain
+            $response = $this->handleFunctionCalls($response, $contents);
+            $additionalCallsRemaining--;
         }
 
-        return $finalResponse;
+        // Check final response type
+        if ($this->isAnotherFunctionCall($response)) {
+            // Still trying to call functions after max attempts - stop to prevent infinite loop
+            error_log('[Chatbot] ERROR: Too many chained function calls - stopping');
+            return $this->createErrorResponse('Too many function calls - possible infinite loop', $response);
+        }
+
+        if ($this->hasTextResponse($response)) {
+            error_log('[Chatbot] Got final text response (' . strlen($response['text']) . ' chars)');
+            return $response;
+        }
+
+        // Unexpected response type
+        error_log('[Chatbot] ERROR: Unexpected response - keys: ' . json_encode(array_keys($response), JSON_UNESCAPED_UNICODE));
+        return $response;
+    }
+
+    /**
+     * Check if response contains another function call
+     * @param array $response Response from Gemini API
+     * @return bool True if response has function calls
+     */
+    private function isAnotherFunctionCall($response) {
+        return isset($response['functionCalls']);
+    }
+
+    /**
+     * Check if response has text content
+     * @param array $response Response from Gemini API
+     * @return bool True if response has text field
+     */
+    private function hasTextResponse($response) {
+        return isset($response['text']);
+    }
+
+    /**
+     * Create error response with text field
+     * @param string $errorMessage Error message to include
+     * @param array $originalResponse Original response for token count
+     * @return array Error response array
+     */
+    private function createErrorResponse($errorMessage, $originalResponse) {
+        return array(
+            'success' => false,
+            'text' => 'ขออภัยค่ะ ระบบประมวลผลข้อมูลไม่สำเร็จ กรุณาลองถามใหม่อีกครั้งหรือติดต่อพนักงานเพื่อขอความช่วยเหลือค่ะ',
+            'error' => $errorMessage,
+            'tokensUsed' => isset($originalResponse['tokensUsed']) ? $originalResponse['tokensUsed'] : 0
+        );
+    }
+
+    /**
+     * Extract search criteria from function call for logging purposes
+     * @param string $functionName Name of the function being called
+     * @param array $args Function arguments
+     * @return string|null JSON-encoded search criteria, or null if not a search function
+     */
+    private function extractSearchCriteria($functionName, $args) {
+        if ($functionName === 'search_products' && isset($args['criterias'])) {
+            return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($functionName === 'search_product_detail' && isset($args['productName'])) {
+            return json_encode(array('productName' => $args['productName']), JSON_UNESCAPED_UNICODE);
+        }
+
+        return null;
     }
 
     private function executeFunction($functionName, $args) {
@@ -466,6 +541,20 @@ class SirichaiElectricChatbot {
             }
 
             return "No products found.";
+        }
+
+        if ($functionName === 'search_product_detail') {
+            $productName = isset($args['productName']) ? $args['productName'] : '';
+            if (empty($productName)) {
+                return "No product name provided.";
+            }
+            $result = $this->productAPI->getProductDetail($productName);
+
+            if ($result !== null) {
+                return $result;
+            }
+
+            return "Product details not found.";
         }
 
         return "Unknown function: " . $functionName;
@@ -503,35 +592,21 @@ class SirichaiElectricChatbot {
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
-        // Build systemInstruction - ONLY TEXT ALLOWED (no files!)
-        // Files must be added to user messages instead
-        $systemInstructionText = 'You are a helpful customer service assistant for Sirichai Electric. Follow the instructions and use the product catalog information provided in the context. IMPORTANT: Always respond in the same language the customer uses. If they write in English, respond in English. If they write in Thai, respond in Thai.';
+        // Build systemInstruction from system-prompt.txt (catalog file will be added to user message)
+        $systemInstructionText = !empty($this->systemPromptText) ? $this->systemPromptText : 'You are a helpful customer service assistant for Sirichai Electric. Follow the instructions and use the product catalog information provided in the context. IMPORTANT: Always respond in the same language the customer uses. If they write in English, respond in English. If they write in Thai, respond in Thai.';
 
-        // Add file references to the FIRST user message (not systemInstruction!)
-        // This allows Gemini to cache files while following API requirements
-        if (($this->systemPromptFileUri || $this->catalogFileUri) && !empty($contents) && $contents[0]['role'] === 'user') {
-            // Build file parts to prepend
-            $fileParts = array();
-
-            if ($this->systemPromptFileUri) {
-                $fileParts[] = array(
-                    'file_data' => array(
-                        'file_uri' => $this->systemPromptFileUri,
-                        'mime_type' => 'text/plain'
-                    )
-                );
-            }
-
-            if ($this->catalogFileUri) {
-                $fileParts[] = array(
+        // Add catalog file reference to the FIRST user message (if available)
+        if ($this->catalogFileUri && !empty($contents) && $contents[0]['role'] === 'user') {
+            $fileParts = array(
+                array(
                     'file_data' => array(
                         'file_uri' => $this->catalogFileUri,
                         'mime_type' => 'text/plain'
                     )
-                );
-            }
+                )
+            );
 
-            // Prepend files to the first user message parts
+            // Prepend catalog file to the first user message parts
             $contents[0]['parts'] = array_merge($fileParts, $contents[0]['parts']);
         }
 
@@ -567,6 +642,20 @@ class SirichaiElectricChatbot {
                                     )
                                 ),
                                 'required' => array('criterias')
+                            )
+                        ),
+                        array(
+                            'name' => 'search_product_detail',
+                            'description' => 'Get detailed product specifications (weight, size, thickness, quantity per pack). CRITICAL: (1) MUST use EXACT product name from search_products() results - NEVER use customer\'s informal name directly, (2) If you don\'t have exact product name from previous search_products(), call search_products() FIRST to get it, (3) ALWAYS call this function for spec questions - NEVER say "information not available" without trying. Trigger keywords: น้ำหนัก/weight, หนา/thickness, ขนาด/size/dimensions, กี่ชิ้นต่อแพ็ค/quantity per pack.',
+                            'parameters' => array(
+                                'type' => 'object',
+                                'properties' => array(
+                                    'productName' => array(
+                                        'type' => 'string',
+                                        'description' => 'EXACT complete product name from search_products() results. Must include ALL characters: brackets [], braces {}, parentheses (), numbers, Thai/English text. NEVER use customer\'s informal product name. Example correct: "รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL". Example WRONG: "KWSS2038-10" or "LC1D12M7".'
+                                    )
+                                ),
+                                'required' => array('productName')
                             )
                         )
                     )
@@ -631,6 +720,41 @@ class SirichaiElectricChatbot {
 
         // Log token usage for this API call and get token count
         $tokensUsed = $this->logTokenUsage($data, $includeFunctions ? 'Initial Call' : 'Follow-up Call');
+
+        // Check if response has content
+        if (!isset($data['candidates'][0]['content']['parts']) || empty($data['candidates'][0]['content']['parts'])) {
+            // Log the actual response structure for debugging
+            error_log('[Chatbot] ERROR: Empty model response');
+            error_log('[Chatbot] Full response: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
+
+            // Try to get actual error reason from API response
+            $errorMessage = 'AI returned empty response';
+
+            // Check for finish reason which often contains the actual error
+            if (isset($data['candidates'][0]['finishReason'])) {
+                $finishReason = $data['candidates'][0]['finishReason'];
+                $errorMessage .= ': ' . $finishReason;
+
+                // Add helpful context based on finish reason
+                if ($finishReason === 'MAX_TOKENS') {
+                    $errorMessage .= '. The conversation is too long. Please start a new conversation.';
+                } elseif ($finishReason === 'SAFETY') {
+                    $errorMessage .= '. Content was blocked by safety filters.';
+                } elseif ($finishReason === 'RECITATION') {
+                    $errorMessage .= '. Content was blocked due to recitation concerns.';
+                }
+            }
+
+            // Check if there's a prompt feedback error
+            if (isset($data['promptFeedback']['blockReason'])) {
+                $errorMessage .= '. Block reason: ' . $data['promptFeedback']['blockReason'];
+            }
+
+            return array(
+                'success' => false,
+                'error' => $errorMessage,
+            );
+        }
 
         // Check for function calls
         if (isset($data['candidates'][0]['content']['parts'])) {

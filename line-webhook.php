@@ -16,10 +16,10 @@ ini_set('max_execution_time', 0);
 
 // Include required files
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/ProductAPIService.php';
-require_once __DIR__ . '/GeminiFileManager.php';
-require_once __DIR__ . '/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/ConversationManager.php';
+require_once __DIR__ . '/services/ProductAPIService.php';
+require_once __DIR__ . '/chatbot/GeminiFileManager.php';
+require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
+require_once __DIR__ . '/chatbot/ConversationManager.php';
 require_once __DIR__ . '/utils/LineWebhookUtils.php';
 
 // Initialize configuration
@@ -177,9 +177,11 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botU
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
-    // Show loading animation (instead of sending a message)
-    // This gives us up to 60 seconds to process the request
-    LineWebhookUtils::showLoadingAnimation($replyTo, 60, $accessToken);
+    // Show loading animation for 1:1 direct chats only
+    // LINE API does not support loading animation in group/room chats
+    if ($sourceType === 'user') {
+        LineWebhookUtils::showLoadingAnimation($replyTo, 60, $accessToken);
+    }
 
     $startTime = microtime(true);
 

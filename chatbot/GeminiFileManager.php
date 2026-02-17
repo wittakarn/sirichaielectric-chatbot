@@ -17,7 +17,7 @@ class GeminiFileManager {
      */
     public function __construct($apiKey, $cacheFile = null) {
         $this->apiKey = $apiKey;
-        $this->cacheFile = $cacheFile ?: __DIR__ . '/file-cache.json';
+        $this->cacheFile = $cacheFile ?: __DIR__ . '/../file-cache.json';
         $this->loadCache();
     }
 

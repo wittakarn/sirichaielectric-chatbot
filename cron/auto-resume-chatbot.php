@@ -13,7 +13,7 @@
  */
 
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../ConversationManager.php';
+require_once __DIR__ . '/../chatbot/ConversationManager.php';
 
 echo "[" . date('Y-m-d H:i:s') . "] Auto-Resume Cron Job Started\n";
 

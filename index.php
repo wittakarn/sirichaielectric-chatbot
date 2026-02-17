@@ -24,10 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Include required files
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/ProductAPIService.php';
-require_once __DIR__ . '/GeminiFileManager.php';
-require_once __DIR__ . '/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/ConversationManager.php';
+require_once __DIR__ . '/services/ProductAPIService.php';
+require_once __DIR__ . '/chatbot/GeminiFileManager.php';
+require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
+require_once __DIR__ . '/chatbot/ConversationManager.php';
 
 // Initialize configuration
 try {
@@ -61,17 +61,13 @@ $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);
 // Route the request
 $requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 
-// Get the path - use REDIRECT_URL if available (from .htaccess rewrite), otherwise parse REQUEST_URI
-if (isset($_SERVER['REDIRECT_URL']) && !empty($_SERVER['REDIRECT_URL'])) {
-    // Apache mod_rewrite provides the clean path in REDIRECT_URL
-    $path = $_SERVER['REDIRECT_URL'];
-} else {
-    // Fallback to parsing REQUEST_URI
-    $requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-    $scriptName = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
-    $path = str_replace($scriptName, '', $requestUri);
-    $path = strtok($path, '?');
-}
+// Get the path from REQUEST_URI (reliable across all Apache versions/setups)
+// REDIRECT_URL is intentionally avoided: on MAMP/some Apache configs it holds the
+// rewritten destination (index.php) instead of the original URL.
+$requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+$scriptName = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
+$path = str_replace($scriptName, '', $requestUri);
+$path = strtok($path, '?');
 
 // Remove base path(s) from config
 $serverConfig = $config->get('server');

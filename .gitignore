@@ -1,5 +1,6 @@
 # File API cache
 file-cache.json
+cache/
 
 # Environment files
 .env
