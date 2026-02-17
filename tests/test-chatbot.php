@@ -108,6 +108,26 @@ $questions = array(
         'group' => 'F',
         'question' => 'ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
         'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
+    ),
+    array(
+        'group' => 'G',
+        'question' => 'มีเบรกเกอร์ abb ไหม',
+        'expectation' => 'AI should search for ABB circuit breaker products and return results'
+    ),
+    array(
+        'group' => 'G',
+        'question' => 'เอา ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว',
+        'expectation' => 'AI should acknowledge the product selection with quantity 2'
+    ),
+    array(
+        'group' => 'G',
+        'question' => 'ใช้กับสายไฟไหนได้บ้าง',
+        'expectation' => 'AI should recommend compatible wire/cable for the selected breaker'
+    ),
+    array(
+        'group' => 'G',
+        'question' => 'เอา สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น',
+        'expectation' => 'AI should acknowledge the cable selection with quantity 1'
     )
 );
 
