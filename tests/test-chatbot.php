@@ -95,6 +95,10 @@ $questions = array(
     array(
         'question' => 'สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่',
         'expectation' => 'AI should search for product weight details and calculate total weight for 400 meters'
+    ),
+    array(
+        'question' => 'ต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
+        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
     )
 );
 
@@ -251,6 +255,7 @@ try {
         printSuccess("✓ Multiple brands query");
         printSuccess("✓ Specific product price query");
         printSuccess("✓ Weight calculation with quantity");
+        printSuccess("✓ IMC conduit product identification");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

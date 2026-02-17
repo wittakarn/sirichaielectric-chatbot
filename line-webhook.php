@@ -177,9 +177,11 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botU
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 
-    // Show loading animation (instead of sending a message)
-    // This gives us up to 60 seconds to process the request
-    LineWebhookUtils::showLoadingAnimation($replyTo, 60, $accessToken);
+    // Show loading animation for 1:1 direct chats only
+    // LINE API does not support loading animation in group/room chats
+    if ($sourceType === 'user') {
+        LineWebhookUtils::showLoadingAnimation($replyTo, 60, $accessToken);
+    }
 
     $startTime = microtime(true);
 
