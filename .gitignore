@@ -3,7 +3,7 @@ file-cache.json
 cache/
 
 # Environment files
-.env
+.env*
 
 # IDE files
 .idea/
