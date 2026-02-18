@@ -11,6 +11,10 @@
  * - Q5: "สรุปรายการ พร้อมราคาให้หน่อย" (summary with pricing)
  * - Q6: "ออกใบเสนอราคาได้เลย" (quotation without rate - expect rejection)
  * - Q7: "ออกใบเสนอราคา ด้วยเรท c" (quotation with rate - expect PDF link)
+ * - Q8: "มีสวิตช์ตัดไฟ RCD ไหม" (new product search after quotation)
+ * - Q9: "เพิ่ม รายการแรก 5 ชิ้น" (shopping phrase - must NOT ask for price type)
+ * - Q10: "เอา ตัวแรก 2 อัน" (another shopping phrase - must NOT trigger quotation)
+ * - Q11: "ออกใบเสนอราคา เรท a" (quotation after shopping list - expect PDF link with all products)
  *
  * Usage: php test-chatbot-with-history.php
  */
@@ -97,6 +101,23 @@ $questions = array(
     array(
         'question' => 'ออกใบเสนอราคา ด้วยเรท c',
         'expectation' => 'AI should call generate_quotation and return a PDF download link'
+    ),
+    // New test cases: verify shopping phrases do NOT trigger quotation workflow
+    array(
+        'question' => 'มีสวิตช์ตัดไฟ RCD ไหม',
+        'expectation' => 'AI should search for RCD products and return results (not quotation-related)'
+    ),
+    array(
+        'question' => 'เพิ่ม รายการแรก 5 ชิ้น',
+        'expectation' => 'AI should respond naturally (acknowledge or clarify). Must NOT ask for price type and must NOT call generate_quotation'
+    ),
+    array(
+        'question' => 'เอา ตัวแรก 2 อัน',
+        'expectation' => 'AI should respond naturally. Must NOT ask for price type and must NOT call generate_quotation'
+    ),
+    array(
+        'question' => 'ออกใบเสนอราคา เรท a',
+        'expectation' => 'AI should call generate_quotation with all accumulated products and return a PDF link'
     )
 );
 
@@ -237,6 +258,10 @@ try {
         printSuccess("✓ Summary with pricing");
         printSuccess("✓ Quotation rejection (no rate specified)");
         printSuccess("✓ Quotation generation with PDF link");
+        printSuccess("✓ Product search after quotation (RCD)");
+        printSuccess("✓ Shopping phrase 'เพิ่ม X ชิ้น' did not trigger quotation");
+        printSuccess("✓ Shopping phrase 'เอา X อัน' did not trigger quotation");
+        printSuccess("✓ Quotation generation still works after shopping list management");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");
