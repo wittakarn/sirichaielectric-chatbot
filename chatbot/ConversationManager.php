@@ -51,7 +51,7 @@ class ConversationManager {
      */
     public function getConversationHistory($conversationId) {
         try {
-            return $this->messageRepository->getHistory($conversationId);
+            return $this->messageRepository->getHistory($conversationId, $this->maxMessagesPerConversation);
         } catch (PDOException $e) {
             error_log('[ConversationManager] getConversationHistory failed: ' . $e->getMessage());
             return array();
@@ -91,9 +91,6 @@ class ConversationManager {
             $nextSeq = $this->messageRepository->getNextSequenceNumber($conversationId);
             $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq, $searchCriteria);
 
-            // Trim old messages
-            $this->trimConversation($conversationId);
-
             $this->conversationRepository->commit();
             return true;
 
@@ -101,27 +98,6 @@ class ConversationManager {
             $this->conversationRepository->rollback();
             error_log('[ConversationManager] addMessage failed: ' . $e->getMessage());
             throw new Exception('Failed to add message: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Trim conversation to keep only recent messages
-     *
-     * @param string $conversationId Conversation ID
-     */
-    private function trimConversation($conversationId) {
-        try {
-            $count = $this->messageRepository->countByConversationId($conversationId);
-
-            if ($count > $this->maxMessagesPerConversation) {
-                $deleted = $this->messageRepository->deleteOldest(
-                    $conversationId,
-                    $this->maxMessagesPerConversation
-                );
-                error_log("[ConversationManager] Trimmed $deleted messages from $conversationId");
-            }
-        } catch (PDOException $e) {
-            error_log('[ConversationManager] trimConversation failed: ' . $e->getMessage());
         }
     }
 
