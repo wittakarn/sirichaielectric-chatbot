@@ -292,6 +292,23 @@ class SirichaiElectricChatbot {
                 $totalTokens += $response['tokensUsed'];
             }
 
+            // Auto-recover: if all retries failed with empty STOP, refresh catalog and retry once.
+            // callGeminiWithFunctions() mutates $contents[0] by prepending the catalog file reference,
+            // so rebuild $contents fresh after refreshFiles() to avoid double-prepending the file.
+            if (!$response['success'] && strpos($response['error'], 'empty response: STOP') !== false) {
+                error_log('[Chatbot] Empty STOP persisted - refreshing catalog and retrying once...');
+                $this->refreshFiles();
+                $contents = $this->buildConversationHistory($conversationHistory);
+                $contents[] = array(
+                    'role' => 'user',
+                    'parts' => array(array('text' => $message))
+                );
+                $response = $this->callGeminiWithFunctions($contents);
+                if (isset($response['tokensUsed'])) {
+                    $totalTokens += $response['tokensUsed'];
+                }
+            }
+
             if (!$response['success']) {
                 return array(
                     'success' => false,
