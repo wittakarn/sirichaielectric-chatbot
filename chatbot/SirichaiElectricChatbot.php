@@ -15,6 +15,11 @@ class SirichaiElectricChatbot {
     private $systemPromptFileUri;
     private $catalogFileUri;
     private $systemPromptText;
+    private $isAuthorized = false;
+
+    public function setAuthorized($isAuthorized) {
+        $this->isAuthorized = (bool) $isAuthorized;
+    }
 
     public function __construct($config, $productAPI = null) {
         $this->config = $config;
@@ -582,6 +587,10 @@ class SirichaiElectricChatbot {
         }
 
         if ($functionName === 'generate_quotation') {
+            if (!$this->isAuthorized) {
+                return "ไม่สามารถสร้างใบเสนอราคาได้ค่ะ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น";
+            }
+
             $quotaDetail = isset($args['quotaDetail']) ? $args['quotaDetail'] : array();
             $priceType = isset($args['priceType']) ? $args['priceType'] : '';
 
@@ -629,74 +638,73 @@ class SirichaiElectricChatbot {
     }
 
     private function getFunctionDeclarations() {
-        return array(
+        $declarations = array(
             array(
-                'functionDeclarations' => array(
-                    array(
-                        'name' => 'search_products',
-                        'description' => 'Search for products by exact category names from the catalog file. Returns product name, price, and unit grouped by category. CRITICAL: Copy complete category names including all text inside {}, [], () - these contain brand/model codes. Never exceed 3 categories.',
-                        'parameters' => array(
-                            'type' => 'object',
-                            'properties' => array(
-                                'criterias' => array(
-                                    'type' => 'array',
-                                    'items' => array('type' => 'string'),
-                                    'description' => 'Array of EXACT category names from catalog (the part before " | "). Must include ALL special characters: {}, [], () and their contents. Maximum 3 categories.'
-                                )
-                            ),
-                            'required' => array('criterias')
+                'name' => 'search_products',
+                'description' => 'Search for products by exact category names from the catalog file. Returns product name, price, and unit grouped by category. CRITICAL: Copy complete category names including all text inside {}, [], () - these contain brand/model codes. Never exceed 3 categories.',
+                'parameters' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'criterias' => array(
+                            'type' => 'array',
+                            'items' => array('type' => 'string'),
+                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Must include ALL special characters: {}, [], () and their contents. Maximum 3 categories.'
                         )
                     ),
-                    array(
-                        'name' => 'search_product_detail',
-                        'description' => 'Get detailed product specifications (weight, size, thickness, quantity per pack). CRITICAL: (1) MUST use EXACT product name from search_products() results - NEVER use customer\'s informal name directly, (2) If you don\'t have exact product name from previous search_products(), call search_products() FIRST to get it, (3) ALWAYS call this function for spec questions - NEVER say "information not available" without trying. Trigger keywords: น้ำหนัก/weight, หนา/thickness, ขนาด/size/dimensions, กี่ชิ้นต่อแพ็ค/quantity per pack.',
-                        'parameters' => array(
+                    'required' => array('criterias')
+                )
+            ),
+            array(
+                'name' => 'search_product_detail',
+                'description' => 'Get detailed product specifications (weight, size, thickness, quantity per pack). CRITICAL: (1) MUST use EXACT product name from search_products() results - NEVER use customer\'s informal name directly, (2) If you don\'t have exact product name from previous search_products(), call search_products() FIRST to get it, (3) ALWAYS call this function for spec questions - NEVER say "information not available" without trying. Trigger keywords: น้ำหนัก/weight, หนา/thickness, ขนาด/size/dimensions, กี่ชิ้นต่อแพ็ค/quantity per pack.',
+                'parameters' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'productName' => array(
+                            'type' => 'string',
+                            'description' => 'EXACT complete product name from search_products() results. Must include ALL characters: brackets [], braces {}, parentheses (), numbers, Thai/English text. NEVER use customer\'s informal product name. Example correct: "รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL". Example WRONG: "KWSS2038-10" or "LC1D12M7".'
+                        )
+                    ),
+                    'required' => array('productName')
+                )
+            )
+        );
+
+        $declarations[] = array(
+            'name' => 'generate_quotation',
+            'description' => 'Generate a fast quotation PDF from products discussed in the conversation. CRITICAL: ONLY call this function when the user message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" AND includes a valid price type (ss|s|a|b|c|vb|vc|d|e|f). NEVER call this function for product selection messages like "เอา [product]" or any other messages that do not explicitly request a quotation.',
+            'parameters' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'quotaDetail' => array(
+                        'type' => 'array',
+                        'items' => array(
                             'type' => 'object',
                             'properties' => array(
                                 'productName' => array(
                                     'type' => 'string',
-                                    'description' => 'EXACT complete product name from search_products() results. Must include ALL characters: brackets [], braces {}, parentheses (), numbers, Thai/English text. NEVER use customer\'s informal product name. Example correct: "รางวายเวย์ 2\"x3\" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL". Example WRONG: "KWSS2038-10" or "LC1D12M7".'
-                                )
-                            ),
-                            'required' => array('productName')
-                        )
-                    ),
-                    array(
-                        'name' => 'generate_quotation',
-                        'description' => 'Generate a fast quotation PDF from products discussed in the conversation. CRITICAL: ONLY call this function when the user message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" AND includes a valid price type (ss|s|a|b|c|vb|vc|d|e|f). NEVER call this function for product selection messages like "เอา [product]" or any other messages that do not explicitly request a quotation.',
-                        'parameters' => array(
-                            'type' => 'object',
-                            'properties' => array(
-                                'quotaDetail' => array(
-                                    'type' => 'array',
-                                    'items' => array(
-                                        'type' => 'object',
-                                        'properties' => array(
-                                            'productName' => array(
-                                                'type' => 'string',
-                                                'description' => 'EXACT product name from search_products() results discussed in the conversation'
-                                            ),
-                                            'amount' => array(
-                                                'type' => 'number',
-                                                'description' => 'Quantity of the product. Use the amount discussed in conversation, or ask the user if not specified.'
-                                            )
-                                        ),
-                                        'required' => array('productName', 'amount')
-                                    ),
-                                    'description' => 'Array of products with their names and quantities from the conversation history'
+                                    'description' => 'EXACT product name from search_products() results discussed in the conversation'
                                 ),
-                                'priceType' => array(
-                                    'type' => 'string',
-                                    'enum' => array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'),
-                                    'description' => 'Price type extracted from user message'
+                                'amount' => array(
+                                    'type' => 'number',
+                                    'description' => 'Quantity of the product. Use the amount discussed in conversation, or ask the user if not specified.'
                                 )
                             ),
-                            'required' => array('quotaDetail', 'priceType')
-                        )
+                            'required' => array('productName', 'amount')
+                        ),
+                        'description' => 'Array of products with their names and quantities from the conversation history'
+                    ),
+                    'priceType' => array(
+                        'type' => 'string',
+                        'enum' => array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'),
+                        'description' => 'Price type extracted from user message'
                     )
-                )
+                ),
+                'required' => array('quotaDetail', 'priceType')
             )
         );
+
+        return array(array('functionDeclarations' => $declarations));
     }
 
     private function executeWithRetry($url, $jsonBody, $includeFunctions) {

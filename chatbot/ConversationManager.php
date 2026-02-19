@@ -8,6 +8,7 @@
 require_once __DIR__ . '/DatabaseManager.php';
 require_once __DIR__ . '/../repository/ConversationRepository.php';
 require_once __DIR__ . '/../repository/MessageRepository.php';
+require_once __DIR__ . '/../repository/AuthorizedUserRepository.php';
 
 class ConversationManager {
     private $maxMessagesPerConversation;
@@ -19,6 +20,9 @@ class ConversationManager {
 
     /** @var MessageRepository */
     private $messageRepository;
+
+    /** @var AuthorizedUserRepository */
+    private $authorizedUserRepository;
 
     /**
      * Constructor
@@ -41,6 +45,7 @@ class ConversationManager {
 
         $this->conversationRepository = new ConversationRepository($pdo);
         $this->messageRepository = new MessageRepository($pdo);
+        $this->authorizedUserRepository = new AuthorizedUserRepository($pdo);
     }
 
     /**
@@ -337,6 +342,21 @@ class ConversationManager {
         } catch (PDOException $e) {
             error_log('[ConversationManager] getActiveConversations failed: ' . $e->getMessage());
             return array();
+        }
+    }
+
+    /**
+     * Check if a user is authorized to generate quotations
+     *
+     * @param string $userId LINE user ID or internal user identifier
+     * @return bool True if authorized, false otherwise
+     */
+    public function isUserAuthorized($userId) {
+        try {
+            return $this->authorizedUserRepository->isAuthorized($userId);
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] isUserAuthorized failed: ' . $e->getMessage());
+            return false;
         }
     }
 }

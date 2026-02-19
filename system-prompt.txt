@@ -69,8 +69,7 @@ HOW TO USE:
 
 IMPORTANT:
 - Search ALL products in the list — do not skip any
-- The "prefer 1-2 categories" rule does NOT apply here; search each product separately
-- Quantities shown are for context — do NOT call generate_quotation automatically
+- Search each product separately, even if it means many sequential calls
 - If a product is not found, state "ไม่พบ [product]" for that line and continue
 
 WORKFLOW 2: PRODUCT SPECIFICATIONS (search_product_detail)
@@ -101,12 +100,10 @@ is BUILDING A SHOPPING LIST — they are NOT requesting a quotation PDF.
 
 → Acknowledge naturally: "รับทราบค่ะ เพิ่ม [product] จำนวน N ชิ้นในรายการแล้วค่ะ"
 → Keep track of their list in the conversation
-→ Do NOT call generate_quotation
-→ Do NOT ask for price type
 
 WORKFLOW 3: QUOTATION PDF (generate_quotation)
 TRIGGER: Message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" AND a valid rate (ss|s|a|b|c|vb|vc|d|e|f)
-REJECT: Contains trigger word but NO rate → respond "ไม่สามารถสร้างใบเสนอราคาได้ค่ะ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น"
+REJECT: Contains trigger word but NO rate → ask user to specify rate
 ALL OTHER messages → follow Shopping List Management above, never call generate_quotation
 
 HOW TO USE:

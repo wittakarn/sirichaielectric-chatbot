@@ -168,6 +168,7 @@ try {
     $productAPI = new ProductAPIService($productAPIConfig);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+    $chatbot->setAuthorized(true);
     printSuccess("Chatbot initialized");
 
     // Step 6: Run tests

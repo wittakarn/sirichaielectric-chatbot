@@ -1,18 +1,18 @@
 #!/usr/bin/env php
 <?php
 /**
- * Chatbot Integration Test - Independent Questions (No Conversation History)
+ * Chatbot Integration Test - Unauthorized User (No Quotation Access)
  *
- * Tests that the chatbot can handle standalone questions correctly:
- * - Q1: "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" (general electrical engineering question)
- * - Q2: "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" (multiple brands query)
- * - Q3: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
- * - Q4: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
- * - Q5: "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
+ * Tests that an unauthorized user cannot generate quotations:
+ * - Q1: "ขอราคา" with 5 products (batch price inquiry)
+ *       → AI must search ALL 5 products and return prices
+ *       → AI must NOT offer to create a quotation
+ * - Q2: "ออกใบเสนอราคาได้เลย" (no rate)
+ *       → AI must reject — unauthorized user
+ * - Q3: "ออกใบเสนอราคา เรท c"
+ *       → AI must reject — unauthorized user, no PDF link returned
  *
- * Each question is sent with no conversation history.
- *
- * Usage: php test-chatbot-without-history.php
+ * Usage: php tests/test-chatbot-unauthorized.php
  */
 
 // Set error reporting for debugging
@@ -67,33 +67,52 @@ function printResponse($label, $response) {
     echo Color::MAGENTA . $label . ": " . Color::RESET . Color::WHITE . $response . Color::RESET . "\n";
 }
 
-// Each question is independent - no shared history
-$testConversationId = 'test_no_history_' . time();
+// All questions share a single conversation history
+$testConversationId = 'test_unauthorized_' . time();
 $questions = array(
     array(
-        'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
-        'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
+        'question' => "ขอราคา\n1 thw1x4สีดำ ยา —4ม้วน\n2 weg5001k pana —50ตัว",
+        'expectation' => 'AI must search ALL 2 products and return prices. Must NOT offer to create a quotation for unauthorized user.',
+        'validate' => function($response) {
+            // Response must contain price info
+            $hasPrices = mb_strpos($response, 'ราคา') !== false || mb_strpos($response, 'บาท') !== false;
+            // Must NOT contain a PDF link
+            $hasNoLink = mb_strpos($response, 'http') === false && mb_strpos($response, 'pdf') === false;
+            return $hasPrices && $hasNoLink;
+        },
+        'validateMsg' => 'Response must contain price info (ราคา/บาท) and must NOT contain a PDF link'
     ),
     array(
-        'question' => 'โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง',
-        'expectation' => 'AI should be able to provide multiple brands of waterproof dustproof lamps'
+        'question' => 'ออกใบเสนอราคาได้เลย',
+        'expectation' => 'AI must reject — unauthorized user cannot generate quotations',
+        'validate' => function($response) {
+            // Must NOT return a PDF link
+            $hasNoLink = mb_strpos($response, 'http') === false
+                && mb_strpos($response, 'ดาวน์โหลด') === false
+                && mb_strpos($response, 'pdf') === false
+                && mb_strpos($response, 'PDF') === false;
+            return $hasNoLink;
+        },
+        'validateMsg' => 'Response must NOT contain a PDF link (unauthorized user)'
     ),
     array(
-        'question' => 'ขอราคา thw 1x2.5 yazaka หน่อย',
-        'expectation' => 'AI should be able to provide product price for specific THW cable'
+        'question' => 'ออกใบเสนอราคา เรท c',
+        'expectation' => 'AI must reject — unauthorized user cannot generate quotations even with a valid rate',
+        'validate' => function($response) {
+            // Must NOT return a PDF link
+            $hasNoLink = mb_strpos($response, 'http') === false
+                && mb_strpos($response, 'ดาวน์โหลด') === false
+                && mb_strpos($response, 'pdf') === false
+                && mb_strpos($response, 'PDF') === false;
+            return $hasNoLink;
+        },
+        'validateMsg' => 'Response must NOT contain a PDF link (unauthorized user)'
     ),
-    array(
-        'question' => 'สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่',
-        'expectation' => 'AI should search for product weight details and calculate total weight for 400 meters'
-    ),
-    array(
-        'question' => 'ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
-        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
-    )
 );
 
 try {
-    printHeader("CHATBOT TEST - INDEPENDENT QUESTIONS (NO HISTORY)");
+    printHeader("CHATBOT TEST - UNAUTHORIZED USER (NO QUOTATION ACCESS)");
+    printInfo("setAuthorized(false) — simulating a normal customer");
 
     // Step 1: Load configuration
     printStep("Loading configuration...");
@@ -139,15 +158,16 @@ try {
     $productAPI = new ProductAPIService($productAPIConfig);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
-    $chatbot->setAuthorized(true);
-    printSuccess("Chatbot initialized");
+    $chatbot->setAuthorized(false);
+    printSuccess("Chatbot initialized (unauthorized)");
 
     // Step 6: Run tests
     printHeader("RUNNING TESTS");
     printInfo("Conversation ID: $testConversationId");
-    printInfo("Each question is sent with no conversation history");
+    printInfo("All questions share the same conversation history");
 
     $allTestsPassed = true;
+    $conversationHistory = array();
 
     foreach ($questions as $index => $testCase) {
         $questionNum = $index + 1;
@@ -155,7 +175,7 @@ try {
         $expectation = $testCase['expectation'];
 
         echo "\n" . Color::BOLD . "─────────────────────────────────────" . Color::RESET . "\n";
-        printStep("Q$questionNum: \"$question\"");
+        printStep("Q$questionNum: \"" . str_replace("\n", " | ", $question) . "\"");
         printInfo("Expected: $expectation");
 
         // Add user message to conversation
@@ -167,8 +187,8 @@ try {
             null
         );
 
-        // Get AI response with empty history (independent question)
-        $response = $chatbot->chat($question, array());
+        // Get AI response with accumulated history
+        $response = $chatbot->chat($question, $conversationHistory);
 
         // Check response
         if (!$response['success']) {
@@ -191,6 +211,17 @@ try {
             printInfo("Search criteria: " . $response['searchCriteria']);
         }
 
+        // Run validation if defined
+        if (isset($testCase['validate'])) {
+            $passed = $testCase['validate']($response['response']);
+            if ($passed) {
+                printSuccess("Validation PASSED: " . $testCase['validateMsg']);
+            } else {
+                printError("Validation FAILED: " . $testCase['validateMsg']);
+                $allTestsPassed = false;
+            }
+        }
+
         // Save assistant message to conversation
         $conversationManager->addMessage(
             $testConversationId,
@@ -198,6 +229,16 @@ try {
             $response['response'],
             $response['tokensUsed'],
             isset($response['searchCriteria']) ? $response['searchCriteria'] : null
+        );
+
+        // Accumulate conversation history
+        $conversationHistory[] = array(
+            'role' => 'user',
+            'content' => $question
+        );
+        $conversationHistory[] = array(
+            'role' => 'assistant',
+            'content' => $response['response']
         );
 
         // Small delay between questions
@@ -211,12 +252,10 @@ try {
 
     if ($allTestsPassed) {
         printSuccess("All tests PASSED!");
-        printSuccess("The chatbot successfully handled all independent questions:");
-        printSuccess("✓ General electrical engineering question");
-        printSuccess("✓ Multiple brands query");
-        printSuccess("✓ Specific product price query");
-        printSuccess("✓ Weight calculation with quantity");
-        printSuccess("✓ IMC conduit product identification");
+        printSuccess("The chatbot correctly blocked quotation generation for unauthorized user:");
+        printSuccess("✓ Batch 'ขอราคา' searched all 5 products and returned prices");
+        printSuccess("✓ Rejected 'ออกใบเสนอราคา' with no rate — no PDF generated");
+        printSuccess("✓ Rejected 'ออกใบเสนอราคา เรท c' — no PDF generated");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

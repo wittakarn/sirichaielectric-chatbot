@@ -116,6 +116,21 @@ if (isset($events['events']) && is_array($events['events']) && count($events['ev
     $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
     $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
 
+    // Check if the sender is authorized to generate quotations
+    $senderId = null;
+    foreach ($events['events'] as $evt) {
+        if (isset($evt['source']['userId'])) {
+            $senderId = $evt['source']['userId'];
+            break;
+        }
+    }
+
+    if ($senderId !== null) {
+        $isAuthorized = $conversationManager->isUserAuthorized($senderId);
+        $chatbot->setAuthorized($isAuthorized);
+        error_log('[LINE Webhook] User ' . $senderId . ' authorized: ' . ($isAuthorized ? 'yes' : 'no'));
+    }
+
     // Get bot user ID from webhook data for mention detection
     $botUserId = LineWebhookUtils::getBotUserId($events);
 

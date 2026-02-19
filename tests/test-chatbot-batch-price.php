@@ -89,13 +89,14 @@ $questions = array(
         'question' => 'ออกใบเสนอราคาได้เลย',
         'expectation' => 'AI should reject — no rate specified',
         'validate' => function($response) {
-            // Should contain rejection message
-            return mb_strpos($response, 'ไม่สามารถ') !== false
-                || mb_strpos($response, 'อนุญาต') !== false
-                || mb_strpos($response, 'เรท') !== false
-                || mb_strpos($response, 'rate') !== false;
+            // Should ask for rate / reject without rate — must NOT return a PDF link
+            $hasNoLink = mb_strpos($response, 'http') === false
+                && mb_strpos($response, 'ดาวน์โหลด') === false
+                && mb_strpos($response, 'pdf') === false
+                && mb_strpos($response, 'PDF') === false;
+            return $hasNoLink;
         },
-        'validateMsg' => 'Response must reject the quotation request (no rate)'
+        'validateMsg' => 'Response must NOT contain a PDF link (no rate specified)'
     ),
     array(
         'question' => 'ออกใบเสนอราคา เรท c',
@@ -158,6 +159,7 @@ try {
     $productAPI = new ProductAPIService($productAPIConfig);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+    $chatbot->setAuthorized(true);
     printSuccess("Chatbot initialized");
 
     // Step 6: Run tests
