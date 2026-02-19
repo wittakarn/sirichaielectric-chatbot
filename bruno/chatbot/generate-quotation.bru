@@ -1,0 +1,36 @@
+meta {
+  name: generate-quotation
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://shop.sirichaielectric.com/configuration/server/rest/generate-fast-quotation.php
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "priceType": "ss",
+    "quotaDetail": [
+      {
+        "amount": 6,
+        "productName": "สายไฟ NYY 1x16 ยาซากิ YAZAKI (เมตร)"
+      },
+      {
+        "amount": 8,
+        "productName": "โวลมิเตอร์ 0-300V (80x80) SD-80V QUBIX"
+      },
+      {
+        "amount": 16,
+        "productName": "ท่อขาว uPVC 16มิล 1116MD UPC"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
