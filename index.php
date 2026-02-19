@@ -155,6 +155,18 @@ function handleChat($chatbot, $conversationManager) {
         ? $data['conversationId']
         : $conversationManager->generateConversationId();
 
+    // Handle /reset command
+    if ($message === '/reset') {
+        $conversationManager->resetConversationHistory($conversationId);
+        echo json_encode(array(
+            'success' => true,
+            'reset' => true,
+            'response' => "Chat history has been cleared. You can start a fresh conversation now.",
+            'conversationId' => $conversationId,
+        ));
+        return;
+    }
+
     // Get conversation history
     $history = $conversationManager->getConversationHistory($conversationId);
 

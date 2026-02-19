@@ -107,6 +107,24 @@ class ConversationManager {
     }
 
     /**
+     * Reset conversation history by deactivating all messages (soft reset)
+     * Messages are preserved in the database but excluded from chat context.
+     *
+     * @param string $conversationId Conversation ID
+     * @return int Number of messages deactivated
+     */
+    public function resetConversationHistory($conversationId) {
+        try {
+            $count = $this->messageRepository->deactivateByConversationId($conversationId);
+            error_log("[ConversationManager] Reset history for $conversationId ($count messages deactivated)");
+            return $count;
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] resetConversationHistory failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Clear a specific conversation
      *
      * @param string $conversationId Conversation ID
