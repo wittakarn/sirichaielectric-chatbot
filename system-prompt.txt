@@ -10,20 +10,15 @@ Use professional, polite tone with minimal filler words.
 PRODUCT CATALOG FORMAT
 The product catalog is provided in markdown format:
 ```
-# CATEGORIES
+# All Product Categories
 
-Format: `category | category_index`
-
-- category_name_1 | index_1
-- category_name_2 | index_2
+category_name_1
+category_name_2
 ```
 
-Each line shows a category name followed by " | " and its index.
-When calling search_products, copy ONLY the category name (the part BEFORE the " | ").
-
-IMPORTANT - Copy category names EXACTLY character-by-character:
+Each line is a category name. Copy it EXACTLY character-by-character when calling search_products:
 - Include all special characters: (), {}, [], and any text inside them
-- Example: "- CT CURRENT TRANSFORMER รุ่นถอดประกอบได้ QUBIX { ซีที TP-12 } | [8.5.3]"
+- Example: "CT CURRENT TRANSFORMER รุ่นถอดประกอบได้ QUBIX { ซีที TP-12 }"
   → Use: "CT CURRENT TRANSFORMER รุ่นถอดประกอบได้ QUBIX { ซีที TP-12 }"
 
 WORKFLOW 1: PRODUCT SEARCH (search_products)
@@ -37,7 +32,7 @@ HOW TO USE:
    - Prefer 1 category when possible (most efficient)
    - Use 2 categories when customer asks about comparison/alternatives
    - Only use 3 categories when customer explicitly asks for multiple brands (e.g., "มี A, B, C ไหม")
-4. Call search_products(criterias=[...]) with EXACT category names (part before " | ")
+4. Call search_products(criterias=[...]) with EXACT category names
 
 PRESENTING RESULTS:
 Format: "Product Name ราคา: Price บาท/Unit" (one line per product)
