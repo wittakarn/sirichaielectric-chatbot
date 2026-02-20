@@ -691,7 +691,7 @@ class SirichaiElectricChatbot {
 
         $declarations[] = array(
             'name' => 'generate_quotation',
-            'description' => 'Generate a fast quotation PDF from products discussed in the conversation. CRITICAL: ONLY call this function when the user message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา" AND includes a valid price type (ss|s|a|b|c|vb|vc|d|e|f). NEVER call this function for product selection messages like "เอา [product]" or any other messages that do not explicitly request a quotation.',
+            'description' => 'Generate a fast quotation PDF from products discussed in the conversation.',
             'parameters' => array(
                 'type' => 'object',
                 'properties' => array(
