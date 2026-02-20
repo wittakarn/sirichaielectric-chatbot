@@ -176,7 +176,7 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botU
     // Check for pause/resume commands (text messages only)
     if ($messageType === 'text') {
         $messageText = isset($event['message']['text']) ? trim($event['message']['text']) : '';
-        $commandResult = handleChatbotCommand($messageText, $conversationId, $userId, $conversationManager, $accessToken);
+        $commandResult = handleChatbotCommand($messageText, $conversationId, $userId, $sourceType, $groupId, $conversationManager, $accessToken);
         if ($commandResult !== false) {
             return; // Command was handled, don't process as regular message
         }
@@ -289,15 +289,18 @@ function handleEvent($event, $chatbot, $conversationManager, $accessToken, $botU
  * Commands:
  * - User pause: "ติดต่อพนักงาน", "/human", "คุยกับพนักงาน"
  * - User resume: "/bot", "/resume", "เปิดแชทบอท"
+ * - Reset: "/reset" (individual in DM, group-wide in group chats)
  *
  * @param string $messageText The message text
  * @param string $conversationId The conversation ID
  * @param string $userId The LINE user ID
+ * @param string $sourceType Source type ('user', 'group', or 'room')
+ * @param string|null $groupId Group/Room ID (null for direct chats)
  * @param ConversationManager $conversationManager
  * @param string $accessToken LINE access token
  * @return bool|string False if not a command, otherwise the command type handled
  */
-function handleChatbotCommand($messageText, $conversationId, $userId, $conversationManager, $accessToken) {
+function handleChatbotCommand($messageText, $conversationId, $userId, $sourceType, $groupId, $conversationManager, $accessToken) {
     $lowerMessage = mb_strtolower(trim($messageText), 'UTF-8');
 
     // User pause commands (user wants to talk to human agent)
@@ -335,8 +338,8 @@ function handleChatbotCommand($messageText, $conversationId, $userId, $conversat
     }
 
     // Check for reset command
-    if ($lowerMessage === '/reset') {
-        return handleResetCommand($conversationId, $userId, $conversationManager, $accessToken);
+    if ($lowerMessage === '/reset' || $lowerMessage === 'zx /reset') {
+        return handleResetCommand($conversationId, $userId, $sourceType, $groupId, $conversationManager, $accessToken);
     }
 
     return false; // Not a command
@@ -405,18 +408,54 @@ function handleResumeCommand($conversationId, $userId, $conversationManager, $ac
 
 /**
  * Handle reset command - deactivate all messages so conversation starts fresh
+ *
+ * Behavior:
+ * - Direct chat (1-on-1): Reset individual user's conversation
+ * - Group chat: Reset ALL conversations for the entire group (all members)
+ *
+ * @param string $conversationId The conversation ID (line_{userId} or line_group_{groupId}_{userId})
+ * @param string $userId The LINE user ID who issued the command
+ * @param string $sourceType Source type ('user', 'group', or 'room')
+ * @param string|null $groupId Group/Room ID (null for direct chats)
+ * @param ConversationManager $conversationManager
+ * @param string $accessToken LINE access token
+ * @return string Command status ('reset' or 'group_reset')
  */
-function handleResetCommand($conversationId, $userId, $conversationManager, $accessToken) {
-    $conversationManager->resetConversationHistory($conversationId);
+function handleResetCommand($conversationId, $userId, $sourceType, $groupId, $conversationManager, $accessToken) {
+    $replyTo = $userId; // Default to user for direct messages
+    $resetCount = 0;
 
-    $message = "ล้างประวัติการสนทนาเรียบร้อยแล้วค่ะ\n"
-             . "เริ่มต้นบทสนทนาใหม่ได้เลยค่ะ\n\n"
-             . "Chat history has been cleared.\n"
-             . "You can start a fresh conversation now.";
+    // For group/room chats: reset ALL conversations in the group (all members)
+    if (($sourceType === 'group' || $sourceType === 'room') && !empty($groupId)) {
+        $replyTo = $groupId; // Reply to group, not individual user
 
-    LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
+        // Reset all conversations matching line_group_{groupId}_*
+        $resetCount = $conversationManager->resetGroupConversations($groupId);
 
-    error_log("[LINE] Conversation history reset by user: $conversationId");
+        $message = "ล้างประวัติการสนทนาทั้งกลุ่มเรียบร้อยแล้วค่ะ (" . $resetCount . " บทสนทนา)\n"
+                 . "สมาชิกทุกคนสามารถเริ่มต้นบทสนทนาใหม่ได้เลยค่ะ\n\n"
+                 . "Group chat history has been cleared (" . $resetCount . " conversations).\n"
+                 . "All members can start fresh conversations now.";
 
-    return 'reset';
+        LineWebhookUtils::sendPushMessage($replyTo, $message, $accessToken);
+
+        error_log("[LINE] Group conversation history reset by user $userId for group $groupId ($resetCount conversations)");
+
+        return 'group_reset';
+    }
+    // For direct chats: reset individual conversation
+    else {
+        $resetCount = $conversationManager->resetConversationHistory($conversationId);
+
+        $message = "ล้างประวัติการสนทนาเรียบร้อยแล้วค่ะ\n"
+                 . "เริ่มต้นบทสนทนาใหม่ได้เลยค่ะ\n\n"
+                 . "Chat history has been cleared.\n"
+                 . "You can start a fresh conversation now.";
+
+        LineWebhookUtils::sendPushMessage($replyTo, $message, $accessToken);
+
+        error_log("[LINE] Conversation history reset by user: $conversationId");
+
+        return 'reset';
+    }
 }

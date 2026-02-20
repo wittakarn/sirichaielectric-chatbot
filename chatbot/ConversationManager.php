@@ -125,6 +125,25 @@ class ConversationManager {
     }
 
     /**
+     * Reset all conversations for a LINE group (soft reset)
+     * Deactivates messages for all users in the group.
+     * Conversation IDs follow pattern: line_group_{groupId}_{userId}
+     *
+     * @param string $groupId LINE Group/Room ID
+     * @return int Number of conversations reset
+     */
+    public function resetGroupConversations($groupId) {
+        try {
+            $count = $this->messageRepository->deactivateByGroupId($groupId);
+            error_log("[ConversationManager] Reset group conversations for group $groupId ($count conversations reset)");
+            return $count;
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] resetGroupConversations failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Clear a specific conversation
      *
      * @param string $conversationId Conversation ID

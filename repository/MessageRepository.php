@@ -246,6 +246,19 @@ class MessageRepository extends BaseRepository {
     }
 
     /**
+     * Deactivate all active messages for all conversations in a LINE group (soft reset)
+     * Matches conversation IDs with pattern: line_group_{groupId}_%
+     *
+     * @param string $groupId LINE Group/Room ID
+     * @return int Number of messages deactivated
+     */
+    public function deactivateByGroupId($groupId) {
+        $pattern = 'line_group_' . $groupId . '_%';
+        $sql = "UPDATE messages SET is_active = 0 WHERE conversation_id LIKE ? AND is_active = 1";
+        return $this->execute($sql, array($pattern));
+    }
+
+    /**
      * Find messages by role in conversation
      *
      * @param string $conversationId Conversation ID
