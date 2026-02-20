@@ -16,6 +16,8 @@ class SirichaiElectricChatbot {
     private $catalogFileUri;
     private $systemPromptText;
     private $isAuthorized = false;
+    private $accumulatedCriteria = array();
+    private $accumulatedTokens = 0;
 
     public function setAuthorized($isAuthorized) {
         $this->isAuthorized = (bool) $isAuthorized;
@@ -162,6 +164,8 @@ class SirichaiElectricChatbot {
         try {
             $totalTokens = 0;
             $searchCriteria = null;
+            $this->accumulatedCriteria = array();
+            $this->accumulatedTokens = 0;
 
             // Build conversation contents from history
             $contents = $this->buildConversationHistory($conversationHistory);
@@ -214,19 +218,13 @@ class SirichaiElectricChatbot {
                     $args = isset($call['args']) ? $call['args'] : array();
                     $argsJson = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     error_log('[Chatbot] Image: Calling: ' . $functionName . '(' . $argsJson . ')');
-
-                    // Capture search criteria for logging to database
-                    $criteria = $this->extractSearchCriteria($functionName, $args);
-                    if ($criteria !== null) {
-                        $searchCriteria = $criteria;
-                    }
                 }
 
                 $response = $this->handleFunctionCalls($response, $contents);
-
-                if (isset($response['tokensUsed'])) {
-                    $totalTokens += $response['tokensUsed'];
-                }
+                $totalTokens += $this->accumulatedTokens;
+                $searchCriteria = !empty($this->accumulatedCriteria)
+                    ? json_encode($this->accumulatedCriteria, JSON_UNESCAPED_UNICODE)
+                    : null;
             }
 
             if (!$response['success']) {
@@ -276,6 +274,8 @@ class SirichaiElectricChatbot {
             // Track total tokens used across all API calls
             $totalTokens = 0;
             $searchCriteria = null;
+            $this->accumulatedCriteria = array();
+            $this->accumulatedTokens = 0;
 
             // Build conversation contents
             $contents = $this->buildConversationHistory($conversationHistory);
@@ -334,20 +334,13 @@ class SirichaiElectricChatbot {
                     $args = isset($call['args']) ? $call['args'] : array();
                     $argsJson = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     error_log('[Chatbot] Calling: ' . $functionName . '(' . $argsJson . ')');
-
-                    // Capture search criteria for logging to database
-                    $criteria = $this->extractSearchCriteria($functionName, $args);
-                    if ($criteria !== null) {
-                        $searchCriteria = $criteria;
-                    }
                 }
 
                 $response = $this->handleFunctionCalls($response, $contents);
-
-                // Track tokens from function call follow-up
-                if (isset($response['tokensUsed'])) {
-                    $totalTokens += $response['tokensUsed'];
-                }
+                $totalTokens += $this->accumulatedTokens;
+                $searchCriteria = !empty($this->accumulatedCriteria)
+                    ? json_encode($this->accumulatedCriteria, JSON_UNESCAPED_UNICODE)
+                    : null;
 
                 // Log what came back after handling functions
                 if (isset($response['functionCalls'])) {
@@ -436,10 +429,26 @@ class SirichaiElectricChatbot {
         // Build function response parts
         $functionResponseParts = array();
 
+        // Capture criteria for this Gemini call round (one entry per round = countable API calls)
+        $roundCriteria = array();
+
         // Execute each function call
         foreach ($response['functionCalls'] as $call) {
             $functionName = $call['name'];
             $args = isset($call['args']) ? $call['args'] : array();
+
+            // Accumulate search criteria for this round
+            $criteria = $this->extractSearchCriteria($functionName, $args);
+            if ($criteria !== null) {
+                $decoded = json_decode($criteria, true);
+                // search_products returns an array of category names — merge flat into round
+                // search_product_detail / generate_quotation return objects — push as-is
+                if (is_array($decoded) && array_values($decoded) === $decoded) {
+                    $roundCriteria = array_merge($roundCriteria, $decoded);
+                } else {
+                    $roundCriteria[] = $decoded;
+                }
+            }
 
             // Execute the function
             $result = $this->executeFunction($functionName, $args);
@@ -461,9 +470,19 @@ class SirichaiElectricChatbot {
             'parts' => $functionResponseParts
         );
 
+        // Store this round's criteria as one nested entry (outer count = number of API call rounds)
+        if (!empty($roundCriteria)) {
+            $this->accumulatedCriteria[] = $roundCriteria;
+        }
+
         // Call Gemini again with function results
         error_log('[Chatbot] Calling Gemini again with function results...');
         $response = $this->callGeminiWithFunctions($contents, true);
+
+        // Accumulate tokens from this API call
+        if (isset($response['tokensUsed'])) {
+            $this->accumulatedTokens += $response['tokensUsed'];
+        }
 
         // Handle chained function calls (e.g., search_products → search_product_detail)
         // Allow up to 2 additional function calls to prevent infinite loops
