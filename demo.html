@@ -508,8 +508,13 @@
                         sessionStorage.setItem('chatbot_conversation_id', conversationId);
                     }
 
-                    // Add assistant response
-                    addMessage('assistant', data.response);
+                    if (data.reset) {
+                        // Clear the chat UI on /reset
+                        clearUI();
+                    } else {
+                        // Add assistant response
+                        addMessage('assistant', data.response);
+                    }
                 } else {
                     showError(data.error || 'An error occurred. Please try again.');
                 }

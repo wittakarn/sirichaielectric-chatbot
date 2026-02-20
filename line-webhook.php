@@ -116,6 +116,21 @@ if (isset($events['events']) && is_array($events['events']) && count($events['ev
     $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
     $conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
 
+    // Check if the sender is authorized to generate quotations
+    $senderId = null;
+    foreach ($events['events'] as $evt) {
+        if (isset($evt['source']['userId'])) {
+            $senderId = $evt['source']['userId'];
+            break;
+        }
+    }
+
+    if ($senderId !== null) {
+        $isAuthorized = $conversationManager->isUserAuthorized($senderId);
+        $chatbot->setAuthorized($isAuthorized);
+        error_log('[LINE Webhook] User ' . $senderId . ' authorized: ' . ($isAuthorized ? 'yes' : 'no'));
+    }
+
     // Get bot user ID from webhook data for mention detection
     $botUserId = LineWebhookUtils::getBotUserId($events);
 
@@ -319,6 +334,11 @@ function handleChatbotCommand($messageText, $conversationId, $userId, $conversat
         }
     }
 
+    // Check for reset command
+    if ($lowerMessage === '/reset') {
+        return handleResetCommand($conversationId, $userId, $conversationManager, $accessToken);
+    }
+
     return false; // Not a command
 }
 
@@ -381,4 +401,22 @@ function handleResumeCommand($conversationId, $userId, $conversationManager, $ac
     error_log("[LINE] Chatbot resumed: $conversationId");
 
     return 'resumed';
+}
+
+/**
+ * Handle reset command - deactivate all messages so conversation starts fresh
+ */
+function handleResetCommand($conversationId, $userId, $conversationManager, $accessToken) {
+    $conversationManager->resetConversationHistory($conversationId);
+
+    $message = "ล้างประวัติการสนทนาเรียบร้อยแล้วค่ะ\n"
+             . "เริ่มต้นบทสนทนาใหม่ได้เลยค่ะ\n\n"
+             . "Chat history has been cleared.\n"
+             . "You can start a fresh conversation now.";
+
+    LineWebhookUtils::sendPushMessage($userId, $message, $accessToken);
+
+    error_log("[LINE] Conversation history reset by user: $conversationId");
+
+    return 'reset';
 }

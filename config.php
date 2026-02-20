@@ -62,6 +62,8 @@ class Config {
             'productAPI' => array(
                 'catalogSummaryUrl' => $this->getEnv('CATALOG_SUMMARY_URL', ''),
                 'productSearchUrl' => $this->getEnv('PRODUCT_SEARCH_URL', ''),
+                'productDetailUrl' => $this->getEnv('PRODUCT_DETAIL_URL', ''),
+                'quotationUrl' => $this->getEnv('QUOTATION_URL', ''),
             ),
             'website' => array(
                 'url' => $this->getEnv('WEBSITE_URL', 'https://assistant.sirichaielectric.com/'),
@@ -136,6 +138,14 @@ class Config {
 
         if (empty($this->config['productAPI']['productSearchUrl'])) {
             throw new Exception('PRODUCT_SEARCH_URL is required in .env file');
+        }
+
+        if (empty($this->config['productAPI']['productDetailUrl'])) {
+            throw new Exception('PRODUCT_DETAIL_URL is required in .env file');
+        }
+
+        if (empty($this->config['productAPI']['quotationUrl'])) {
+            throw new Exception('QUOTATION_URL is required in .env file');
         }
 
         if (empty($this->config['database']['user'])) {

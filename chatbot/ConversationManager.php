@@ -8,6 +8,7 @@
 require_once __DIR__ . '/DatabaseManager.php';
 require_once __DIR__ . '/../repository/ConversationRepository.php';
 require_once __DIR__ . '/../repository/MessageRepository.php';
+require_once __DIR__ . '/../repository/AuthorizedUserRepository.php';
 
 class ConversationManager {
     private $maxMessagesPerConversation;
@@ -19,6 +20,9 @@ class ConversationManager {
 
     /** @var MessageRepository */
     private $messageRepository;
+
+    /** @var AuthorizedUserRepository */
+    private $authorizedUserRepository;
 
     /**
      * Constructor
@@ -41,6 +45,7 @@ class ConversationManager {
 
         $this->conversationRepository = new ConversationRepository($pdo);
         $this->messageRepository = new MessageRepository($pdo);
+        $this->authorizedUserRepository = new AuthorizedUserRepository($pdo);
     }
 
     /**
@@ -51,7 +56,7 @@ class ConversationManager {
      */
     public function getConversationHistory($conversationId) {
         try {
-            return $this->messageRepository->getHistory($conversationId);
+            return $this->messageRepository->getHistory($conversationId, $this->maxMessagesPerConversation);
         } catch (PDOException $e) {
             error_log('[ConversationManager] getConversationHistory failed: ' . $e->getMessage());
             return array();
@@ -91,9 +96,6 @@ class ConversationManager {
             $nextSeq = $this->messageRepository->getNextSequenceNumber($conversationId);
             $this->messageRepository->create($conversationId, $role, $content, $tokensUsed, $nextSeq, $searchCriteria);
 
-            // Trim old messages
-            $this->trimConversation($conversationId);
-
             $this->conversationRepository->commit();
             return true;
 
@@ -105,23 +107,20 @@ class ConversationManager {
     }
 
     /**
-     * Trim conversation to keep only recent messages
+     * Reset conversation history by deactivating all messages (soft reset)
+     * Messages are preserved in the database but excluded from chat context.
      *
      * @param string $conversationId Conversation ID
+     * @return int Number of messages deactivated
      */
-    private function trimConversation($conversationId) {
+    public function resetConversationHistory($conversationId) {
         try {
-            $count = $this->messageRepository->countByConversationId($conversationId);
-
-            if ($count > $this->maxMessagesPerConversation) {
-                $deleted = $this->messageRepository->deleteOldest(
-                    $conversationId,
-                    $this->maxMessagesPerConversation
-                );
-                error_log("[ConversationManager] Trimmed $deleted messages from $conversationId");
-            }
+            $count = $this->messageRepository->deactivateByConversationId($conversationId);
+            error_log("[ConversationManager] Reset history for $conversationId ($count messages deactivated)");
+            return $count;
         } catch (PDOException $e) {
-            error_log('[ConversationManager] trimConversation failed: ' . $e->getMessage());
+            error_log('[ConversationManager] resetConversationHistory failed: ' . $e->getMessage());
+            return 0;
         }
     }
 
@@ -361,6 +360,21 @@ class ConversationManager {
         } catch (PDOException $e) {
             error_log('[ConversationManager] getActiveConversations failed: ' . $e->getMessage());
             return array();
+        }
+    }
+
+    /**
+     * Check if a user is authorized to generate quotations
+     *
+     * @param string $userId LINE user ID or internal user identifier
+     * @return bool True if authorized, false otherwise
+     */
+    public function isUserAuthorized($userId) {
+        try {
+            return $this->authorizedUserRepository->isAuthorized($userId);
+        } catch (PDOException $e) {
+            error_log('[ConversationManager] isUserAuthorized failed: ' . $e->getMessage());
+            return false;
         }
     }
 }

@@ -32,13 +32,24 @@ This file provides context for Claude AI when working on this codebase.
 - `system-prompt.txt` - AI behavior instructions (uploaded to Gemini File API)
 
 ### 4. Testing
-- `test-chatbot.php` - Integration test with 5-question conversation:
-  1. Product search (function calling)
-  2. Follow-up details (fuzzy search)
-  3. Electrical calculations (general knowledge + product suggestions)
-  4. Multiple brands query (multi-category search)
-  5. Specific pricing (informal query handling)
-- `test-file-api.php` - File API integration test
+- `tests/test-chatbot-without-history.php` - 5 independent questions (no conversation history):
+  1. General electrical engineering (motor current calculation)
+  2. Multiple brands query (waterproof/dustproof lamps)
+  3. Specific product price (THW cable)
+  4. Weight calculation with quantity (THW cable 400m)
+  5. Product identification (IMC conduit straight coupling)
+- `tests/test-chatbot-with-history.php` - 11-turn multi-turn conversation (full quotation workflow):
+  1. Product search (ABB circuit breaker)
+  2. Shopping list — add product with quantity
+  3. Compatibility question (wire recommendation)
+  4. Shopping list — add accessory with quantity
+  5. Summary with pricing
+  6. Quotation without rate → expect rejection
+  7. Quotation with rate `c` → expect PDF link
+  8. New product search after quotation (RCD)
+  9. Shopping phrase "เพิ่ม X ชิ้น" → must NOT trigger quotation
+  10. Shopping phrase "เอา X อัน" → must NOT trigger quotation
+  11. Quotation with rate `a` → expect PDF link with all accumulated products
 
 ## Database Schema
 

@@ -1,9 +1,9 @@
 # Sirichai Electric Chatbot - Complete Project Documentation
 
-**Last Updated:** February 15, 2026
+**Last Updated:** February 18, 2026
 **Database:** chatbotdb (MySQL)
 **PHP Version:** 5.6+
-**Architecture:** Repository Pattern + File API + LINE Integration + Image Recognition
+**Architecture:** Repository Pattern + File API + LINE Integration + Image Recognition + Admin Dashboard + React Monitoring UI
 
 > **Quick AI Context:** See [claude.md](claude.md) for condensed context optimized for AI-assisted development
 
@@ -18,11 +18,16 @@
 5. [File API Integration](#file-api-integration)
 6. [Repository Pattern](#repository-pattern)
 7. [LINE Integration](#line-integration)
-8. [Configuration](#configuration)
-9. [Testing & Monitoring](#testing--monitoring)
-10. [Maintenance & Cleanup](#maintenance--cleanup)
-11. [Troubleshooting](#troubleshooting)
-12. [Development History](#development-history)
+8. [Gemini Function Calling Architecture](#gemini-function-calling-architecture)
+9. [Services Layer](#services-layer)
+10. [LineWebhookUtils](#linewebhookutils)
+11. [Admin System](#admin-system)
+12. [React Monitoring Dashboard](#react-monitoring-dashboard)
+13. [Configuration](#configuration)
+14. [Testing & Monitoring](#testing--monitoring)
+15. [Maintenance & Cleanup](#maintenance--cleanup)
+16. [Troubleshooting](#troubleshooting)
+17. [Development History](#development-history)
 
 ---
 
@@ -56,19 +61,20 @@ Sirichai Electric Chatbot is a conversational AI system powered by Google Gemini
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Entry Points                              │
-│           index.php (API)      line-webhook.php (LINE)          │
+│     index.php (API)      line-webhook.php (LINE)                │
+│     admin/dashboard.php  admin/api/monitoring.php               │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────────┐
-│                   SirichaiElectricChatbot                             │
-│         (AI Logic + File API + Product Search)                   │
+│          chatbot/SirichaiElectricChatbot.php                     │
+│         (AI Logic + File API + Function Calling)                 │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
            ┌───────────────┼───────────────┐
            ▼               ▼               ▼
 ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐
-│ GeminiFileAPI  │  │ProductAPI    │  │ConversationMgr  │
-│ (Token Saving) │  │ (Catalog)    │  │ (Service Layer) │
+│GeminiFileMgr   │  │ProductAPI    │  │ConversationMgr  │
+│(Token Saving)  │  │(Catalog+PDF) │  │(Service Layer)  │
 └────────────────┘  └──────────────┘  └────────┬────────┘
                                                │
                            ┌───────────────────┼──────────────┐
@@ -89,49 +95,103 @@ Sirichai Electric Chatbot is a conversational AI system powered by Google Gemini
                           │   DatabaseManager      │
                           │   (Singleton + PDO)    │
                           └────────────────────────┘
+
+Admin / Monitoring Layer:
+┌──────────────────────────────────────────────────────────┐
+│  DashboardController  →  DashboardService                │
+│  (REST API)              (Business Logic)                │
+│                          ↓          ↓                    │
+│                ConversationRepo  MessageRepo             │
+└──────────────────────────────────────────────────────────┘
+
+React Dashboard (dashboard/):
+┌──────────────────────────────────────────────────────────┐
+│  React + TypeScript (Vite) + TanStack Query              │
+│  monitoringService.ts → admin/api/monitoring.php         │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ### File Structure
 
 ```
 sirichaielectric-chatbot/
-├── Core Application
+├── Entry Points
 │   ├── index.php                    # REST API entry point
-│   ├── line-webhook.php             # LINE webhook handler
-│   ├── SirichaiElectricChatbot.php       # Main chatbot logic
+│   └── line-webhook.php             # LINE webhook handler
+│
+├── chatbot/                         # Core chatbot engine
+│   ├── SirichaiElectricChatbot.php  # Main AI logic (Gemini + function calling)
 │   ├── ConversationManager.php      # Conversation service layer
-│   └── DatabaseManager.php          # Database singleton
+│   ├── DatabaseManager.php          # Database singleton (PDO)
+│   └── GeminiFileManager.php        # File API (token optimization)
 │
-├── Repository Layer
-│   ├── repository/
-│   │   ├── BaseRepository.php          # Abstract base class
-│   │   ├── ConversationRepository.php  # Conversation queries
-│   │   └── MessageRepository.php       # Message queries
+├── repository/                      # Repository layer (all DB queries)
+│   ├── BaseRepository.php           # Abstract base with PDO helpers
+│   ├── ConversationRepository.php   # Conversation table operations
+│   └── MessageRepository.php        # Messages table operations
 │
-├── API Integration
-│   ├── GeminiFileManager.php        # File API (token optimization)
-│   ├── ProductAPIService.php        # Product catalog API
-│   └── cleanup-files.php            # File management utility
+├── services/                        # Business logic services
+│   ├── ProductAPIService.php        # Product catalog + search API
+│   ├── DashboardService.php         # Monitoring data aggregation
+│   ├── LineProfileService.php       # LINE user profile fetching
+│   └── CacheClearService.php        # HTTP endpoint to clear catalog cache
+│
+├── controllers/
+│   └── DashboardController.php      # REST endpoints for monitoring API
+│
+├── utils/
+│   └── LineWebhookUtils.php         # LINE webhook utility helpers
+│
+├── admin/                           # Admin dashboard (PHP + HTML)
+│   ├── index.php                    # Admin entry / redirect
+│   ├── login.php                    # Login form
+│   ├── logout.php                   # Session logout
+│   ├── auth.php                     # Session-based auth guard
+│   ├── dashboard.php                # Main admin dashboard UI
+│   ├── generate-password-hash.php   # CLI tool: bcrypt hash generator
+│   └── api/
+│       └── monitoring.php           # REST: monitoring conversations endpoint
+│
+├── dashboard/                       # React monitoring dashboard (TypeScript)
+│   ├── src/
+│   │   ├── components/              # React UI components
+│   │   ├── services/
+│   │   │   └── monitoringService.ts # API client for monitoring endpoint
+│   │   ├── ui/                      # Shared UI primitives
+│   │   └── main.tsx                 # App entry point
+│   ├── package.json                 # Node.js dependencies
+│   ├── vite.config.ts               # Vite build config
+│   ├── tsconfig.json                # TypeScript config
+│   ├── tailwind.config.js           # Tailwind CSS config
+│   └── config.php                   # PHP bridge: injects WEBSITE_URL global
+│
+├── cron/
+│   └── auto-resume-chatbot.php      # Cron job: auto-resume paused chats
+│
+├── tests/
+│   ├── test-chatbot-with-history.php    # Integration test: 7-question quotation flow
+│   └── test-chatbot-without-history.php # Integration test: 5 independent questions
 │
 ├── Configuration
-│   ├── config.php                   # Config loader (singleton)
-│   ├── .env                         # Environment variables
+│   ├── config.php                   # Config loader singleton (.env)
+│   ├── .env                         # Environment variables (not committed)
 │   └── system-prompt.txt            # AI system instructions
 │
 ├── Database
-│   └── schema.sql                   # Database schema
+│   ├── schema.sql                   # Database schema
+│   └── migrations/                  # Schema migration scripts
 │
 ├── Cache
 │   ├── cache/                       # Catalog cache directory
-│   └── file-cache.json             # File API cache (excluded from git)
+│   └── file-cache.json              # Gemini File API URI cache (excluded from git)
 │
-├── Testing & Utilities
-│   ├── test-file-api.php           # File API test script
-│   ├── test-chatbot.php            # Integration test for chatbot
-│   └── view-cache-stats.php        # Cache statistics viewer
+├── Utilities
+│   └── cleanup-files.php            # CLI: manage Gemini File API uploads
 │
 └── Documentation
-    └── PROJECT.md                   # This file (comprehensive guide)
+    ├── PROJECT.md                   # This file (comprehensive guide)
+    ├── ADMIN_DASHBOARD.md           # Admin dashboard setup guide
+    └── CLAUDE.md / claude.md        # AI assistant context
 ```
 
 ---
@@ -528,27 +588,45 @@ abstract class BaseRepository {
 ### ConversationRepository
 
 **Key Methods:**
-- `findById($conversationId)` - Get conversation by ID
-- `upsert($conversationId, $platform, $userId, $maxMessagesLimit)` - Insert or update
-- `delete($conversationId)` - Delete single conversation
-- `deleteAll()` - Delete all conversations
-- `deleteOlderThan($maxAgeHours)` - Cleanup old conversations
-- `findByPlatform($platform, $limit)` - List by platform
-- `findByUserId($userId)` - List by user
-- `exists($conversationId)` - Check existence
-- `countAll()`, `countByPlatform($platform)` - Analytics
+
+| Method | Description |
+|--------|-------------|
+| `findById($conversationId)` | Get conversation by ID (includes `is_chatbot_active`, `paused_at`) |
+| `upsert($conversationId, $platform, $userId, $maxMessagesLimit)` | Insert or update |
+| `updateLastActivity($conversationId)` | Touch `last_activity` timestamp |
+| `delete($conversationId)` | Delete single conversation |
+| `deleteAll()` | Delete all conversations |
+| `deleteOlderThan($maxAgeHours)` | Cleanup conversations older than N hours |
+| `findByPlatform($platform, $limit)` | List by platform |
+| `findByUserId($userId)` | List by user ID |
+| `exists($conversationId)` | Check if conversation exists |
+| `countAll()` | Total conversation count |
+| `countByPlatform($platform)` | Count by platform |
+| `pauseChatbot($conversationId)` | Set `is_chatbot_active=0`, record `paused_at` |
+| `resumeChatbot($conversationId)` | Set `is_chatbot_active=1`, clear `paused_at` |
+| `isChatbotActive($conversationId)` | Returns true if active (or conversation new) |
+| `findPausedConversations($limit)` | Get all paused conversations |
+| `autoResumeChatbot($maxPausedMinutes)` | Bulk-resume if paused longer than timeout |
+| `findActiveRecent($days, $limit)` | Get active conversations from last N days |
+| `findRecentForMonitoring($limit)` | Get most-recent N conversations for monitoring grid |
 
 ### MessageRepository
 
 **Key Methods:**
-- `getHistory($conversationId)` - Get messages for AI context
-- `create($conversationId, $role, $content, $tokensUsed, $sequenceNumber)` - Add message
-- `getNextSequenceNumber($conversationId)` - Get next sequence
-- `countByConversationId($conversationId)` - Count messages
-- `deleteOldest($conversationId, $keepCount)` - Trim old messages
-- `getTotalTokens($conversationId)` - Sum tokens used
-- `getLastMessage($conversationId)` - Get most recent
-- `findByRole($conversationId, $role)` - Filter by role
+
+| Method | Description |
+|--------|-------------|
+| `findByConversationId($conversationId)` | All messages ordered by sequence (full detail) |
+| `getHistory($conversationId)` | Simplified format for AI context (role + content) |
+| `create($conversationId, $role, $content, $tokensUsed, $sequenceNumber, $searchCriteria)` | Insert message (searchCriteria optional JSON) |
+| `getNextSequenceNumber($conversationId)` | Next sequence number (MAX+1) |
+| `countByConversationId($conversationId)` | Count messages in conversation |
+| `deleteOldest($conversationId, $keepCount, $olderThanDays)` | Trim: keep recent N OR delete older than N days |
+| `deleteByConversationId($conversationId)` | Delete all messages for a conversation |
+| `getTotalTokens($conversationId)` | Sum of `tokens_used` |
+| `getLastMessage($conversationId)` | Most recent message |
+| `getLastNMessages($conversationId, $limit)` | Last N messages in chronological order (for monitoring preview) |
+| `findByRole($conversationId, $role)` | Filter messages by role ('user' or 'assistant') |
 
 ### Security Features
 
@@ -790,116 +868,434 @@ Bot:   "แชทบอทกลับมาให้บริการแล้
 
 ---
 
+## Services Layer
+
+### DashboardService (`services/DashboardService.php`)
+
+Business logic for monitoring. Used by `DashboardController` and the admin PHP dashboard.
+
+**Methods:**
+
+#### `getRecentConversationsForGrid($conversationLimit = 6, $messageLimit = 6)`
+Returns recent conversations enriched with message stats for the monitoring grid.
+
+```php
+$service = new DashboardService($pdo);
+$conversations = $service->getRecentConversationsForGrid(6, 6);
+// Each item contains:
+// conversation_id, platform, user_id, is_chatbot_active, paused_at,
+// created_at, last_activity, message_count, recent_messages[]
+```
+
+#### `getConversationWithMessages($conversationId)`
+Returns full conversation with all messages. Returns `null` if not found.
+
+```php
+$conversation = $service->getConversationWithMessages($conversationId);
+// Returns: conversation fields + messages[] array
+```
+
+---
+
+### LineProfileService (`services/LineProfileService.php`)
+
+Fetches LINE user profile information via the LINE Messaging API.
+
+**Methods:**
+
+#### `getProfile($userId)`
+Fetches full LINE user profile. Returns `null` on failure.
+
+```php
+$lineProfile = new LineProfileService($accessToken);
+$profile = $lineProfile->getProfile($userId);
+// Returns: ['userId', 'displayName', 'pictureUrl', 'statusMessage']
+```
+
+#### `getDisplayName($userId)`
+Convenience method — returns just the display name string or `null`.
+
+#### `extractUserIdFromConversationId($conversationId)` _(static)_
+Extracts LINE user ID from conversation IDs formatted as `line_{userId}`.
+
+```php
+$userId = LineProfileService::extractUserIdFromConversationId('line_U1234');
+// Returns: 'U1234'
+```
+
+---
+
+### CacheClearService (`services/CacheClearService.php`)
+
+HTTP endpoint that deletes all files in the `cache/` directory, forcing the product catalog to be regenerated on the next request.
+
+**Usage:**
+```
+GET /services/CacheClearService.php
+POST /services/CacheClearService.php
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Cache cleared successfully",
+  "timestamp": "2026-02-18 12:00:00",
+  "data": {
+    "deleted_count": 3,
+    "deleted_files": [
+      { "name": "catalog.txt", "size_kb": 98.4 }
+    ],
+    "total_size_kb": 98.4
+  }
+}
+```
+
+Logs all operations to `logs.log`. Useful after product catalog updates to ensure the chatbot fetches fresh data.
+
+---
+
+### DashboardController (`controllers/DashboardController.php`)
+
+REST API controller for the monitoring dashboard. Handles JSON responses, CORS headers, and error handling.
+
+**Endpoints:**
+
+#### `GET /admin/api/monitoring.php?conversation_limit=6&message_limit=6`
+Returns recent conversations for the monitoring grid.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "conversation_id": "line_U1234",
+      "platform": "line",
+      "user_id": "U1234",
+      "is_chatbot_active": 1,
+      "paused_at": null,
+      "created_at": 1234567890,
+      "last_activity": 1234567890,
+      "message_count": 5,
+      "recent_messages": [
+        { "role": "user", "content": "...", "timestamp": 1234567890 }
+      ]
+    }
+  ],
+  "timestamp": 1234567890
+}
+```
+
+#### `GET /api/conversation/{id}`
+Returns full conversation with all messages.
+
+---
+
+## LineWebhookUtils
+
+[`utils/LineWebhookUtils.php`](utils/LineWebhookUtils.php) — Static utility class for LINE webhook processing.
+
+### Methods
+
+#### `shouldRespondToEvent($event, $botUserId = '')` _(static)_
+Determines if the bot should respond to a LINE event. Returns structured info array or `false`.
+
+**Rules:**
+- **Direct chat (1-on-1):** Always respond. Conversation ID: `line_{userId}`
+- **Group/Room chat:** Only respond if bot is mentioned (via `zx` prefix or LINE mention). Conversation ID: `line_group_{groupId}_{userId}`
+- **Other events:** Return `false`
+
+**Return value:**
+```php
+array(
+  'userId' => 'U1234',
+  'conversationId' => 'line_U1234',   // or 'line_group_{groupId}_{userId}'
+  'sourceType' => 'user',             // 'user', 'group', or 'room'
+  'messageType' => 'text',            // 'text' or 'image'
+  'groupId' => null                   // groupId if group/room source
+)
+```
+
+#### `isBotMentioned($message, $botUserId = '')` _(static)_
+Checks for bot mentions in two ways:
+1. Message starts with `"zx"` (case-insensitive) — works on LINE Desktop
+2. LINE native mention (`mentionees[].isSelf === true`) — works on mobile
+
+#### `removeZxPrefix($text)` _(static)_
+Strips the `"zx"` prefix from message text after bot-mention detection.
+
+#### `getBotUserId($eventsData)` _(static)_
+Extracts the bot's own user ID from the webhook payload's `destination` field.
+
+#### `splitMessage($text, $maxLength = 4900)` _(static)_
+Splits long messages for LINE's 5000-character limit. Splits by paragraphs, then by sentences if needed.
+
+#### `verifySignature($body, $signature, $secret)` _(static)_
+Verifies LINE webhook HMAC-SHA256 signature using `hash_hmac` + `hash_equals`.
+
+#### `sendLineRequest($url, $data, $accessToken, $logPrefix)` _(static)_
+Generic LINE API request helper. Accepts 2xx response codes.
+
+#### `sendPushMessage($userId, $message, $accessToken)` _(static)_
+Sends a text push message to a LINE user.
+
+#### `downloadLineContent($messageId, $accessToken)` _(static)_
+Downloads image/video/audio content from LINE Content API. Returns raw binary or `false`.
+
+#### `showLoadingAnimation($userId, $seconds, $accessToken)` _(static)_
+Shows typing indicator (5–60 seconds) in LINE chat.
+
+---
+
+## Admin System
+
+The admin system (`admin/`) provides a web UI for monitoring conversations and managing chatbot pause/resume. Documented in detail in [ADMIN_DASHBOARD.md](ADMIN_DASHBOARD.md).
+
+### Authentication (`admin/auth.php`, `admin/login.php`)
+
+Session-based PHP authentication. Protected pages include `auth.php` which redirects to login if not authenticated.
+
+**Admin setup:**
+```bash
+# Generate bcrypt password hash for admin login
+php admin/generate-password-hash.php [optional_password]
+```
+Store the hash in `.env` as `ADMIN_PASSWORD_HASH`.
+
+### Admin Dashboard (`admin/dashboard.php`)
+
+Full HTML dashboard (~26KB) with:
+- **Paused conversations table** — lists conversations waiting for human agents, with LINE display names
+- **Manual pause/resume controls** — agents can pause/resume individual conversations
+- **Auto-resume timeout button** — triggers auto-resume for all long-paused conversations
+- **Real-time refresh** — auto-refreshes conversation list
+- **Platform badges** — shows LINE vs API source
+
+### Monitoring API (`admin/api/monitoring.php`)
+
+Thin wrapper around `DashboardController::getMonitoringConversations()`. All requests routed through the controller.
+
+---
+
+## React Monitoring Dashboard
+
+Located in `dashboard/`, built with React + TypeScript + Vite + Tailwind CSS.
+
+### Tech Stack
+
+| Dependency | Purpose |
+|-----------|---------|
+| React 19 | UI framework |
+| TypeScript 5.9 | Type safety |
+| Vite 7 | Build tool (watch mode for development) |
+| Tailwind CSS 4 | Utility-first styling |
+| TanStack Query 5 | Data fetching + caching |
+| React Router 7 | Client-side routing |
+| Radix UI | Accessible UI primitives |
+| Lucide React | Icons |
+
+### Build Commands
+
+```bash
+cd dashboard
+
+# Development (watch mode — auto-rebuilds on change)
+npm run watch
+
+# Production build
+npm run build
+
+# Lint
+npm run lint
+
+# Preview built output
+npm run preview
+```
+
+### Architecture
+
+```
+dashboard/
+├── src/
+│   ├── main.tsx                 # App entry point
+│   ├── App.tsx                  # Root component + routing
+│   ├── components/              # Feature components (ChatBox, ChatDashboard, etc.)
+│   ├── services/
+│   │   └── monitoringService.ts # API client: fetches from /admin/api/monitoring.php
+│   ├── ui/                      # Shared UI primitives (shadcn-style)
+│   └── lib/                     # Utilities (e.g., cn() class merger)
+└── config.php                   # PHP bridge: injects window.WEBSITE_URL global
+```
+
+### Monitoring Service (`monitoringService.ts`)
+
+```typescript
+// Fetches conversation list with last 10 messages per conversation
+export const getConversationList = async () => {
+  const response = await fetch(
+    `${window.WEBSITE_URL}/admin/api/monitoring.php?conversation_limit=10&message_limit=10`
+  );
+  if (!response.ok) throw new Error('Failed to fetch monitoring data');
+  return response.json();
+};
+```
+
+`window.WEBSITE_URL` is injected by `dashboard/config.php` which reads `WEBSITE_URL` from `.env`.
+
+### Configuration Bridge (`dashboard/config.php`)
+
+```php
+// Injects WEBSITE_URL from .env into the React app global scope
+echo "<script>window.WEBSITE_URL = '{$websiteUrl}';</script>";
+```
+
+---
+
 ## Gemini Function Calling Architecture
 
 ### How Function Calling Works
 
-Gemini API uses a **two-step conversational flow** for function calling. The AI doesn't execute functions directly - instead, it requests your code to execute them and returns the results.
+Gemini API uses a **two-step conversational flow** for function calling. The AI doesn't execute functions directly — it requests your code to execute them and returns the results.
 
 #### The Two-Step Process
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ STEP 1: Gemini Decides to Call a Function                      │
-└─────────────────────────────────────────────────────────────────┘
+STEP 1: Gemini Decides to Call a Function
+──────────────────────────────────────────
+User: "มีตู้เหล็ก KJL รุ่นไหนบ้าง"
+     ↓
+PHP → Sends to Gemini with function declarations
+     ↓
+Gemini: "I need product data → call search_products()"
+     ↓
+Gemini Response: { "functionCalls": [{ "name": "search_products", ... }] }
 
-User: "มีตู้เหล็ก KJL รุ่นไหนบ้าง" (What KJL metal cabinets do you have?)
+STEP 2: Execute Function and Send Results Back
+──────────────────────────────────────────────
+PHP executes search_products() → gets product data from API
      ↓
-Your PHP Code → Sends to Gemini API with function declarations
+PHP → sends conversation + function results back to Gemini
      ↓
-Gemini AI analyzes: "I need product data to answer this. I should call search_products()"
+Gemini: "Now I have data! Let me format a response."
      ↓
-Gemini Response: {
-  "functionCalls": [{
-    "name": "search_products",
-    "args": {"criterias": ["ตู้เหล็ก KJL KBSA"]}
-  }]
-}
-
-
-┌─────────────────────────────────────────────────────────────────┐
-│ STEP 2: Execute Function and Send Results Back                 │
-└─────────────────────────────────────────────────────────────────┘
-
-Your PHP Code: Executes search_products() → Gets product data from API
-     ↓
-Your PHP Code → Sends conversation + function results back to Gemini
-     ↓
-Gemini AI: "Now I have the data! Let me format a nice response."
-     ↓
-Gemini Response: {
-  "text": "ตู้เหล็ก KJL KBSA มี 3 รุ่น:\n\nตู้เหล็ก KJL KBSA (รุ่น 1) ราคา: 1,250 บาท/ชิ้น..."
-}
+Gemini Response: { "text": "ตู้เหล็ก KJL KBSA มี 3 รุ่น: ..." }
      ↓
 Return final response to user
 ```
 
-### Available Functions
+#### Chained Function Calls
 
-#### 1. search_products()
+The AI can chain up to **3 function calls** in a single response cycle (e.g., `search_products` then `generate_quotation`). The system allows up to 2 additional function calls after the first to prevent infinite loops:
 
-**Purpose:** Search for products by category names from the catalog
+```php
+// Allow up to 2 additional function calls after initial
+$additionalCallsRemaining = 2;
+while ($this->isAnotherFunctionCall($response) && $additionalCallsRemaining > 0) {
+    $response = $this->handleFunctionCalls($response, $contents);
+    $additionalCallsRemaining--;
+}
+// Stop if still calling functions after max attempts (infinite loop guard)
+```
+
+---
+
+### Available Functions (Tools)
+
+Three functions are declared in `callGeminiWithFunctions()` in [chatbot/SirichaiElectricChatbot.php](chatbot/SirichaiElectricChatbot.php):
+
+#### 1. `search_products()`
+
+**Purpose:** Search for products by exact category names from the product catalog
 
 **When to Use:**
 - Customer asks about specific products, prices, or availability
 - Requests to see products from a category or brand
-- Mentions model codes or series (KBSA, KBSW, KJL, etc.)
-- Asks follow-up filtering questions ("only metal", "show me X brand")
+- Mentions model codes (KBSA, KBSW, KJL, etc.)
+- Follow-up filtering questions ("only metal", "show me X brand")
 
 **Parameters:**
 ```php
 array(
-  'criterias' => array(
+  'criterias' => array(   // Max 3 categories
     'ตู้เหล็ก KJL KBSA { รุ่น KBSA-100 }',
-    'สายไไฟ 2.5 ตร.มม.'
+    'สายไฟ 2.5 ตร.มม.'
   )
 )
 ```
+> **CRITICAL:** Must copy complete category names including all text inside `{}`, `[]`, `()` — these contain brand/model codes.
 
-**Returns:** Markdown formatted product list with name, price, and unit
+**Returns:** Markdown-formatted product list with name, price, and unit
 
-**Example:**
-```
-# PRODUCTS
-## ตู้เหล็ก KJL KBSA
-- ตู้เหล็ก KJL KBSA (รุ่น 1) | 1,250 | ชิ้น
-- ตู้เหล็ก KJL KBSA (รุ่น 2) | 1,450 | ชิ้น
-```
+---
 
-#### 2. search_product_detail()
+#### 2. `search_product_detail()`
 
-**Purpose:** Get detailed specifications for a specific product (weight, size, quantity per pack)
+**Purpose:** Get detailed specifications for a specific product (weight, size, thickness, quantity per pack)
 
 **When to Use:**
-- Customer asks about product weight, dimensions, or size
-- Asks how many pieces come in a pack/box
-- Wants detailed specifications beyond name and price
-- Thai keywords: "น้ำหนักเท่าไหร่", "ขนาด", "มีกี่ชิ้นต่อแพ็ค"
+- Customer asks: "น้ำหนักเท่าไหร่", "หนาเท่าไหร่", "ขนาด", "มีกี่ชิ้นต่อแพ็ค"
+- Any specification question beyond price and name
 
 **Parameters:**
 ```php
 array(
-  'productName' => '[422112*1] แมกเนติก LC1D12M7 220V 1NO+1NC SCHNEIDER {MAGNETIC CONTACTOR LC1-D12M7 | LC1D12M7 SCHNEIDER}'
+  'productName' => 'รางวายเวย์ 2"x3" (50x75) ยาว 2.4เมตร สีขาว KWSS2038-10 KJL'
+  // EXACT product name from search_products() results — NEVER use customer's informal name
 )
 ```
-
-**Important:** Use the EXACT product name from `search_products()` results
+> **CRITICAL:** If exact product name is not yet known from a previous `search_products()` call, the AI must call `search_products()` first to retrieve it.
 
 **Returns:** JSON with detailed product specifications
 
-**Example Usage Flow:**
+**Example Flow:**
 ```
-Customer: "มีตู้เหล็ก KJL รุ่นไหนบ้าง"
-Bot: [Calls search_products(), shows 3 products]
+Customer: "มีรางวายเวย์ KWSS2038 KJL ไหม"
+Bot: [Calls search_products() → shows products with exact names]
 
-Customer: "รุ่นแรกน้ำหนักเท่าไหร่"
-Bot: [Calls search_product_detail() with exact product name]
-Bot: "น้ำหนัก: 2.5 กก., ขนาด: 30x40x15 ซม., บรรจุ 1 ชิ้น/กล่อง"
+Customer: "หนาเท่าไหร่"
+Bot: [Calls search_product_detail() with exact name from previous result]
+Bot: "ความหนา 0.6 มม., ขนาด 50x75 ซม., บรรจุ 10 เส้น/มัด"
 ```
+
+---
+
+#### 3. `generate_quotation()`
+
+**Purpose:** Generate a PDF quotation document from products discussed in the conversation
+
+**When to Use:** ONLY when user message explicitly contains `"ออกใบเสนอราคา"` or `"สร้างใบเสนอราคา"` AND includes a valid price type code. Never call for product selection messages like "เอา [product]".
+
+**Parameters:**
+```php
+array(
+  'quotaDetail' => array(
+    array(
+      'productName' => 'EXACT product name from search_products() results',
+      'amount' => 5  // quantity
+    ),
+    // ... more products
+  ),
+  'priceType' => 'c'  // one of: ss|s|a|b|c|vb|vc|d|e|f
+)
+```
+
+**Price Types:** `ss`, `s`, `a`, `b`, `c`, `vb`, `vc`, `d`, `e`, `f` — these are internal pricing tiers. Invalid price types return an error message telling the user they are not authorized.
+
+**Returns:** A URL link to the generated PDF quotation, or an error message if price type is invalid.
+
+**Example Flow:**
+```
+Customer: "ออกใบเสนอราคา ด้วยเรท c"
+Bot: [Calls generate_quotation() with products from conversation + priceType='c']
+Bot: "ใบเสนอราคาพร้อมแล้วค่ะ: https://shop.sirichaielectric.com/quotation/..."
+```
+
+---
 
 ### Code Implementation
 
-#### Function Declaration (SirichaiElectricChatbot.php lines 554-589)
+#### Function Declarations (`chatbot/SirichaiElectricChatbot.php` → `callGeminiWithFunctions()`)
 
 ```php
 $requestBody['tools'] = array(
@@ -914,7 +1310,7 @@ $requestBody['tools'] = array(
                         'criterias' => array(
                             'type' => 'array',
                             'items' => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names...'
+                            'description' => 'Array of EXACT category names. Max 3.'
                         )
                     ),
                     'required' => array('criterias')
@@ -922,16 +1318,41 @@ $requestBody['tools'] = array(
             ),
             array(
                 'name' => 'search_product_detail',
-                'description' => 'Get detailed information for a specific product...',
+                'description' => 'Get detailed product specifications...',
                 'parameters' => array(
                     'type' => 'object',
                     'properties' => array(
                         'productName' => array(
                             'type' => 'string',
-                            'description' => 'The EXACT product name as it appears in search results.'
+                            'description' => 'EXACT complete product name from search_products() results.'
                         )
                     ),
                     'required' => array('productName')
+                )
+            ),
+            array(
+                'name' => 'generate_quotation',
+                'description' => 'Generate a PDF quotation from products in conversation...',
+                'parameters' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'quotaDetail' => array(
+                            'type' => 'array',
+                            'items' => array(
+                                'type' => 'object',
+                                'properties' => array(
+                                    'productName' => array('type' => 'string'),
+                                    'amount' => array('type' => 'number')
+                                ),
+                                'required' => array('productName', 'amount')
+                            )
+                        ),
+                        'priceType' => array(
+                            'type' => 'string',
+                            'enum' => array('ss','s','a','b','c','vb','vc','d','e','f')
+                        )
+                    ),
+                    'required' => array('quotaDetail', 'priceType')
                 )
             )
         )
@@ -939,7 +1360,7 @@ $requestBody['tools'] = array(
 );
 ```
 
-#### Function Execution (SirichaiElectricChatbot.php lines 470-486)
+#### Function Execution (`chatbot/SirichaiElectricChatbot.php` → `executeFunction()`)
 
 ```php
 private function executeFunction($functionName, $args) {
@@ -955,123 +1376,57 @@ private function executeFunction($functionName, $args) {
         return $result !== null ? $result : "Product details not found.";
     }
 
+    if ($functionName === 'generate_quotation') {
+        $quotaDetail = isset($args['quotaDetail']) ? $args['quotaDetail'] : array();
+        $priceType = isset($args['priceType']) ? $args['priceType'] : '';
+
+        // Validate price type — unauthorized users get an error message
+        $validTypes = array('ss','s','a','b','c','vb','vc','d','e','f');
+        if (!in_array($priceType, $validTypes)) {
+            return "ไม่สามารถสร้างใบเสนอราคาได้ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น";
+        }
+
+        $result = $this->productAPI->generateFastQuotation($quotaDetail, $priceType);
+        return $result !== null ? $result : "Failed to generate quotation.";
+    }
+
     return "Unknown function: " . $functionName;
 }
 ```
 
-#### Conversation Flow (SirichaiElectricChatbot.php lines 375-451)
+#### Extract Search Criteria (logging helper)
 
 ```php
-private function handleFunctionCalls($response, $originalContents) {
-    // Step 1: Build conversation with function call request
-    $contents = $originalContents;
-
-    // Add Gemini's function call to conversation
-    $contents[] = array(
-        'role' => 'model',
-        'parts' => [cleanedFunctionCallParts]
-    );
-
-    // Step 2: Execute the actual function
-    foreach ($response['functionCalls'] as $call) {
-        $result = $this->executeFunction($call['name'], $call['args']);
-
-        $functionResponseParts[] = array(
-            'functionResponse' => array(
-                'name' => $call['name'],
-                'response' => array('content' => $result)
-            )
-        );
-    }
-
-    // Step 3: Add function results to conversation
-    $contents[] = array(
-        'role' => 'user',
-        'parts' => $functionResponseParts
-    );
-
-    // Step 4: Call Gemini again with results
-    $finalResponse = $this->callGeminiWithFunctions($contents, true);
-
-    return $finalResponse;
-}
-```
-
-### Why This Design?
-
-**Gemini doesn't execute functions** - it's just a language model! It can only:
-1. **Understand** that it needs external data
-2. **Request** a function call with proper arguments
-3. **Use** the results you provide to formulate an answer
-
-Your PHP code acts as the bridge that:
-- Declares what functions are available
-- Executes the actual function calls against your APIs
-- Passes results back to Gemini for final response formatting
-
-### Helper Methods
-
-#### Extract Search Criteria (SirichaiElectricChatbot.php lines 458-468)
-
-```php
-/**
- * Extract search criteria from function call for logging purposes
- * Centralized logic to avoid duplication (DRY principle)
- */
 private function extractSearchCriteria($functionName, $args) {
     if ($functionName === 'search_products' && isset($args['criterias'])) {
         return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
     }
-
     if ($functionName === 'search_product_detail' && isset($args['productName'])) {
         return json_encode(array('productName' => $args['productName']), JSON_UNESCAPED_UNICODE);
     }
-
+    if ($functionName === 'generate_quotation') {
+        return json_encode(array(
+            'quotaDetail' => isset($args['quotaDetail']) ? $args['quotaDetail'] : array(),
+            'priceType' => isset($args['priceType']) ? $args['priceType'] : ''
+        ), JSON_UNESCAPED_UNICODE);
+    }
     return null;
 }
 ```
 
-This method is used in the foreach loops (lines 209-212 and 311-314) to capture search criteria for database logging and analytics.
+This captures search criteria for database logging in both `chat()` and `chatWithImage()`.
+
+---
 
 ### Adding New Functions
 
 To add a new function (e.g., `check_inventory`):
 
-1. **Add function declaration** in `callGeminiWithFunctions()`:
-```php
-array(
-    'name' => 'check_inventory',
-    'description' => 'Check inventory status for a product',
-    'parameters' => array(
-        'type' => 'object',
-        'properties' => array(
-            'productId' => array(
-                'type' => 'string',
-                'description' => 'Product ID to check'
-            )
-        ),
-        'required' => array('productId')
-    )
-)
-```
-
-2. **Add execution handler** in `executeFunction()`:
-```php
-if ($functionName === 'check_inventory') {
-    $productId = isset($args['productId']) ? $args['productId'] : '';
-    $result = $this->productAPI->checkInventory($productId);
-    return $result !== null ? $result : "Inventory unavailable.";
-}
-```
-
-3. **Add to extractSearchCriteria()** (if logging needed):
-```php
-if ($functionName === 'check_inventory' && isset($args['productId'])) {
-    return json_encode(array('productId' => $args['productId']), JSON_UNESCAPED_UNICODE);
-}
-```
-
-4. **Update system-prompt.txt** with usage instructions
+1. **Add function declaration** in `callGeminiWithFunctions()`
+2. **Add execution handler** in `executeFunction()`
+3. **Add logging support** in `extractSearchCriteria()` (if needed)
+4. **Update `system-prompt.txt`** with usage instructions
+5. **Call `$chatbot->refreshFiles()`** to upload the updated prompt
 
 ---
 
@@ -1113,6 +1468,10 @@ DB_PASSWORD=your_db_password
 
 # Conversation
 MAX_MESSAGES_PER_CONVERSATION=20
+AUTO_RESUME_TIMEOUT_MINUTES=30   # Auto-resume paused conversations after N minutes
+
+# Admin Dashboard
+ADMIN_PASSWORD_HASH=your_bcrypt_hash  # Generate with: php admin/generate-password-hash.php
 ```
 
 ### Config Loader (`config.php`)
@@ -1140,99 +1499,66 @@ Contains AI behavior instructions, role definition, and workflow. Referenced as 
 
 ### Integration Testing
 
-The project includes a comprehensive integration test script that verifies the chatbot can handle multi-turn conversations correctly.
+Two test scripts cover different conversation scenarios.
 
-**Test Script:** `test-chatbot.php`
+---
 
-**What it tests (5-question conversation):**
-1. **Product search:** "มี รางวายเวย์ KWSS2038 KJL ไหม" - Tests catalog search with function calling
-2. **Follow-up details:** "หนาเท่าไหร่ ใช้ทำอะไร" - Tests fuzzy search for product specifications
-3. **Electrical calculations:** "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" - Tests general technical knowledge + product suggestions
-4. **Multiple brands query:** "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" - Tests multi-category search and brand listing
-5. **Specific product pricing:** "ขอราคา thw 1x2.5 yazaka หน่อย" - Tests informal queries and price extraction
+#### Test 1: Multi-turn Quotation Workflow (`tests/test-chatbot-with-history.php`)
 
-**Usage:**
+Tests a complete customer quotation workflow in a **single shared conversation** (all questions share history).
+
+**Run:**
 ```bash
-# Run the test (requires MySQL to be running)
-./test-chatbot.php
-
-# Or with full path to PHP
-/Applications/MAMP/bin/php/php7.4.33/bin/php test-chatbot.php
+php tests/test-chatbot-with-history.php
+# or
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-with-history.php
 ```
 
-**What the test does:**
-1. ✓ Clears messages table
-2. ✓ Clears conversations table
-3. ✓ Clears logs.log
-4. ✓ Removes file-cache.json (forces fresh file upload)
-5. ✓ Asks all 5 questions in sequence
-6. ✓ Verifies AI response for each question
-7. ✓ Tracks token usage for each query
-8. ✓ Saves test conversation to database
-9. ✓ Reports success/failure with colored output
+**7-question conversation:**
 
-**Expected Output:**
-```
-=====================================
-CHATBOT INTEGRATION TEST
-=====================================
+| Q | Message | Tests |
+|---|---------|-------|
+| 1 | "มีเบรกเกอร์ abb ไหม" | Product search with `search_products()` |
+| 2 | "เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว" | Product selection acknowledgment |
+| 3 | "ใช้กับสายไฟไหนได้บ้าง" | Compatibility question (technical knowledge + product suggestions) |
+| 4 | "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" | Accessory selection |
+| 5 | "สรุปรายการ พร้อมราคาให้หน่อย" | Conversation summary with pricing |
+| 6 | "ออกใบเสนอราคาได้เลย" | Quotation without price type → expect rejection |
+| 7 | "ออกใบเสนอราคา ด้วยเรท c" | Quotation with valid price type → expect PDF link |
 
-▶ Loading configuration...
-✓ Configuration loaded
+---
 
-▶ Clearing messages table...
-✓ Messages table cleared (count: 0)
+#### Test 2: Independent Questions (`tests/test-chatbot-without-history.php`)
 
-▶ Clearing conversations table...
-✓ Conversations table cleared (count: 0)
+Tests standalone questions with **no shared conversation history** — each question starts fresh.
 
-▶ Clearing logs.log...
-✓ logs.log cleared
-
-▶ Removing file-cache.json...
-✓ file-cache.json removed
-
-▶ Initializing chatbot services...
-✓ Chatbot initialized
-
-=====================================
-RUNNING CONVERSATION TEST
-=====================================
-
-ℹ Conversation ID: test_1234567890
-
-─────────────────────────────────────
-▶ Question 1: "มี รางวายเวย์ KWSS2038 KJL ไหม"
-ℹ Expected: AI should search for products and return product details with price
-✓ AI responded successfully
-Answer: ทางเรามีรางวายเวย์ KWSS2038-10 KJL ขนาด 2"x3" (50x75) ยาว 2.4เมตร สีขาว ราคา 365.00 บาท/เส้น ค่ะ
-ℹ Tokens used: 32786
-
-─────────────────────────────────────
-▶ Question 2: "หนาเท่าไหร่ ใช้ทำอะไร"
-ℹ Expected: AI should provide thickness and usage information
-✓ AI responded successfully
-Answer: รางวายเวย์ KWSS2038-10 KJL นี้มีความหนา 0.6 มม. ค่ะ...
-ℹ Tokens used: 33124
-
-=====================================
-TEST RESULTS
-=====================================
-
-✓ All tests PASSED!
-✓ The chatbot successfully answered both questions:
-✓ ✓ Initial product search
-✓ ✓ Follow-up detail question
-
-ℹ Test conversation saved with ID: test_1234567890
-ℹ Check logs.log for detailed API interactions
+**Run:**
+```bash
+php tests/test-chatbot-without-history.php
 ```
 
-**When to run this test:**
-- After updating system-prompt.txt
-- After implementing Option 1, 2, or 3 from INVESTIGATION_SUMMARY.md
+**5 independent questions:**
+
+| Q | Message | Tests |
+|---|---------|-------|
+| 1 | "มอเตอร์ 2kw 380v กินกระแสเท่าไหร่" | General electrical engineering calculation |
+| 2 | "โคมไฟกันน้ำกันฝุ่น มียี่ห้ออะไรบ้าง" | Multi-brand/multi-category search |
+| 3 | "ขอราคา thw 1x2.5 yazaka หน่อย" | Informal query with brand + product type |
+| 4 | "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" | Weight calculation with quantity using `search_product_detail()` |
+| 5 | "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" | Conduit product identification |
+
+---
+
+**Both tests:**
+- Clear DB tables and `file-cache.json` before running
+- Use colored terminal output (ANSI) for pass/fail
+- Track token usage per question
+- Log to `logs.log`
+
+**When to run:**
+- After updating `system-prompt.txt`
+- After adding new Gemini tools/functions
 - Before deploying to production
-- To verify the follow-up question bug is fixed
 
 ### API Testing
 
@@ -1424,18 +1750,39 @@ php cleanup-files.php clear-cache
 
 **Remember:** Files auto-expire after 48 hours, cleanup is optional!
 
-### Cron Jobs (Optional)
+### Cron Jobs
 
+#### Auto-Resume Paused Chatbots (`cron/auto-resume-chatbot.php`)
+
+Automatically resumes conversations that have been paused (waiting for human agent) longer than the configured `AUTO_RESUME_TIMEOUT_MINUTES`.
+
+**Manual run:**
 ```bash
-# Add to crontab
+php cron/auto-resume-chatbot.php
+```
+
+**Sample output:**
+```
+[2026-02-18 12:00:00] Auto-Resume Cron Job Started
+[2026-02-18 12:00:00] Configuration loaded. Timeout: 30 minutes
+[2026-02-18 12:00:00] SUCCESS: Auto-resumed 2 conversation(s)
+[2026-02-18 12:00:00] Auto-Resume Cron Job Completed
+```
+
+Exit code `0` on success, `1` on error (useful for cron monitoring).
+
+**Crontab setup (run every 15 minutes):**
+```bash
 crontab -e
 
-# Cleanup old conversations daily at 2 AM
-0 2 * * * /usr/bin/php /path/to/sirichaielectric-chatbot/cleanup-old-conversations.php
+# Auto-resume chatbots every 15 minutes
+*/15 * * * * /usr/bin/php /path/to/sirichaielectric-chatbot/cron/auto-resume-chatbot.php >> /path/to/logs/auto-resume.log 2>&1
 
 # Backup database daily at 3 AM
 0 3 * * * /usr/bin/mysqldump -u chatbot_user -p'password' chatbotdb | gzip > /backups/chatbot_$(date +\%Y\%m\%d).sql.gz
 ```
+
+**Environment variable:** `AUTO_RESUME_TIMEOUT_MINUTES` (default: 30) controls how long a conversation must be paused before auto-resuming.
 
 ---
 
@@ -1627,86 +1974,6 @@ ini_set('memory_limit', '256M');
 $messages = $messageRepository->getHistory($conversationId);
 // Instead of loading all fields
 ```
-
----
-
-## Development History
-
-### Timeline
-
-**January 13, 2026 - Session to Database Migration**
-- Created `DatabaseManager.php` (Singleton PDO wrapper)
-- Migrated `ConversationManager.php` from `$_SESSION` to MySQL
-- Created database schema (`schema.sql`)
-- Added token tracking per message
-- Increased max messages from 10 to 50
-- Created `MIGRATION_GUIDE.md`
-
-**January 14, 2026 - File API Integration**
-- Created `GeminiFileManager.php`
-- Modified `SirichaiElectricChatbot.php` to use File API
-- Created `cleanup-files.php` utility
-- Created `test-file-api.php` test script
-- Achieved 95%+ token reduction
-- Created `FILE-API-INTEGRATION.md` and `IMPLEMENTATION-SUMMARY.md`
-
-**January 16, 2026 - Repository Pattern Refactoring**
-- Created `repository/` folder structure
-- Created `BaseRepository.php` abstract class
-- Created `ConversationRepository.php`
-- Created `MessageRepository.php`
-- Refactored `ConversationManager.php` to use repositories
-- Changed database name: `sirichaielectric_chatbot` → `chatbotdb`
-- Created `REPOSITORY_REFACTOR_SUMMARY.md`
-
-**January 16, 2026 - Code Cleanup**
-- Removed `phpinfo.php` (security risk)
-- Removed unused `sendReply()` function from `line-webhook.php`
-- Fixed commented code in `ProductAPIService.php`
-- Updated documentation with cleanup notes
-
-**January 16, 2026 - Documentation Consolidation**
-- Created `PROJECT.md` (this file)
-- Combined all documentation into single comprehensive guide
-
-**January 2026 - Image Recognition Support**
-- Added `chatWithImage()` method to `SirichaiElectricChatbot.php`
-- Implemented image download from LINE Content API
-- Updated `line-webhook.php` to handle image messages
-- Added image analysis instructions to `system-prompt.txt`
-- Support for multimodal AI interactions (image + text)
-- Automatic product identification from images
-- Smart fallback for non-product images
-
-**January 28, 2026 - System Prompt Improvements**
-- Enhanced product search accuracy for follow-up questions
-- Added explicit guidance for handling model code queries (KBSA, KBSW, etc.)
-- Improved keyword matching logic (brand + product type + model code)
-- Added CRITICAL rule to always show actual products, not just category lists
-- Added matching examples for common query patterns
-- Clarified when to call search_products() vs general conversation
-
-**January 28, 2026 - Chatbot Pause/Resume Feature (Human Agent Takeover)**
-- Added `is_chatbot_active` and `paused_at` columns to conversations table
-- Created migration script: `migrations/001_add_chatbot_active_flag.sql`
-- Added pause/resume methods to `ConversationRepository.php`
-- Added pause/resume API to `ConversationManager.php`
-- Modified `line-webhook.php` to handle pause/resume commands
-- Pause commands: "ติดต่อพนักงาน", "/human", "/pause", "/agent"
-- Resume commands: "เปิดแชทบอท", "/bot", "/resume", "/chatbot"
-- Auto-resume capability after configurable timeout
-- Allows human agents to take over conversations via LINE OA Manager
-
-**February 13, 2026 - Product Detail Function & Code Refactoring**
-- Added `search_product_detail()` function for detailed product specifications
-- Created `getProductDetail()` method in `ProductAPIService.php`
-- Integrated with endpoint: `https://shop.sirichaielectric.com/services/get-product-by-name.php`
-- Provides weight, size, dimensions, quantity per pack, and other specs
-- Refactored duplicate search criteria logging logic into `extractSearchCriteria()` method
-- Applied DRY principle to reduce code duplication in function call handling
-- Updated `system-prompt.txt` with usage guidelines for product detail queries
-- Added comprehensive function calling architecture documentation to PROJECT.md
-- Customers can now ask specific questions like "น้ำหนักเท่าไหร่" or "มีกี่ชิ้นต่อแพ็ค"
 
 ### Key Architectural Decisions
 
@@ -1910,17 +2177,21 @@ Send message with image and get response
 
 ### SirichaiElectricChatbot API
 
+**File:** `chatbot/SirichaiElectricChatbot.php`
+
 ```php
-// Initialize
+require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
+
+// Initialize (uploads catalog to File API on construction)
 $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
 
-// Text chat
+// Text chat (with optional conversation history)
 $response = $chatbot->chat($message, $conversationHistory);
 
-// Image chat
+// Image + optional text chat
 $response = $chatbot->chatWithImage($imageData, $mimeType, $textMessage, $conversationHistory);
 
-// Refresh uploaded files
+// Force refresh File API cache (after editing system-prompt.txt or catalog changes)
 $chatbot->refreshFiles();
 ```
 
@@ -1930,64 +2201,78 @@ $chatbot->refreshFiles();
 - `$textMessage` (string, optional): Text message to accompany the image
 - `$conversationHistory` (array, optional): Previous conversation messages
 
-**Response Format:**
+**Response Format (both chat methods):**
 ```php
 array(
   'success' => true,
   'response' => 'AI response text',
-  'language' => 'th', // or 'en'
-  'tokensUsed' => 450
+  'language' => 'th',       // 'th' or 'en' (detected from user message)
+  'tokensUsed' => 450,
+  'searchCriteria' => '...' // JSON string of search params used (for DB logging)
 )
 ```
 
 ### ConversationManager API
 
+**File:** `chatbot/ConversationManager.php`
+
 ```php
+require_once __DIR__ . '/chatbot/ConversationManager.php';
+
 // Initialize
 $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);
 
-// Get history
+// Message management
 $messages = $conversationManager->getConversationHistory($conversationId);
-
-// Add message
 $conversationManager->addMessage($conversationId, 'user', $message, 0);
 $conversationManager->addMessage($conversationId, 'assistant', $response, $tokens);
 
-// Get full conversation
+// Conversation info
 $conversation = $conversationManager->getConversation($conversationId);
-
-// Delete conversation
 $conversationManager->clearConversation($conversationId);
 
-// Cleanup old conversations
-$cleaned = $conversationManager->cleanupOldConversations(24); // 24 hours
+// Cleanup
+$cleaned = $conversationManager->cleanupOldConversations(24); // hours
 
 // Analytics
 $totalTokens = $conversationManager->getTotalTokens($conversationId);
 $lineConvos = $conversationManager->getConversationsByPlatform('line', 100);
 $userConvos = $conversationManager->getConversationsByUserId($userId);
+$active = $conversationManager->getActiveConversations($days = 2, $limit = 100);
+
+// Pause/Resume (human agent handoff)
+$conversationManager->pauseChatbot($conversationId);
+$conversationManager->resumeChatbot($conversationId);
+$isActive = $conversationManager->isChatbotActive($conversationId);
+$paused = $conversationManager->getPausedConversations($limit = 100);
+$count = $conversationManager->autoResumeChatbot($maxPausedMinutes = 30);
 ```
 
 ### GeminiFileManager API
 
+**File:** `chatbot/GeminiFileManager.php`
+
 ```php
+require_once __DIR__ . '/chatbot/GeminiFileManager.php';
+
 // Initialize
 $fileManager = new GeminiFileManager($apiKey);
 
-// Upload file
-$result = $fileManager->uploadFile($filePath, $displayName, $mimeType);
+// Get or upload file (uses content hash + TTL to avoid redundant uploads)
+$result = $fileManager->getOrUploadFile($cacheKey, $textContent, $displayName);
+// Returns: ['success', 'fileUri', 'name', 'cached' (bool)]
 
-// Get cached URI
-$uri = $fileManager->getCachedFileUri('systemPrompt');
-
-// Refresh files
-$result = $fileManager->refreshFiles();
-
-// List files
+// List all files in Gemini File API
 $result = $fileManager->listAllFiles();
 
-// Delete file
+// Delete specific file
 $result = $fileManager->deleteFile($fileName);
+
+// Delete all files and clear local cache
+$result = $fileManager->deleteAllFiles();
+
+// Clear local JSON cache (forces re-upload on next request)
+$fileManager->clearCache();
 
 // Delete all files
 $result = $fileManager->deleteAllFiles();
@@ -2119,5 +2404,5 @@ For issues, questions, or contributions:
 
 ---
 
-**Last Updated:** January 28, 2026
-**Version:** 2.2.0 (Repository Pattern + File API + LINE Integration + Image Recognition + Human Agent Takeover)
+**Last Updated:** February 18, 2026
+**Version:** 3.0.0 (Repository Pattern + File API + LINE Integration + Image Recognition + Human Agent Takeover + Quotation PDF + Group Chat + Admin Dashboard + React Monitoring UI)

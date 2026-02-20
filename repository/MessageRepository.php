@@ -42,15 +42,20 @@ class MessageRepository extends BaseRepository {
      * @param string $conversationId Conversation ID
      * @return array List of messages with role, content, timestamp, tokens_used
      */
-    public function getHistory($conversationId) {
+    public function getHistory($conversationId, $limit = 20) {
         $sql = "
             SELECT role, content, UNIX_TIMESTAMP(timestamp) as timestamp, tokens_used
-            FROM messages
-            WHERE conversation_id = ?
+            FROM (
+                SELECT role, content, timestamp, tokens_used, sequence_number
+                FROM messages
+                WHERE conversation_id = ? AND is_active = 1
+                ORDER BY sequence_number DESC
+                LIMIT ?
+            ) AS recent
             ORDER BY sequence_number ASC
         ";
 
-        $messages = $this->fetchAll($sql, array($conversationId));
+        $messages = $this->fetchAll($sql, array($conversationId, intval($limit)));
 
         foreach ($messages as &$message) {
             $message['timestamp'] = intval($message['timestamp']);
@@ -99,7 +104,7 @@ class MessageRepository extends BaseRepository {
         $sql = "
             SELECT COALESCE(MAX(sequence_number), 0) + 1 as next_seq
             FROM messages
-            WHERE conversation_id = ?
+            WHERE conversation_id = ? AND is_active = 1
         ";
 
         return intval($this->fetchColumn($sql, array($conversationId)));
@@ -227,6 +232,17 @@ class MessageRepository extends BaseRepository {
         }
 
         return $messages;
+    }
+
+    /**
+     * Deactivate all active messages for a conversation (soft reset)
+     *
+     * @param string $conversationId Conversation ID
+     * @return int Number of messages deactivated
+     */
+    public function deactivateByConversationId($conversationId) {
+        $sql = "UPDATE messages SET is_active = 0 WHERE conversation_id = ? AND is_active = 1";
+        return $this->execute($sql, array($conversationId));
     }
 
     /**
