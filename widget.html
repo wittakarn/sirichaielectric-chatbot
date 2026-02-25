@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Demo - SirichaiElectric Chatbot</title>
+    <style>
+        /* ── Demo page background ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-content { text-align: center; color: #4a5568; }
+        .page-content h1 { font-size: 28px; color: #1a202c; margin-bottom: 8px; }
+        .page-content p  { font-size: 15px; margin-bottom: 32px; }
+
+        .embed-box {
+            margin-top: 32px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-align: left;
+            max-width: 520px;
+        }
+        .embed-box h2 { font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 10px; }
+        .embed-box pre {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Demo page content -->
+    <div class="page-content">
+        <h1>Your Website Here</h1>
+        <p>Click the ⚡ button in the bottom-right corner to open the chat.</p>
+
+        <div class="embed-box">
+            <h2>Embed on any website — paste before &lt;/body&gt;:</h2>
+            <pre id="embedSnippet">Loading…</pre>
+        </div>
+    </div>
+
+    <!--
+    ═══════════════════════════════════════════════════════════════
+      SIRICHAI ELECTRIC CHATBOT WIDGET
+      Copy everything between the START / END comments below
+      and paste it before </body> on any page.
+
+      Only change CHAT_URL to point to where chat.html is hosted.
+    ═══════════════════════════════════════════════════════════════
+    -->
+
+    <!-- ── START WIDGET ── -->
+    <style>
+        #se-launcher {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102,126,234,0.5);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 999998;
+        }
+        #se-launcher:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 28px rgba(102,126,234,0.65);
+        }
+        #se-launcher svg { transition: opacity 0.2s, transform 0.2s; position: absolute; }
+        #se-launcher .se-icon-chat  { opacity: 1;  transform: rotate(0deg)   scale(1);   }
+        #se-launcher .se-icon-close { opacity: 0;  transform: rotate(-90deg) scale(0.5); }
+        #se-launcher.se-open .se-icon-chat  { opacity: 0;  transform: rotate(90deg) scale(0.5); }
+        #se-launcher.se-open .se-icon-close { opacity: 1;  transform: rotate(0deg)  scale(1);   }
+
+        #se-badge {
+            position: absolute; top: 0; right: 0;
+            width: 18px; height: 18px;
+            background: #f56565;
+            border-radius: 50%;
+            border: 2px solid white;
+            font-size: 10px; font-weight: 700; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-family: sans-serif;
+            opacity: 0; transform: scale(0);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        #se-badge.se-visible { opacity: 1; transform: scale(1); }
+
+        #se-panel {
+            position: fixed;
+            bottom: 96px; right: 24px;
+            width: 380px; height: 560px;
+            max-height: calc(100vh - 120px);
+            border-radius: 16px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.22);
+            overflow: hidden;
+            z-index: 999999;
+            border: none;
+            /* closed state */
+            opacity: 0;
+            transform: translateY(16px) scale(0.97);
+            transform-origin: bottom right;
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        #se-panel.se-open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        @media (max-width: 480px) {
+            #se-panel {
+                right: 0; left: 0; bottom: 0;
+                width: 100%; height: 80vh; max-height: 80vh;
+                border-radius: 16px 16px 0 0;
+                transform-origin: bottom center;
+            }
+            #se-launcher { bottom: 16px; right: 16px; }
+        }
+    </style>
+
+    <!-- Launcher button -->
+    <button id="se-launcher" onclick="seToggle()" title="Chat with SirichaiElectric">
+        <svg class="se-icon-chat" width="26" height="26" viewBox="0 0 24 24" fill="none"
+             stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <svg class="se-icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6"  y1="6" x2="18" y2="18"/>
+        </svg>
+        <div id="se-badge">1</div>
+    </button>
+
+    <!-- Chat iframe -->
+    <iframe
+        id="se-panel"
+        title="SirichaiElectric Chatbot"
+        allow="clipboard-write"
+    ></iframe>
+
+    <script>
+        (function () {
+            // ── CONFIGURE THIS ────────────────────────────────────────
+            var CHAT_URL = (function () {
+                // Auto-detect: same origin as widget.html, swap filename to chat.html
+                var s = window.location.href;
+                return s.substring(0, s.lastIndexOf('/') + 1) + 'chat.html';
+            })();
+            // ─────────────────────────────────────────────────────────
+
+            var panel     = document.getElementById('se-panel');
+            var launcher  = document.getElementById('se-launcher');
+            var badge     = document.getElementById('se-badge');
+            var isOpen    = false;
+            var iframeLoaded = false;
+
+            function seToggle() {
+                isOpen = !isOpen;
+                panel.classList.toggle('se-open', isOpen);
+                launcher.classList.toggle('se-open', isOpen);
+
+                if (isOpen) {
+                    badge.classList.remove('se-visible');
+
+                    // Load iframe lazily on first open
+                    if (!iframeLoaded) {
+                        panel.src = CHAT_URL;
+                        iframeLoaded = true;
+                    }
+                }
+            }
+
+            // Expose toggle globally so the inline onclick works
+            window.seToggle = seToggle;
+
+            // Show unread badge after 2s (invite user to open)
+            setTimeout(function () {
+                if (!isOpen) badge.classList.add('se-visible');
+            }, 2000);
+
+            // Listen for new-message events from the iframe
+            window.addEventListener('message', function (e) {
+                if (e.data && e.data.type === 'sirichai:newMessage' && !isOpen) {
+                    badge.classList.add('se-visible');
+                }
+            });
+        })();
+    </script>
+    <!-- ── END WIDGET ── -->
+
+    <script>
+        // Show the embed snippet dynamically so it always shows the real URL
+        (function () {
+            var base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            var chatUrl = base + 'chat.html';
+            document.getElementById('embedSnippet').textContent =
+                '<!-- SirichaiElectric Chatbot Widget -->\n' +
+                '<script src="' + base + 'widget-embed.js"><\/script>';
+        })();
+    </script>
+
+</body>
+</html>
