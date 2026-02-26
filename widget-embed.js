@@ -114,10 +114,14 @@
         if (!isOpen) badge.classList.add('se-visible');
     }, 2000);
 
-    // Re-show badge when iframe sends a new-message event
+    // Listen for events from the iframe
     window.addEventListener('message', function (e) {
-        if (e.data && e.data.type === 'sirichai:newMessage' && !isOpen) {
+        if (!e.data) return;
+        if (e.data.type === 'sirichai:newMessage' && !isOpen) {
             badge.classList.add('se-visible');
+        }
+        if (e.data.type === 'sirichai:close' && isOpen) {
+            toggle();
         }
     });
 

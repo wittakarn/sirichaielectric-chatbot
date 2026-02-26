@@ -67,6 +67,23 @@
         }
         .btn-clear:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.55); }
 
+        .btn-close-mobile {
+            display: none;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 4px;
+            cursor: pointer;
+            line-height: 0;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+        .btn-close-mobile:hover { opacity: 1; }
+
+        @media (max-width: 480px) {
+            .btn-close-mobile { display: flex; align-items: center; justify-content: center; }
+        }
+
         /* ── Quick questions ── */
         #quickQuestions {
             padding: 8px 12px;
@@ -246,6 +263,13 @@
         <div class="chat-header-right">
             <div class="status-dot" title="Online"></div>
             <button class="btn-clear" onclick="clearConversation()">Clear</button>
+            <button class="btn-close-mobile" onclick="closeWidget()" title="Close chat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6"  y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -278,6 +302,10 @@
 <script>
     // API URL: same origin as chat.html (works whether loaded directly or in iframe)
     const API_BASE_URL = window.location.origin + window.location.pathname.replace(/chat\.html.*$/, '');
+
+    function closeWidget() {
+        window.parent.postMessage({ type: 'sirichai:close' }, '*');
+    }
     let conversationId = sessionStorage.getItem('sirichai_conversation_id');
     let isProcessing = false;
 
