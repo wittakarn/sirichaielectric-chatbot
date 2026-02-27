@@ -383,7 +383,12 @@
         contentDiv.className = 'message-content';
 
         if (role === 'assistant' && typeof marked !== 'undefined') {
-            marked.setOptions({ breaks: true, gfm: true });
+            const renderer = new marked.Renderer();
+            renderer.link = (token) => {
+                const t = token.title ? ` title="${token.title}"` : '';
+                return `<a href="${token.href}"${t} target="_blank" rel="noopener noreferrer">${token.text}</a>`;
+            };
+            marked.setOptions({ breaks: true, gfm: true, renderer });
             contentDiv.innerHTML = marked.parse(content);
         } else {
             contentDiv.textContent = content;
