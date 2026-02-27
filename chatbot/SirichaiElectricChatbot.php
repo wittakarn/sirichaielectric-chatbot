@@ -297,10 +297,10 @@ class SirichaiElectricChatbot {
                 $totalTokens += $response['tokensUsed'];
             }
 
-            // Auto-recover: if all retries failed with empty STOP, refresh catalog and retry once.
-            // callGeminiWithFunctions() mutates $contents[0] by prepending the catalog file reference,
-            // so rebuild $contents fresh after refreshFiles() to avoid double-prepending the file.
+            // Auto-recover: if all retries failed with empty STOP, try two fallback strategies.
+            // Rebuild $contents fresh each time to avoid double-prepending the catalog file reference.
             if (!$response['success'] && strpos($response['error'], 'empty response: STOP') !== false) {
+                // Fallback 1: refresh catalog (force re-upload with new URI) and retry
                 error_log('[Chatbot] Empty STOP persisted - refreshing catalog and retrying once...');
                 $this->refreshFiles();
                 $contents = $this->buildConversationHistory($conversationHistory);
@@ -309,6 +309,23 @@ class SirichaiElectricChatbot {
                     'parts' => array(array('text' => $message))
                 );
                 $response = $this->callGeminiWithFunctions($contents);
+                if (isset($response['tokensUsed'])) {
+                    $totalTokens += $response['tokensUsed'];
+                }
+            }
+
+            // Fallback 2: if still failing, retry without catalog file to break server-side cache
+            if (!$response['success'] && strpos($response['error'], 'empty response: STOP') !== false) {
+                error_log('[Chatbot] Empty STOP after file refresh - retrying without catalog file...');
+                $savedCatalogUri = $this->catalogFileUri;
+                $this->catalogFileUri = null;
+                $contents = $this->buildConversationHistory($conversationHistory);
+                $contents[] = array(
+                    'role' => 'user',
+                    'parts' => array(array('text' => $message))
+                );
+                $response = $this->callGeminiWithFunctions($contents);
+                $this->catalogFileUri = $savedCatalogUri;
                 if (isset($response['tokensUsed'])) {
                     $totalTokens += $response['tokensUsed'];
                 }
@@ -484,12 +501,13 @@ class SirichaiElectricChatbot {
             $this->accumulatedTokens += $response['tokensUsed'];
         }
 
-        // Handle chained function calls (e.g., search_products → search_product_detail)
-        // Allow up to 2 additional function calls to prevent infinite loops
-        $additionalCallsRemaining = 2;
+        // Handle chained function calls (e.g., search_products → search_product_detail,
+        // or WORKFLOW 1B batch price: up to 5 products searched sequentially + generate_quotation)
+        // Allow up to 6 additional function calls to support 5-product batches
+        $additionalCallsRemaining = 6;
 
         while ($this->isAnotherFunctionCall($response) && $additionalCallsRemaining > 0) {
-            $attemptNumber = 3 - $additionalCallsRemaining;
+            $attemptNumber = 7 - $additionalCallsRemaining;
             error_log('[Chatbot] AI called another function (attempt #' . $attemptNumber . ')');
 
             // Execute the next function in the chain

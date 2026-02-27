@@ -29,7 +29,7 @@ WORKFLOW 1B: BATCH PRICE INQUIRY
 Customer sends "ขอราคา" or "ราคา" followed by a numbered/bulleted list of 2+ products with quantities.
 1. Recognize each numbered item as a separate product
 2. Search each product individually using search_products() — one search per product, sequentially
-3. Present results as a numbered list matching the customer's order
+3. Present results as a numbered list matching the customer's order (show ALL products, not 3-max rule)
 4. After showing all prices, ask: "ต้องการออกใบเสนอราคาไหมคะ?"
 - Search ALL products — do not skip any
 - If a product is not found, state "ไม่พบ [product]" for that line and continue
