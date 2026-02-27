@@ -11,8 +11,8 @@
  *       → AI must NOT call generate_quotation automatically
  *       → AI should offer to create a quotation at the end
  * - Q2: "ออกใบเสนอราคาได้เลย" (no rate)
- *       → AI must reject - no rate specified
- * - Q3: "ออกใบเสนอราคา เรท c"
+ *       → AI should call generate_quotation with default rate c and return PDF link
+ * - Q3: "ออกใบเสนอราคา เรท vb"
  *       → AI should call generate_quotation with the 5 products and return PDF link
  *
  * Usage: php tests/test-chatbot-batch-price.php
@@ -87,19 +87,17 @@ $questions = array(
     ),
     array(
         'question' => 'ออกใบเสนอราคาได้เลย',
-        'expectation' => 'AI should reject — no rate specified',
+        'expectation' => 'AI should call generate_quotation with default rate c and return a PDF download link',
         'validate' => function($response) {
-            // Should ask for rate / reject without rate — must NOT return a PDF link
-            $hasNoLink = mb_strpos($response, 'http') === false
-                && mb_strpos($response, 'ดาวน์โหลด') === false
-                && mb_strpos($response, 'pdf') === false
-                && mb_strpos($response, 'PDF') === false;
-            return $hasNoLink;
+            return mb_strpos($response, 'http') !== false
+                || mb_strpos($response, 'ดาวน์โหลด') !== false
+                || mb_strpos($response, 'pdf') !== false
+                || mb_strpos($response, 'PDF') !== false;
         },
-        'validateMsg' => 'Response must NOT contain a PDF link (no rate specified)'
+        'validateMsg' => 'Response must contain a PDF download link (default rate c)'
     ),
     array(
-        'question' => 'ออกใบเสนอราคา เรท c',
+        'question' => 'ออกใบเสนอราคา เรท vb',
         'expectation' => 'AI should call generate_quotation with all 5 products and return a PDF download link',
         'validate' => function($response) {
             // Must contain a URL (PDF link)
@@ -257,8 +255,8 @@ try {
         printSuccess("✓ Batch 'ขอราคา' searched all 5 products and returned prices");
         printSuccess("✓ Did NOT auto-trigger quotation from batch price inquiry");
         printSuccess("✓ Offered to create quotation after showing prices");
-        printSuccess("✓ Rejected quotation request with no rate");
-        printSuccess("✓ Generated quotation PDF with rate 'c' and all 5 products");
+        printSuccess("✓ Generated quotation PDF with default rate 'c' (no rate specified)");
+        printSuccess("✓ Generated quotation PDF with explicit rate 'vb' and all 5 products");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

@@ -9,8 +9,8 @@
  * - Q3: "ใช้กับสายไฟไหนได้บ้าง" (compatibility question)
  * - Q4: "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" (accessory selection)
  * - Q5: "สรุปรายการ พร้อมราคาให้หน่อย" (summary with pricing)
- * - Q6: "ออกใบเสนอราคาได้เลย" (quotation without rate - expect rejection)
- * - Q7: "ออกใบเสนอราคา ด้วยเรท c" (quotation with rate - expect PDF link)
+ * - Q6: "ออกใบเสนอราคาได้เลย" (quotation without rate - expect PDF link using default rate c)
+ * - Q7: "ออกใบเสนอราคา ด้วยเรท vb" (quotation with explicit rate vb - expect PDF link)
  * - Q8: "มีสวิตช์ตัดไฟ RCD ไหม" (new product search after quotation)
  * - Q9: "เพิ่ม รายการแรก 5 ชิ้น" (shopping phrase - must NOT ask for price type)
  * - Q10: "เอา ตัวแรก 2 อัน" (another shopping phrase - must NOT trigger quotation)
@@ -96,10 +96,10 @@ $questions = array(
     ),
     array(
         'question' => 'ออกใบเสนอราคาได้เลย',
-        'expectation' => 'AI should reject - no rate specified'
+        'expectation' => 'AI should call generate_quotation with default priceType c and return a PDF download link'
     ),
     array(
-        'question' => 'ออกใบเสนอราคา ด้วยเรท c',
+        'question' => 'ออกใบเสนอราคา ด้วยเรท vb',
         'expectation' => 'AI should call generate_quotation and return a PDF download link'
     ),
     // New test cases: verify shopping phrases do NOT trigger quotation workflow
@@ -257,8 +257,8 @@ try {
         printSuccess("✓ Compatible accessory recommendation");
         printSuccess("✓ Accessory selection with quantity");
         printSuccess("✓ Summary with pricing");
-        printSuccess("✓ Quotation rejection (no rate specified)");
-        printSuccess("✓ Quotation generation with PDF link");
+        printSuccess("✓ Quotation generation with default rate c (no rate specified)");
+        printSuccess("✓ Quotation generation with explicit rate vb");
         printSuccess("✓ Product search after quotation (RCD)");
         printSuccess("✓ Shopping phrase 'เพิ่ม X ชิ้น' did not trigger quotation");
         printSuccess("✓ Shopping phrase 'เอา X อัน' did not trigger quotation");

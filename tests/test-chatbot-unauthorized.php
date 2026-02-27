@@ -8,9 +8,9 @@
  *       → AI must search ALL 5 products and return prices
  *       → AI must NOT offer to create a quotation
  * - Q2: "ออกใบเสนอราคาได้เลย" (no rate)
- *       → AI must reject — unauthorized user
- * - Q3: "ออกใบเสนอราคา เรท c"
- *       → AI must reject — unauthorized user, no PDF link returned
+ *       → AI should generate quotation with forced rate c and return PDF link
+ * - Q3: "ออกใบเสนอราคา เรท vb"
+ *       → AI should generate quotation with forced rate vb and return PDF link
  *
  * Usage: php tests/test-chatbot-unauthorized.php
  */
@@ -72,41 +72,36 @@ $testConversationId = 'test_unauthorized_' . time();
 $questions = array(
     array(
         'question' => "ขอราคา\n1 thw1x4สีดำ ยา —4ม้วน\n2 weg5001k pana —50ตัว",
-        'expectation' => 'AI must search ALL 2 products and return prices. Must NOT offer to create a quotation for unauthorized user.',
+        'expectation' => 'AI must search ALL 2 products and return prices',
         'validate' => function($response) {
-            // Response must contain price info
+            // Response must contain price info and must NOT auto-generate a PDF
             $hasPrices = mb_strpos($response, 'ราคา') !== false || mb_strpos($response, 'บาท') !== false;
-            // Must NOT contain a PDF link
             $hasNoLink = mb_strpos($response, 'http') === false && mb_strpos($response, 'pdf') === false;
             return $hasPrices && $hasNoLink;
         },
-        'validateMsg' => 'Response must contain price info (ราคา/บาท) and must NOT contain a PDF link'
+        'validateMsg' => 'Response must contain price info (ราคา/บาท) and must NOT auto-generate a PDF'
     ),
     array(
         'question' => 'ออกใบเสนอราคาได้เลย',
-        'expectation' => 'AI must reject — unauthorized user cannot generate quotations',
+        'expectation' => 'AI should generate quotation with forced rate c and return a PDF download link',
         'validate' => function($response) {
-            // Must NOT return a PDF link
-            $hasNoLink = mb_strpos($response, 'http') === false
-                && mb_strpos($response, 'ดาวน์โหลด') === false
-                && mb_strpos($response, 'pdf') === false
-                && mb_strpos($response, 'PDF') === false;
-            return $hasNoLink;
+            return mb_strpos($response, 'http') !== false
+                || mb_strpos($response, 'ดาวน์โหลด') !== false
+                || mb_strpos($response, 'pdf') !== false
+                || mb_strpos($response, 'PDF') !== false;
         },
-        'validateMsg' => 'Response must NOT contain a PDF link (unauthorized user)'
+        'validateMsg' => 'Response must contain a PDF download link (forced rate c for unauthorized user)'
     ),
     array(
-        'question' => 'ออกใบเสนอราคา เรท c',
-        'expectation' => 'AI must reject — unauthorized user cannot generate quotations even with a valid rate',
+        'question' => 'ออกใบเสนอราคา เรท vb',
+        'expectation' => 'AI should generate quotation with forced rate c and return a PDF download link',
         'validate' => function($response) {
-            // Must NOT return a PDF link
-            $hasNoLink = mb_strpos($response, 'http') === false
-                && mb_strpos($response, 'ดาวน์โหลด') === false
-                && mb_strpos($response, 'pdf') === false
-                && mb_strpos($response, 'PDF') === false;
-            return $hasNoLink;
+            return mb_strpos($response, 'http') !== false
+                || mb_strpos($response, 'ดาวน์โหลด') !== false
+                || mb_strpos($response, 'pdf') !== false
+                || mb_strpos($response, 'PDF') !== false;
         },
-        'validateMsg' => 'Response must NOT contain a PDF link (unauthorized user)'
+        'validateMsg' => 'Response must contain a PDF download link (forced rate c for unauthorized user)'
     ),
 );
 
@@ -252,10 +247,10 @@ try {
 
     if ($allTestsPassed) {
         printSuccess("All tests PASSED!");
-        printSuccess("The chatbot correctly blocked quotation generation for unauthorized user:");
-        printSuccess("✓ Batch 'ขอราคา' searched all 5 products and returned prices");
-        printSuccess("✓ Rejected 'ออกใบเสนอราคา' with no rate — no PDF generated");
-        printSuccess("✓ Rejected 'ออกใบเสนอราคา เรท c' — no PDF generated");
+        printSuccess("The chatbot correctly handled quotation generation for unauthorized user:");
+        printSuccess("✓ Batch 'ขอราคา' searched all 2 products and returned prices");
+        printSuccess("✓ Generated quotation PDF with forced rate c (no rate specified)");
+        printSuccess("✓ Generated quotation PDF with forced rate c (rate override ignored for unauthorized user)");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

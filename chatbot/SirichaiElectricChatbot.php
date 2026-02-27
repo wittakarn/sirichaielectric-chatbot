@@ -606,18 +606,17 @@ class SirichaiElectricChatbot {
         }
 
         if ($functionName === 'generate_quotation') {
-            if (!$this->isAuthorized) {
-                return "ไม่สามารถสร้างใบเสนอราคาได้ค่ะ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น";
-            }
 
             $quotaDetail = isset($args['quotaDetail']) ? $args['quotaDetail'] : array();
-            $priceType = isset($args['priceType']) ? $args['priceType'] : '';
+            $priceType = isset($args['priceType']) ? $args['priceType'] : 'c';
+
+            // Default to 'c' if empty or invalid, or if user is unauthorized
+            if (!in_array($priceType, array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f')) || !$this->isAuthorized) {
+                $priceType = 'c';
+            }
 
             if (empty($quotaDetail)) {
                 return "No products provided for quotation.";
-            }
-            if (!in_array($priceType, array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'))) {
-                return "ไม่สามารถสร้างใบเสนอราคาได้ คำสั่งนี้สำหรับผู้ใช้ที่ได้รับอนุญาตเท่านั้น";
             }
 
             $result = $this->productAPI->generateFastQuotation($quotaDetail, $priceType);
