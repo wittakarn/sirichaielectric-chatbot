@@ -1,6 +1,8 @@
 # Sirichai Electric Chatbot - Apache Configuration
 # Rewrite rules for clean URLs
 
+Options -MultiViews
+
 RewriteEngine On
 
 # Redirect all requests to index.php
