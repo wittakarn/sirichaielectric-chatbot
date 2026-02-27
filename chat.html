@@ -22,7 +22,7 @@
 
         /* ── Header ── */
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
             color: white;
             padding: 14px 16px;
             display: flex;
@@ -105,7 +105,7 @@
             white-space: nowrap;
             transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .quick-question:hover { background: #667eea; color: white; border-color: #667eea; }
+        .quick-question:hover { background: #cc0000; color: white; border-color: #cc0000; }
 
         /* ── Messages area ── */
         #chatMessages {
@@ -157,7 +157,7 @@
         }
 
         .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
             color: white;
             border-bottom-right-radius: 4px;
         }
@@ -169,7 +169,7 @@
         .message-content p:first-child { margin-top: 0; }
         .message-content p:last-child  { margin-bottom: 0; }
         .message-content strong { font-weight: 600; }
-        .message-content a { color: #667eea; text-decoration: none; }
+        .message-content a { color: #cc0000; text-decoration: none; }
         .message-content a:hover { text-decoration: underline; }
 
         /* Typing indicator */
@@ -227,11 +227,11 @@
             font-family: inherit;
             transition: border-color 0.2s;
         }
-        #messageInput:focus { border-color: #667eea; }
+        #messageInput:focus { border-color: #cc0000; }
 
         #sendButton {
             padding: 9px 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
             color: white;
             border: none;
             border-radius: 20px;
@@ -243,7 +243,7 @@
         }
         #sendButton:hover:not(:disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 3px 10px rgba(204, 0, 0, 0.4);
         }
         #sendButton:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
