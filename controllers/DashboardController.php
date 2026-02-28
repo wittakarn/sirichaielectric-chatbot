@@ -76,6 +76,35 @@ class DashboardController {
     }
 
     /**
+     * GET /api/conversations?date=YYYY-MM-DD
+     * Get conversations for a specific date
+     */
+    public function getConversationsByDate() {
+        $this->setJsonHeaders();
+
+        try {
+            $date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                $this->sendError('Invalid date format. Use YYYY-MM-DD', 400);
+            }
+
+            $conversations = $this->dashboardService->getConversationsByDate($date);
+
+            $this->sendJsonResponse(array(
+                'success' => true,
+                'data' => $conversations,
+                'date' => $date,
+                'timestamp' => time()
+            ));
+
+        } catch (Exception $e) {
+            error_log('[DashboardController] Error: ' . $e->getMessage());
+            $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
      * GET /api/conversation/{id}
      * Get full conversation with all messages
      */

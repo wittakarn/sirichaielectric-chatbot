@@ -42,6 +42,26 @@ class DashboardService {
     }
 
     /**
+     * Get conversations by date with message count and first message preview
+     *
+     * @param string $date Date in YYYY-MM-DD format
+     * @return array List of conversations with stats
+     */
+    public function getConversationsByDate($date) {
+        $conversations = $this->conversationRepo->findByDate($date);
+
+        foreach ($conversations as &$conversation) {
+            $conversationId = $conversation['conversation_id'];
+            $conversation['message_count'] = $this->messageRepo->countByConversationId($conversationId);
+
+            $firstMessage = $this->messageRepo->getFirstUserMessage($conversationId);
+            $conversation['first_message'] = $firstMessage ? $firstMessage['content'] : null;
+        }
+
+        return $conversations;
+    }
+
+    /**
      * Get full conversation with all messages
      *
      * @param string $conversationId Conversation ID

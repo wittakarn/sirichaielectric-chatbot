@@ -173,6 +173,35 @@ class MessageRepository extends BaseRepository {
     }
 
     /**
+     * Get first user message in conversation (for preview)
+     *
+     * @param string $conversationId Conversation ID
+     * @return array|null First user message or null
+     */
+    public function getFirstUserMessage($conversationId) {
+        $sql = "
+            SELECT id, conversation_id, role, content,
+                   UNIX_TIMESTAMP(timestamp) as timestamp,
+                   tokens_used, sequence_number
+            FROM messages
+            WHERE conversation_id = ? AND role = 'user'
+            ORDER BY sequence_number ASC
+            LIMIT 1
+        ";
+
+        $message = $this->fetchOne($sql, array($conversationId));
+
+        if ($message) {
+            $message['id'] = intval($message['id']);
+            $message['timestamp'] = intval($message['timestamp']);
+            $message['tokens_used'] = intval($message['tokens_used']);
+            $message['sequence_number'] = intval($message['sequence_number']);
+        }
+
+        return $message;
+    }
+
+    /**
      * Get last message in conversation
      *
      * @param string $conversationId Conversation ID

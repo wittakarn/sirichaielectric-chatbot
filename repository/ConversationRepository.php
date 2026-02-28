@@ -312,6 +312,43 @@ class ConversationRepository extends BaseRepository {
     }
 
     /**
+     * Find conversations that have messages on a specific date
+     *
+     * @param string $date Date in YYYY-MM-DD format
+     * @return array List of conversations that had activity on that date
+     */
+    public function findByDate($date) {
+        $sql = "
+            SELECT
+                c.conversation_id,
+                c.platform,
+                c.user_id,
+                c.is_chatbot_active,
+                UNIX_TIMESTAMP(c.paused_at) as paused_at,
+                UNIX_TIMESTAMP(c.created_at) as created_at,
+                UNIX_TIMESTAMP(c.last_activity) as last_activity
+            FROM conversations c
+            WHERE c.conversation_id IN (
+                SELECT DISTINCT conversation_id
+                FROM messages
+                WHERE DATE(timestamp) = ?
+            )
+            ORDER BY c.last_activity DESC
+        ";
+
+        $conversations = $this->fetchAll($sql, array($date));
+
+        foreach ($conversations as &$conversation) {
+            $conversation['created_at'] = intval($conversation['created_at']);
+            $conversation['last_activity'] = intval($conversation['last_activity']);
+            $conversation['is_chatbot_active'] = intval($conversation['is_chatbot_active']);
+            $conversation['paused_at'] = $conversation['paused_at'] ? intval($conversation['paused_at']) : null;
+        }
+
+        return $conversations;
+    }
+
+    /**
      * Get recent conversations for monitoring (simple version)
      *
      * @param int $limit Number of conversations to return (default 6)
