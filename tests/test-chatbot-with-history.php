@@ -15,6 +15,8 @@
  * - Q9: "เพิ่ม รายการแรก 5 ชิ้น" (shopping phrase - must NOT ask for price type)
  * - Q10: "เอา ตัวแรก 2 อัน" (another shopping phrase - must NOT trigger quotation)
  * - Q11: "ออกใบเสนอราคา เรท a" (quotation after shopping list - expect PDF link with all products)
+ * - Q12: "มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W" (color inquiry - AI must NOT fabricate color variants not in data)
+ * - Q13: "ออกใบเสนอราคา โคมไฟ สปอร์ตไลท์ LED SPEED 50W BEC มีแสงสีเหลือง 2 ตัว" (quotation with hallucinated name appended - must still generate PDF via fuzzy match)
  *
  * Usage: php test-chatbot-with-history.php
  */
@@ -118,6 +120,32 @@ $questions = array(
     array(
         'question' => 'ออกใบเสนอราคา เรท a',
         'expectation' => 'AI should call generate_quotation with all accumulated products and return a PDF link'
+    ),
+    // Hallucination guard: AI must not fabricate color variants
+    array(
+        'question' => 'มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W',
+        'expectation' => 'AI should search for BEC floodlight products and report only colors explicitly listed in results — must NOT fabricate warm/yellow color if not in data',
+        'validate' => function($response) {
+            // Must NOT confidently claim yellow/warm color exists unless the product name contains it
+            $fabricatedClaims = array('มีแสงสีเหลือง', 'WARM WHITE', 'Warm White');
+            foreach ($fabricatedClaims as $claim) {
+                if (strpos($response, $claim) !== false) {
+                    return 'Response fabricated color variant: "' . $claim . '"';
+                }
+            }
+            return null;
+        }
+    ),
+    // Fuzzy match guard: quotation must succeed even when product name has extra appended words
+    array(
+        'question' => 'ออกใบเสนอราคา โคมไฟ สปอร์ตไลท์ LED SPEED 50W BEC มีแสงสีเหลือง 2 ตัว',
+        'expectation' => 'AI should call generate_quotation — backend fuzzy match must strip trailing junk and find the correct product — must return a PDF link',
+        'validate' => function($response) {
+            if (strpos($response, 'shop.sirichaielectric.com') === false) {
+                return 'Response does not contain a PDF download link';
+            }
+            return null;
+        }
     )
 );
 
@@ -221,6 +249,17 @@ try {
             printInfo("Search criteria: " . $response['searchCriteria']);
         }
 
+        // Run custom validator if defined
+        if (isset($testCase['validate'])) {
+            $validationError = $testCase['validate']($response['response']);
+            if ($validationError !== null) {
+                printError("Validation FAILED: " . $validationError);
+                $allTestsPassed = false;
+                break;
+            }
+            printSuccess("Validation PASSED");
+        }
+
         // Save assistant message to conversation
         $conversationManager->addMessage(
             $testConversationId,
@@ -263,6 +302,8 @@ try {
         printSuccess("✓ Shopping phrase 'เพิ่ม X ชิ้น' did not trigger quotation");
         printSuccess("✓ Shopping phrase 'เอา X อัน' did not trigger quotation");
         printSuccess("✓ Quotation generation still works after shopping list management");
+        printSuccess("✓ Color inquiry did not fabricate variants not in search results");
+        printSuccess("✓ Quotation with hallucinated product name resolved via fuzzy match");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");
