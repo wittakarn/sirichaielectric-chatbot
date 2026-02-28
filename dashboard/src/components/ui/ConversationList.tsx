@@ -20,7 +20,7 @@ export default function ConversationList({ date, selectedDate, selectedConversat
   const conversations = data?.data ?? []
 
   return (
-    <div className="flex w-80 flex-col border-r">
+    <div className="flex flex-col border-r">
       <div className="border-b px-4 py-3">
         <h2 className="text-sm font-semibold">
           Conversations — {selectedDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
