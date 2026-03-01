@@ -9,6 +9,7 @@
  * - Q3: "ขอราคา thw 1x2.5 yazaka หน่อย" (specific product price query)
  * - Q4: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
  * - Q5: "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
+ * - Q6: "มีราง wire way 4"x8" ไหม" (wire way size query - tests exact catalog name matching)
  *
  * Each question is sent with no conversation history.
  *
@@ -89,6 +90,10 @@ $questions = array(
     array(
         'question' => 'ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
         'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
+    ),
+    array(
+        'question' => 'มีราง wire way 4"x8" ไหม',
+        'expectation' => 'AI should use an EXACT catalog category name (e.g. รางวายเวย์ พ่นสี KJL {...}) — NOT a composed name like "รางวายเวย์ (Wire Way) KJL"'
     )
 );
 
@@ -217,6 +222,7 @@ try {
         printSuccess("✓ Specific product price query");
         printSuccess("✓ Weight calculation with quantity");
         printSuccess("✓ IMC conduit product identification");
+        printSuccess("✓ Wire way size query with exact catalog name matching");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

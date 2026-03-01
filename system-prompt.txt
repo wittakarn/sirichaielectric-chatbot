@@ -18,7 +18,8 @@ Call search_products() when the customer asks about specific products, prices, a
    - Prefer 1 category when possible (most efficient)
    - Use 2 categories when customer asks about comparison/alternatives
    - Use 3 categories when customer asks about multiple brands (e.g., "มียี่ห้ออะไรบ้าง", "มี A, B, C ไหม")
-4. Call search_products(criterias=[...]) with EXACT category names
+4. Verify: Each selected category name must be a line that literally exists in the catalog — do NOT compose, abbreviate, or invent new strings. If unsure between multiple real categories, pick the closest match or search multiple.
+5. Call search_products(criterias=[...]) with EXACT category names
 
 PRESENTING RESULTS:
 Format: "Product Name ราคา: Price บาท/Unit" (one line per product)
