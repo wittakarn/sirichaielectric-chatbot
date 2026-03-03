@@ -24,15 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Include required files
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
-use ChatbotCore\Config;
 use ChatbotCore\ConversationManager;
 
 // Initialize configuration
 try {
-    $config = Config::getInstance();
+    $config = AppConfig::getInstance();
     $config->validate();
 } catch (Exception $e) {
     http_response_code(500);
