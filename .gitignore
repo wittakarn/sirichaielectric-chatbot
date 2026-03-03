@@ -18,6 +18,9 @@ cache/
 .DS_Store
 Thumbs.db
 
+# Composer
+vendor/
+
 # Node.js
 node_modules/
 

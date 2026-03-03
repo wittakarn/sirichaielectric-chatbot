@@ -1,5 +1,9 @@
 #!/usr/bin/env php
 <?php
+
+use ChatbotCore\DatabaseManager;
+use ChatbotCore\ConversationManager;
+
 /**
  * Chatbot Integration Test - Independent Questions (No Conversation History)
  *
@@ -22,12 +26,10 @@ ini_set('display_errors', '1');
 ini_set('error_log', __DIR__ . '/../logs.log');
 
 // Load dependencies
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../chatbot/DatabaseManager.php';
-require_once __DIR__ . '/../chatbot/ConversationManager.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../AppConfig.php';
 require_once __DIR__ . '/../services/ProductAPIService.php';
 require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/../chatbot/GeminiFileManager.php';
 
 // ANSI color codes for terminal output
 class Color {
@@ -102,7 +104,7 @@ try {
 
     // Step 1: Load configuration
     printStep("Loading configuration...");
-    $config = Config::getInstance();
+    $config = AppConfig::getInstance();
     $config->validate();
     $dbConfig = $config->get('database');
     $geminiConfig = $config->get('gemini');
