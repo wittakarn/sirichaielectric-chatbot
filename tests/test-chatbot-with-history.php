@@ -1,5 +1,9 @@
 #!/usr/bin/env php
 <?php
+
+use ChatbotCore\DatabaseManager;
+use ChatbotCore\ConversationManager;
+
 /**
  * Chatbot Integration Test - Multi-turn Conversation (With History)
  *
@@ -15,6 +19,7 @@
  * - Q9: "เพิ่ม รายการแรก 5 ชิ้น" (shopping phrase - must NOT ask for price type)
  * - Q10: "เอา ตัวแรก 2 อัน" (another shopping phrase - must NOT trigger quotation)
  * - Q11: "ออกใบเสนอราคา เรท a" (quotation after shopping list - expect PDF link with all products)
+ * - Q12: "มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W" (color inquiry - AI must NOT fabricate color variants not in data)
  *
  * Usage: php test-chatbot-with-history.php
  */
@@ -25,12 +30,10 @@ ini_set('display_errors', '1');
 ini_set('error_log', __DIR__ . '/../logs.log');
 
 // Load dependencies
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../chatbot/DatabaseManager.php';
-require_once __DIR__ . '/../chatbot/ConversationManager.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../AppConfig.php';
 require_once __DIR__ . '/../services/ProductAPIService.php';
 require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
-require_once __DIR__ . '/../chatbot/GeminiFileManager.php';
 
 // ANSI color codes for terminal output
 class Color {
@@ -118,6 +121,23 @@ $questions = array(
     array(
         'question' => 'ออกใบเสนอราคา เรท a',
         'expectation' => 'AI should call generate_quotation with all accumulated products and return a PDF link'
+    ),
+    // Hallucination guard: AI must not fabricate color variants
+    array(
+        'question' => 'มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W',
+        'expectation' => 'AI should search for BEC floodlight products and report only colors explicitly listed in results — must NOT fabricate warm/yellow color if not in data',
+        'validate' => function($response) {
+            // Must NOT directly state SPEED 50W has yellow color as a product variant
+            // Acceptable: mentioning VECTOR WARM WHITE as a different product
+            // Not acceptable: listing "SPEED 50W BEC WARM WHITE" or "SPEED 50W มีแสงสีเหลือง" as actual product
+            if (preg_match('/โคมไฟ\s*สปอร์ตไลท์\s*LED\s*SPEED\s*50W\s*BEC\s*(?:\*\*)?WARM\s*WHITE/i', $response)) {
+                return 'Response fabricated SPEED 50W WARM WHITE as a product variant';
+            }
+            if (preg_match('/SPEED\s*50W\s*BEC\s*มีแสงสีเหลือง/i', $response)) {
+                return 'Response fabricated SPEED 50W yellow color variant';
+            }
+            return null;
+        }
     )
 );
 
@@ -126,7 +146,7 @@ try {
 
     // Step 1: Load configuration
     printStep("Loading configuration...");
-    $config = Config::getInstance();
+    $config = AppConfig::getInstance();
     $config->validate();
     $dbConfig = $config->get('database');
     $geminiConfig = $config->get('gemini');
@@ -221,6 +241,17 @@ try {
             printInfo("Search criteria: " . $response['searchCriteria']);
         }
 
+        // Run custom validator if defined
+        if (isset($testCase['validate'])) {
+            $validationError = $testCase['validate']($response['response']);
+            if ($validationError !== null) {
+                printError("Validation FAILED: " . $validationError);
+                $allTestsPassed = false;
+                break;
+            }
+            printSuccess("Validation PASSED");
+        }
+
         // Save assistant message to conversation
         $conversationManager->addMessage(
             $testConversationId,
@@ -263,6 +294,7 @@ try {
         printSuccess("✓ Shopping phrase 'เพิ่ม X ชิ้น' did not trigger quotation");
         printSuccess("✓ Shopping phrase 'เอา X อัน' did not trigger quotation");
         printSuccess("✓ Quotation generation still works after shopping list management");
+        printSuccess("✓ Color inquiry did not fabricate variants not in search results");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");

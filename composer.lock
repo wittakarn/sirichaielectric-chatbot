@@ -1,0 +1,54 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "26f4af7b2abd76a174a81d174b88f405",
+    "packages": [
+        {
+            "name": "wittakarn/chatbot-core",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:wittakarn/chatbot-core.git",
+                "reference": "56a4692d47e3a301c3ff604593aef1aa87fc6caa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wittakarn/chatbot-core/zipball/56a4692d47e3a301c3ff604593aef1aa87fc6caa",
+                "reference": "56a4692d47e3a301c3ff604593aef1aa87fc6caa",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ChatbotCore\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Core library for AI chatbots (Gemini + LINE + MySQL)",
+            "support": {
+                "source": "https://github.com/wittakarn/chatbot-core/tree/v1.1.1",
+                "issues": "https://github.com/wittakarn/chatbot-core/issues"
+            },
+            "time": "2026-03-03T08:31:02+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=7.4"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

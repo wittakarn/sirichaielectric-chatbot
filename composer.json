@@ -1,0 +1,15 @@
+{
+    "name": "sirichaielectric/chatbot",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "wittakarn/chatbot-core": "^1.1.1"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/wittakarn/chatbot-core"
+        }
+    ],
+    "minimum-stability": "stable"
+}

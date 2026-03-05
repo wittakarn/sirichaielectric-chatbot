@@ -30,8 +30,9 @@ function isAdminLoggedIn() {
  * @return bool True if credentials are valid
  */
 function verifyAdminCredentials($username, $password) {
-    require_once __DIR__ . '/../config.php';
-    $config = Config::getInstance();
+    require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/../AppConfig.php';
+    $config = AppConfig::getInstance();
 
     // Get configured admin credentials
     $validUsername = $config->get('admin', 'username');

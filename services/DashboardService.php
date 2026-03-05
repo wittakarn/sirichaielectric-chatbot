@@ -3,8 +3,8 @@
  * DashboardService - Business logic for dashboard monitoring
  */
 
-require_once __DIR__ . '/../repository/ConversationRepository.php';
-require_once __DIR__ . '/../repository/MessageRepository.php';
+use ChatbotCore\Repository\ConversationRepository;
+use ChatbotCore\Repository\MessageRepository;
 
 class DashboardService {
     private $conversationRepo;
@@ -12,50 +12,42 @@ class DashboardService {
 
     public function __construct($pdo) {
         $this->conversationRepo = new ConversationRepository($pdo);
-        $this->messageRepo = new MessageRepository($pdo);
+        $this->messageRepo      = new MessageRepository($pdo);
     }
 
-    /**
-     * Get recent conversations for monitoring grid (6 cards)
-     * Each card shows: conversation info, message count, last 6 messages preview
-     *
-     * @param int $conversationLimit Number of conversations to return (default 6)
-     * @param int $messageLimit Number of recent messages per conversation (default 6)
-     * @return array List of conversations with stats
-     */
     public function getRecentConversationsForGrid($conversationLimit = 6, $messageLimit = 6) {
-        // Get recent conversations
         $conversations = $this->conversationRepo->findRecentForMonitoring($conversationLimit);
 
-        // Enrich each conversation with message stats
         foreach ($conversations as &$conversation) {
             $conversationId = $conversation['conversation_id'];
-
-            // Get message count
-            $conversation['message_count'] = $this->messageRepo->countByConversationId($conversationId);
-
-            // Get last N messages for preview
+            $conversation['message_count']   = $this->messageRepo->countByConversationId($conversationId);
             $conversation['recent_messages'] = $this->messageRepo->getLastNMessages($conversationId, $messageLimit);
         }
 
         return $conversations;
     }
 
-    /**
-     * Get full conversation with all messages
-     *
-     * @param string $conversationId Conversation ID
-     * @return array|null Conversation with messages
-     */
+    public function getConversationsByDate($date) {
+        $conversations = $this->conversationRepo->findByDate($date);
+
+        foreach ($conversations as &$conversation) {
+            $conversationId = $conversation['conversation_id'];
+            $conversation['message_count'] = $this->messageRepo->countByConversationId($conversationId);
+
+            $firstMessage = $this->messageRepo->getFirstUserMessage($conversationId);
+            $conversation['first_message'] = $firstMessage ? $firstMessage['content'] : null;
+        }
+
+        return $conversations;
+    }
+
     public function getConversationWithMessages($conversationId) {
         $conversation = $this->conversationRepo->findById($conversationId);
         if (!$conversation) {
             return null;
         }
 
-        $messages = $this->messageRepo->findByConversationId($conversationId);
-        $conversation['messages'] = $messages;
-
+        $conversation['messages'] = $this->messageRepo->findByConversationId($conversationId);
         return $conversation;
     }
 }
