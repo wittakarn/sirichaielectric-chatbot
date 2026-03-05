@@ -2,9 +2,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
 ini_set('error_log', dirname(__FILE__) . '/logs.log');
-require_once '../config.php';
+require_once '../vendor/autoload.php';
+require_once '../AppConfig.php';
 
-$config = Config::getInstance();
+$config = AppConfig::getInstance();
 ?>
 
 <!doctype html>
