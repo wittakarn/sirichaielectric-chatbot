@@ -83,7 +83,7 @@ $questions = array(
     ),
     array(
         'question' => 'ขอราคา thw 1x2.5 yazaka หน่อย',
-        'expectation' => 'AI should be able to provide product price for specific THW cable'
+        'expectation' => 'AI should be able to provide product price for specific THW cable (multiple color variants expected, no link)'
     ),
     array(
         'question' => 'สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่',
@@ -91,7 +91,11 @@ $questions = array(
     ),
     array(
         'question' => 'ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
-        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
+        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details with a product link',
+        'validate' => function($response) {
+            return mb_strpos($response, 'https://shop.sirichaielectric.com/product/') !== false;
+        },
+        'validateMsg' => 'Response must contain a product link (https://shop.sirichaielectric.com/product/...)'
     ),
     array(
         'question' => 'มีราง wire way 4"x8" ไหม',
@@ -196,6 +200,17 @@ try {
 
         if (isset($response['searchCriteria']) && $response['searchCriteria']) {
             printInfo("Search criteria: " . $response['searchCriteria']);
+        }
+
+        // Run validation if defined
+        if (isset($testCase['validate'])) {
+            $passed = $testCase['validate']($response['response']);
+            if ($passed) {
+                printSuccess("Validation PASSED: " . $testCase['validateMsg']);
+            } else {
+                printError("Validation FAILED: " . $testCase['validateMsg']);
+                $allTestsPassed = false;
+            }
         }
 
         // Save assistant message to conversation

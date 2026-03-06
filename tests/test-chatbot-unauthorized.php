@@ -78,8 +78,9 @@ $questions = array(
         'validate' => function($response) {
             // Response must contain price info and must NOT auto-generate a PDF
             $hasPrices = mb_strpos($response, 'ราคา') !== false || mb_strpos($response, 'บาท') !== false;
-            $hasNoLink = mb_strpos($response, 'http') === false && mb_strpos($response, 'pdf') === false;
-            return $hasPrices && $hasNoLink;
+            $hasNoPdfLink = mb_strpos($response, 'pdf') === false && mb_strpos($response, 'PDF') === false
+                && mb_strpos($response, 'ดาวน์โหลด') === false;
+            return $hasPrices && $hasNoPdfLink;
         },
         'validateMsg' => 'Response must contain price info (ราคา/บาท) and must NOT auto-generate a PDF'
     ),
