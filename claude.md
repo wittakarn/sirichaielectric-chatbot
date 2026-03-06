@@ -2,162 +2,136 @@
 
 This file provides context for Claude AI when working on this codebase.
 
-> **For comprehensive documentation:** See [PROJECT.md](PROJECT.md) (2,100+ lines covering architecture, setup, troubleshooting, and development history)
+> **For comprehensive documentation:** See [PROJECT.md](PROJECT.md)
 
 ## Project Overview
 
 **Name:** Sirichai Electric Chatbot
 **Purpose:** AI-powered customer service chatbot for electrical product inquiries
-**Tech Stack:** PHP 5.6+, MySQL 5.7+, Google Gemini 2.5 Flash API, LINE Messaging API
-**Architecture:** Repository Pattern, File API Integration, Database-backed conversations
+**Tech Stack:** PHP 7.4+, MySQL 5.7+, Google Gemini 2.5 Flash API, LINE Messaging API
+**Architecture:** chatbot-core library (Composer package) + Sirichai application layer
 
-## Key Components
+## Architecture: Two-Layer Design
 
-### 1. Core Files
-- `SirichaiElectricChatbot.php` - Main chatbot logic with Gemini API integration
-- `ConversationManager.php` - Service layer for conversation management
-- `DatabaseManager.php` - Singleton PDO wrapper
-- `ProductAPIService.php` - Product catalog and search API integration
-- `GeminiFileManager.php` - Gemini File API for token optimization
+The project is split into two distinct layers:
 
-### 2. Repository Layer
-- `repository/BaseRepository.php` - Abstract base with common DB operations
-- `repository/ConversationRepository.php` - Conversation table operations
-- `repository/MessageRepository.php` - Message table operations
+### Layer 1: `wittakarn/chatbot-core` (Composer library)
+Located at `vendor/wittakarn/chatbot-core/src/`:
 
-### 3. Integration Points
-- `index.php` - REST API entry point
-- `line-webhook.php` - LINE Official Account webhook handler
-- `config.php` - Configuration singleton (.env loader)
-- `system-prompt.txt` - AI behavior instructions (uploaded to Gemini File API)
+| File | Role |
+|------|------|
+| `GeminiChatbot.php` | Abstract base — handles all Gemini API calls, function-call loops (up to 6 chained calls), retry logic (3x), File API upload/cache, token tracking |
+| `LineWebhookHandler.php` | Abstract base — handles LINE signature verification, HTTP 200 async, pause/resume commands, message splitting (4900 char), push API dispatch |
+| `ConversationManager.php` | Conversation state, history trimming, pause/resume, authorized user checks |
+| `GeminiFileManager.php` | Uploads catalog to Gemini File API, caches URIs in `file-cache.json` for 46h |
+| `Config.php` | Singleton `.env` loader, extensible via `buildConfig()` override |
+| `DatabaseManager.php` | Singleton PDO wrapper |
+| `Repository/BaseRepository.php` | Abstract PDO helpers (fetchAll, fetchOne, fetchColumn, transaction support) |
+| `Repository/ConversationRepository.php` | conversations table CRUD + pause/resume/auto-resume |
+| `Repository/MessageRepository.php` | messages table CRUD + history/token queries |
+| `Repository/AuthorizedUserRepository.php` | authorized_users table — checks `INSTR(?, user_id)` |
+| `Utils/LineWebhookUtils.php` | Static helpers: signature verify, push message, loading animation, message split, bot mention detection |
 
-### 4. Testing
-- `tests/test-chatbot-without-history.php` - 5 independent questions (no conversation history):
-  1. General electrical engineering (motor current calculation)
-  2. Multiple brands query (waterproof/dustproof lamps)
-  3. Specific product price (THW cable)
-  4. Weight calculation with quantity (THW cable 400m)
-  5. Product identification (IMC conduit straight coupling)
-- `tests/test-chatbot-with-history.php` - 11-turn multi-turn conversation (full quotation workflow):
-  1. Product search (ABB circuit breaker)
-  2. Shopping list — add product with quantity
-  3. Compatibility question (wire recommendation)
-  4. Shopping list — add accessory with quantity
-  5. Summary with pricing
-  6. Quotation without rate → expect rejection
-  7. Quotation with rate `c` → expect PDF link
-  8. New product search after quotation (RCD)
-  9. Shopping phrase "เพิ่ม X ชิ้น" → must NOT trigger quotation
-  10. Shopping phrase "เอา X อัน" → must NOT trigger quotation
-  11. Quotation with rate `a` → expect PDF link with all accumulated products
+### Layer 2: Sirichai Application (project root)
 
-## Database Schema
+| File | Role |
+|------|------|
+| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 3 functions: `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
+| `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
+| `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
+| `services/ProductAPIService.php` | HTTP client for 4 external APIs: catalog summary (24h cache), product search, product detail, quotation PDF |
+| `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
+| `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
+| `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
 
-### `conversations` Table
-```sql
-- conversation_id (VARCHAR 100, UNIQUE) - Primary identifier
-- platform (VARCHAR 20) - 'api' or 'line'
-- user_id (VARCHAR 100) - LINE user ID if applicable
-- max_messages_limit (INT) - Default 20
-- is_chatbot_active (TINYINT) - 1=active, 0=paused for human agent
-- paused_at (TIMESTAMP) - When chatbot was paused
-- created_at, last_activity (TIMESTAMP)
-```
+### Admin & Dashboard
 
-### `messages` Table
-```sql
-- id (INT AUTO_INCREMENT)
-- conversation_id (VARCHAR 100, FK to conversations)
-- role (ENUM 'user', 'assistant')
-- content (TEXT) - Message content
-- tokens_used (INT) - Gemini API tokens
-- sequence_number (INT) - Message order
-- search_criteria (TEXT) - JSON of search params used
-- timestamp (TIMESTAMP)
-```
+| File | Role |
+|------|------|
+| `admin/` | PHP session-auth admin UI — view/pause/resume conversations, LINE profile lookup |
+| `admin/api/monitoring.php` | REST API for React dashboard |
+| `controllers/DashboardController.php` | Controller layer for monitoring endpoints |
+| `services/DashboardService.php` | Aggregates conversation + message data for dashboard |
+| `dashboard/` | React + TypeScript + Vite + TanStack Query — real-time monitoring UI |
+| `services/LineProfileService.php` | Fetches LINE display name/picture for admin dashboard |
+| `services/CacheClearService.php` | HTTP endpoint to clear catalog cache |
 
 ## Key Architecture Decisions
 
-### File API Integration
-- System prompt and product catalog uploaded as files to Gemini File API
-- Reduces token usage by 95%+ (from ~3000 tokens to ~10-50 tokens)
-- Files cached in `file-cache.json` for 46 hours (auto-refresh before 48h expiry)
-- File API is FREE (no storage/retrieval charges)
+### Hybrid File API Approach
+- **System prompt** → inline `systemInstruction` text (~5KB, direct)
+- **Product catalog** → Gemini File API upload (~101KB, cached 46h in `file-cache.json`)
+- Result: 95%+ token reduction, fast responses, server-side caching
 
-### Repository Pattern
-- All database operations use PDO prepared statements (SQL injection prevention)
-- Clean separation: Controllers → Service Layer → Repository Layer → Database
-- Transactions supported via BaseRepository
-- Centralized query logic for maintainability
+### Function Calling (3 Available Functions)
+Gemini two-step flow:
+1. AI returns function call request
+2. PHP executes → sends result back → AI formats text response
 
-### Function Calling
-Gemini uses two-step conversational flow:
-1. **Step 1:** AI decides to call a function → returns function call request
-2. **Step 2:** PHP executes function → sends results back → AI formats response
+Available functions:
+- `search_products(criterias[])` — search by exact catalog category names (max 3)
+- `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
+- `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
-**Available Functions:**
-- `search_products(criterias[])` - Search products by category names
-- `search_product_detail(productName)` - Get detailed specs (weight, size, qty/pack) with fuzzy matching
+Chained calls: up to **6 additional** rounds (supports 5-product batch quotation).
 
-### Fuzzy Search for Product Details
-- **Implementation:** `ProductAPIService::getProductDetail()` uses fuzzy matching on partial product names
-- **Backend SQL:** Splits product name into keywords and uses `LIKE %keyword%` matching
-- **AI Workflow:** AI can directly call `search_product_detail()` with keywords from conversation context
-- **Benefits:** Eliminates redundant `search_products()` calls for follow-up questions, saves ~50-100 tokens per query
+### Authorization System
+- `authorized_users` DB table — stores authorized LINE user IDs
+- `ConversationManager::isUserAuthorized()` checks per message
+- Unauthorized users: `priceType` always forced to `"c"` regardless of request
+- Rate types: `ss|s|a|b|c|vb|vc|d|e|f` — NOT shown to users
 
-### LINE Integration
-- Async processing (responds HTTP 200 immediately, processes in background)
-- Loading animation (60s) during AI processing
-- Push API (not Reply API) for reliability with long processing times
-- Image message support (downloads from LINE Content API, analyzes with Gemini vision)
-- Signature verification in production
+### Retry / Empty STOP Recovery
+`GeminiChatbot::executeWithRetry()`:
+1. Retry up to 3x with 2s/3s delays
+2. On retry 2+: force `tool_config.function_calling_config.mode = "ANY"` to prevent empty STOP
+3. After all retries fail: `chat()` calls `refreshFiles()` (force re-upload catalog) and retries once more
 
-### Chatbot Pause/Resume
-- Users can request human agent with "ติดต่อพนักงาน" or "/human"
-- Agents respond via LINE Official Account Manager
-- Resume with "/bot" or "เปิดแชทบอท"
-- Auto-resume after configurable timeout (prevents forgotten paused chats)
+### LINE Async Processing
+- Respond HTTP 200 immediately (`closeConnection()` — supports LiteSpeed, FastCGI, fallback)
+- `initialize()` runs after 200 is sent
+- Loading animation (60s) for 1:1 chats only
+- Push API (not Reply API) — no 60s reply token expiry
 
-## Critical Issues (INVESTIGATION_SUMMARY.md)
+### Conversation ID Format
+- API conversations: `conv_{timestamp}_{9chars}`
+- LINE conversations: `line_{userId}` (user-scoped, persistent across sessions)
 
-### Fixed Issues
+## Database Schema
 
-✅ **Empty Response Bug** - SOLVED (February 15, 2026)
+### `conversations`
+```sql
+conversation_id VARCHAR(100) UNIQUE
+platform        VARCHAR(20)      -- 'api' or 'line'
+user_id         VARCHAR(100)     -- LINE user ID
+max_messages_limit INT           -- default 20
+is_chatbot_active  TINYINT       -- 1=active, 0=paused
+paused_at       TIMESTAMP
+created_at, last_activity TIMESTAMP
+```
 
-**Problem:** AI returned empty response with `finishReason: STOP` on both first and follow-up queries
+### `messages`
+```sql
+id              INT AUTO_INCREMENT
+conversation_id VARCHAR(100) FK
+role            ENUM('user','assistant')
+content         TEXT
+tokens_used     INT
+sequence_number INT
+search_criteria TEXT             -- JSON of function call args
+is_active       TINYINT          -- soft delete flag
+timestamp       TIMESTAMP
+```
 
-**Root Causes:**
-1. System prompt too long and complex (269 lines, 18KB) - overwhelming the model
-2. Both system prompt AND catalog uploaded as File API files - caused caching issues
+### `authorized_users`
+```sql
+user_id   VARCHAR(100)           -- LINE user ID substring match
+```
 
-**Solution Applied:**
-1. **Simplified system-prompt.txt** from 269 lines → 92 lines (66% reduction)
-2. **Hybrid File API Approach:**
-   - System prompt text → Direct in `systemInstruction` parameter (~5KB)
-   - Product catalog → File API upload (~101KB)
-   - This combination provides fast responses with caching
-3. **Fuzzy Search Implementation (February 15, 2026):**
-   - Backend `getProductByName()` uses partial keyword matching
-   - AI workflow updated to extract product keywords from context
-   - Eliminates "Always Search First" requirement for follow-up questions
-   - System prompt simplified from verbose Option A/B to single clear instruction
+## Environment Variables
 
-**Results:**
-- ✅ First queries work correctly (product search)
-- ✅ Follow-up queries work correctly (fuzzy search for product details)
-- ✅ General electrical engineering questions work correctly
-- ✅ Multiple brands query works correctly
-- ✅ Specific product pricing works correctly
-- ✅ Test script passes all 5 test questions
-- ✅ Response time: ~5 seconds per query
-- ✅ Token usage: ~34K-73K tokens per query (with caching)
-- ✅ AI can calculate electrical parameters AND suggest relevant products
-
-## Environment Setup
-
-### Required .env Variables
 ```bash
-# Gemini API
+# Gemini
 GEMINI_API_KEY=xxx
 GEMINI_MODEL=gemini-2.5-flash
 GEMINI_TEMPERATURE=0.7
@@ -175,215 +149,139 @@ LINE_CHANNEL_SECRET=xxx
 LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
-# Product API
+# Product API (all 4 required)
 CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
+PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
+QUOTATION_URL=https://shop.sirichaielectric.com/services/...
+
 WEBSITE_URL=https://shop.sirichaielectric.com/
 
 # Conversation
 MAX_MESSAGES_PER_CONVERSATION=20
 AUTO_RESUME_TIMEOUT_MINUTES=30
+MAX_REQUESTS_PER_MINUTE=15
+API_BASE_PATH=
+
+# Admin
+ADMIN_USERNAME=xxx
+ADMIN_PASSWORD_HASH=xxx   # bcrypt hash, generate with admin/generate-password-hash.php
 ```
 
-### PHP Version
-- **Development:** `/Applications/MAMP/bin/php/php7.4.33/bin/php`
-- **Compatibility:** PHP 5.6+ (no type hints, uses docblock annotations)
+## Running Tests
 
-## Common Tasks
+Run SEQUENTIALLY — never in parallel (Gemini rate limits):
 
-### Running Tests
 ```bash
-# Integration test (clears DB, tests 5 questions)
-# Q1: Product search, Q2: Follow-up details, Q3: Electrical calculations
-# Q4: Multiple brands, Q5: Specific pricing
-./test-chatbot.php
-
-# File API test
-php test-file-api.php
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-without-history.php
+sleep 15
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-with-history.php
+sleep 15
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-batch-price.php
+sleep 15
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-unauthorized.php
 ```
 
-### Database Operations
-```bash
-# Clear all conversations
-mysql -u root -p chatbotdb -e "DELETE FROM conversations;"
+### Test Coverage
 
-# View recent messages
-mysql -u root -p chatbotdb -e "SELECT * FROM messages ORDER BY timestamp DESC LIMIT 10;"
+**`test-chatbot-without-history.php`** — 5 independent questions (no history):
+1. Motor current calculation (general electrical engineering)
+2. Waterproof/dustproof lamps — multiple brands
+3. THW cable specific price
+4. THW cable weight for 400m
+5. IMC conduit straight coupling identification
 
-# Token usage stats
-mysql -u root -p chatbotdb -e "SELECT platform, SUM(tokens_used) FROM conversations c JOIN messages m ON c.conversation_id = m.conversation_id GROUP BY platform;"
-```
+**`test-chatbot-with-history.php`** — 12-turn quotation workflow:
+1. Product search (ABB circuit breaker)
+2. Add product with quantity
+3. Wire compatibility question
+4. Add accessory with quantity
+5. Summary with pricing
+6. Quotation without rate (expects default `c`)
+7. Quotation with rate `vb` (expects PDF link)
+8. New product search (RCD)
+9. "เพิ่ม X ชิ้น" — must NOT trigger quotation
+10. "เอา X อัน" — must NOT trigger quotation
+11. Quotation with rate `a` (all accumulated products)
+12. Color inquiry — AI must NOT fabricate variants not in data
 
-### File Cache Management
-```bash
-# List uploaded files
-php cleanup-files.php list
+**`test-chatbot-batch-price.php`** — Batch price workflow (WORKFLOW 1B):
+- Multiple products searched sequentially
+- All prices shown (not 3-max rule)
+- Quotation offered at end
 
-# Delete all files
-php cleanup-files.php delete-all
-
-# Clear local cache
-php cleanup-files.php clear-cache
-```
-
-### Force Refresh Files
-```php
-require_once 'SirichaiElectricChatbot.php';
-$chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
-$chatbot->refreshFiles(); // Re-uploads system-prompt.txt and catalog
-```
+**`test-chatbot-unauthorized.php`** — Authorization enforcement:
+- Unauthorized user requests non-`c` rate
+- Expects `priceType` forced to `c`
 
 ## Code Patterns
 
-### Adding a New Function
-1. Add function declaration in `SirichaiElectricChatbot::callGeminiWithFunctions()`
-2. Add execution handler in `SirichaiElectricChatbot::executeFunction()`
-3. Add logging support in `SirichaiElectricChatbot::extractSearchCriteria()`
-4. Update `system-prompt.txt` with usage instructions
-5. Call `$chatbot->refreshFiles()` to upload new prompt
+### Adding a New Gemini Function
+1. Add declaration in `SirichaiElectricChatbot::getFunctionDeclarations()`
+2. Add handler in `SirichaiElectricChatbot::executeFunction()`
+3. Add logging in `SirichaiElectricChatbot::extractSearchCriteria()`
+4. Update `system-prompt.txt`
+5. Delete `file-cache.json` or call `$chatbot->refreshFiles()`
 
-### Adding a New Repository Method
+### Extending chatbot-core for a New Project
 ```php
-// In repository class (extends BaseRepository)
-public function findByCustomField($value) {
-    $sql = "SELECT * FROM table_name WHERE custom_field = ?";
-    return $this->fetchAll($sql, array($value));
+// 1. Subclass GeminiChatbot
+class MyChatbot extends GeminiChatbot {
+    protected function getFunctionDeclarations(): array { ... }
+    protected function executeFunction(string $name, array $args): string { ... }
+    protected function extractSearchCriteria(string $name, array $args): ?string { ... }
 }
+
+// 2. Subclass LineWebhookHandler
+class MyWebhook extends LineWebhookHandler {
+    protected function initialize(): void { /* boot chatbot + conversationManager */ }
+    protected function getAIResponse(string $text, string $convId, string $userId): string { ... }
+    protected function getAIResponseWithImage(...): string { ... }
+}
+
+// 3. Entry point
+(new MyWebhook())->run();
 ```
 
-### Adding a New Conversation Manager Method
-```php
-// In ConversationManager.php
-public function getCustomData($conversationId) {
-    try {
-        return $this->conversationRepository->findByCustomField($conversationId);
-    } catch (PDOException $e) {
-        error_log('[ConversationManager] getCustomData failed: ' . $e->getMessage());
-        return null;
-    }
-}
-```
+## Important Files
 
-## Important Files to Understand
-
-### 1. `system-prompt.txt`
-- Defines AI behavior, role, and workflow
-- Uploaded to Gemini File API (cached for 46 hours)
-- **CRITICAL:** After editing, must run `$chatbot->refreshFiles()`
-- Simplified to 72 lines after debugging empty response issue
-
-### 2. `file-cache.json`
-- Stores Gemini File API URIs for system prompt and catalog
-- Format: `{fileType: {uri, name, uploadedAt, expiresAt}}`
-- Auto-refreshed at 46 hours
-- **Should be in .gitignore** (temporary cache)
-
-### 3. `schema.sql`
-- Database structure definition
-- Run migrations in `migrations/` folder for schema updates
-- Always use migrations instead of direct schema edits
-
-### 4. `INVESTIGATION_SUMMARY.md`
-- Documents the empty response bug investigation
-- Contains detailed root cause analysis
-- Includes 3 proposed solutions with pros/cons
-- Reference this when fixing the follow-up question issue
-
-## Best Practices
-
-### Security
-- Always use prepared statements (never concatenate SQL)
-- Verify LINE signatures in production
-- Keep `.env` in `.gitignore`
-- No sensitive data in code/logs
-
-### Performance
-- Use File API caching (don't upload files on every request)
-- Trim conversation history (20 message limit recommended)
-- Use database indexes on frequently queried columns
-- Close connections properly (DatabaseManager singleton handles this)
-
-### Maintainability
-- Follow repository pattern for all DB operations
-- Log errors with context: `error_log('[Component] Message: ' . $details)`
-- Update `PROJECT.md` when making architectural changes
-- Write tests for critical flows
-
-### Testing
-- Run `test-chatbot.php` after system prompt changes
-- Test LINE integration with test account before production
-- Verify database queries return expected results
-- Check logs after each test run
+| File | Notes |
+|------|-------|
+| `system-prompt.txt` | AI behavior — edit here, then delete `file-cache.json` to apply |
+| `file-cache.json` | Gemini File API URI cache — in `.gitignore`, auto-refreshes at 46h |
+| `schema.sql` | DB structure — use `migrations/` for changes |
+| `cache/catalog-summary-cache.md` | Product catalog cache (24h) — delete to force refresh |
+| `logs.log` | Application error log |
 
 ## Common Pitfalls
 
-### 1. Forgetting to Refresh Files
-**Issue:** Updated `system-prompt.txt` but AI still uses old behavior
-**Fix:** Run `$chatbot->refreshFiles()` or delete `file-cache.json`
+1. **system-prompt.txt not applied** — delete `file-cache.json` or call `$chatbot->refreshFiles()`
+2. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
+3. **Empty STOP from Gemini** — retry with `mode=ANY` + catalog refresh handles this automatically
+4. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
+5. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
+6. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
 
-### 2. SQL Without Prepared Statements
-**Issue:** Security vulnerability
-**Fix:** Always use `?` placeholders with parameter binding
+## Chatbot Behaviors (system-prompt.txt)
 
-### 3. LINE Reply Token Expiry
-**Issue:** Reply API fails after 60 seconds
-**Fix:** Use Push API for async processing (already implemented)
+- Rate info (ss|s|a|b|c|vb|vc|d|e|f) is NOT shown to users
+- Default priceType: `"c"` when no rate specified
+- Unauthorized users: always forced to `"c"`
+- All prices include VAT
+- **WORKFLOW 1B (Batch Price):** One search per product sequentially, show ALL prices, offer quotation at end: "ต้องการออกใบเสนอราคาไหมคะ?"
+- Quotation TRIGGER: message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา"
+- NEVER auto-generate quotation from price inquiry alone
+- Must use EXACT product names from search results for `generate_quotation`
 
-### 4. Empty Response with STOP
-**Issue:** AI returns `finishReason: STOP` but no content
-**Causes:**
-- System prompt too complex/conflicting (fixed by simplification)
-- Product name lost in conversation (current issue - see INVESTIGATION_SUMMARY.md)
-- Model confusion from unclear instructions
+## Debugging
 
-### 5. File Cache Not Expiring
-**Issue:** Files older than 48 hours but still in cache
-**Fix:** File API auto-deletes, cache refresh logic runs at 46 hours
-
-## Development Workflow
-
-### Making Changes
-1. Read `PROJECT.md` for architecture overview
-2. Check `INVESTIGATION_SUMMARY.md` for known issues
-3. Write code following existing patterns
-4. Run integration tests
-5. Update documentation
-6. Test in LINE test account (if LINE-related)
-7. Deploy
-
-### Debugging
-1. Check `logs.log` for error details
-2. Run SQL queries to verify data state
-3. Use `test-chatbot.php` to reproduce issues
-4. Add detailed logging with `error_log()`
-5. Verify file cache status with `cleanup-files.php list`
-
-### Deploying
-1. Run tests: `./test-chatbot.php`
-2. Backup database: `mysqldump chatbotdb > backup.sql`
-3. Update `.env` if config changed
-4. Run migrations if schema changed
-5. Verify LINE webhook URL in LINE console
-6. Monitor logs after deployment
-
-## Reference Links
-
-- **PROJECT.md** - Comprehensive documentation (2000+ lines)
-- **INVESTIGATION_SUMMARY.md** - Empty response bug analysis
-- **schema.sql** - Database structure
-- **Gemini API Docs:** https://ai.google.dev/docs
-- **LINE Messaging API Docs:** https://developers.line.biz/en/docs/messaging-api/
-
-## Key Metrics
-
-- **Token Reduction:** 95%+ via File API
-- **Message Limit:** 20 messages per conversation
-- **File Cache TTL:** 46 hours (refreshes before 48h expiry)
-- **Database:** chatbotdb (MySQL 5.7+)
-- **Platform Support:** LINE Official Account + REST API
-- **Language Support:** Thai + English (auto-detected)
+1. Check `logs.log` — all components log with `[ClassName]` prefix
+2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
+3. Function calls logged — look for `[GeminiChatbot] AI decided to call function:`
+4. File cache status: check `file-cache.json` or search logs for `[GeminiChatbot] === File API Context Ready ===`
+5. Catalog cache: check `cache/catalog-summary-cache.md` modification time
 
 ---
 
-**Last Updated:** February 15, 2026
-**Version:** 2.3.0 - Fuzzy Search & 5-Question Test Suite
+**Last Updated:** March 6, 2026
+**Version:** 3.0.0 — chatbot-core library + 4-test suite + React dashboard
