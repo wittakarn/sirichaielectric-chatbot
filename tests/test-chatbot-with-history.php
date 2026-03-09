@@ -8,7 +8,7 @@ use ChatbotCore\ConversationManager;
  * Chatbot Integration Test - Multi-turn Conversation (With History)
  *
  * Simulates a full customer quotation workflow in a single conversation:
- * - Q1: "มีเบรกเกอร์ abb ไหม" (product search)
+ * - Q1: "มีเบรกเกอร์ abb ไหม" (product search — must include product links)
  * - Q2: "เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว" (product selection)
  * - Q3: "ใช้กับสายไฟไหนได้บ้าง" (compatibility question)
  * - Q4: "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" (accessory selection)
@@ -79,7 +79,13 @@ $testConversationId = 'test_with_history_' . time();
 $questions = array(
     array(
         'question' => 'มีเบรกเกอร์ abb ไหม',
-        'expectation' => 'AI should search for ABB circuit breaker products and return results'
+        'expectation' => 'AI should search for ABB circuit breaker products and return results with product links',
+        'validate' => function($response) {
+            if (mb_strpos($response, 'https://shop.sirichaielectric.com/product/') === false) {
+                return 'Response must contain a product link (https://shop.sirichaielectric.com/product/...)';
+            }
+            return null;
+        }
     ),
     array(
         'question' => 'เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว',

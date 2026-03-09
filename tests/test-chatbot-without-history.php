@@ -100,11 +100,7 @@ $questions = array(
     ),
     array(
         'question' => 'ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน',
-        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details with a product link',
-        'validate' => function($response) {
-            return mb_strpos($response, 'https://shop.sirichaielectric.com/product/') !== false;
-        },
-        'validateMsg' => 'Response must contain a product link (https://shop.sirichaielectric.com/product/...)'
+        'expectation' => 'AI should search for IMC conduit straight coupling product and return product details'
     ),
     array(
         'question' => 'มีราง wire way 4"x8" ไหม',
