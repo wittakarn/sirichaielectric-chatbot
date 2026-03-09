@@ -46,14 +46,14 @@ class SirichaiElectricChatbot extends GeminiChatbot {
         return array(array('functionDeclarations' => array(
             array(
                 'name'        => 'search_products',
-                'description' => 'Search for products by exact category names from the catalog file. Returns product name, price, and unit grouped by category. CRITICAL: Copy complete category names including all text inside {}, [], () - these contain brand/model codes. Never exceed 3 categories.',
+                'description' => 'Search for products by exact category names from the catalog file. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Must include ALL special characters: {}, [], () and their contents. Maximum 3 categories.'
+                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Maximum 3 categories.'
                         )
                     ),
                     'required' => array('criterias')
