@@ -183,7 +183,17 @@ try {
         printInfo("logs.log does not exist (will be created on first log)");
     }
 
-    // Step 5: Initialize services
+    // Step 5: Clear file-cache.json to force system prompt reload
+    printStep("Clearing file-cache.json...");
+    $fileCachePath = __DIR__ . '/../file-cache.json';
+    if (file_exists($fileCachePath)) {
+        unlink($fileCachePath);
+        printSuccess("file-cache.json cleared");
+    } else {
+        printInfo("file-cache.json does not exist (will be created on first run)");
+    }
+
+    // Step 6: Initialize services
     printStep("Initializing chatbot services...");
     $conversationManager = new ConversationManager(
         $config->get('conversation', 'maxMessages', 20),
