@@ -7,7 +7,7 @@
 
 class ProductAPIService {
     private $config;
-    private $catalogSummaryUrl;
+    private $uniqueCatalogKeywordUrl;
     private $productSearchUrl;
     private $productDetailUrl;
     private $quotationUrl;
@@ -16,7 +16,7 @@ class ProductAPIService {
 
     public function __construct($config) {
         $this->config = $config;
-        $this->catalogSummaryUrl = $config['catalogSummaryUrl'];
+        $this->uniqueCatalogKeywordUrl = $config['uniqueCatalogKeywordUrl'];
         $this->productSearchUrl = $config['productSearchUrl'];
         $this->productDetailUrl = $config['productDetailUrl'];
         $this->quotationUrl = $config['quotationUrl'];
@@ -30,18 +30,18 @@ class ProductAPIService {
     }
 
     /**
-     * Get catalog summary (categories with product IDs)
+     * Get unique catalog keywords for AI context
      * Uses local cache to avoid repeated API calls
-     * @return string|null Returns markdown formatted catalog, or null on error
+     * @return string|null Returns newline-separated list of unique keywords, or null on error
      */
-    public function getCatalogSummary() {
-        $cacheFile = $this->cacheDir . '/catalog-summary-cache.md';
+    public function getUniqueKeywords() {
+        $cacheFile = $this->cacheDir . '/unique-keyword-cache.md';
 
         // Check if cache exists and is valid
         if (file_exists($cacheFile)) {
             $cacheAge = time() - filemtime($cacheFile);
             if ($cacheAge < $this->cacheDuration) {
-                error_log('[ProductAPI] Using cached catalog summary (age: ' . $cacheAge . 's)');
+                error_log('[ProductAPI] Using cached unique keywords (age: ' . $cacheAge . 's)');
                 $cachedData = file_get_contents($cacheFile);
                 if ($cachedData !== false && strlen($cachedData) > 0) {
                     return $cachedData;
@@ -53,10 +53,10 @@ class ProductAPIService {
         }
 
         // Cache miss or expired - fetch from API
-        error_log('[ProductAPI] Fetching catalog summary from: ' . $this->catalogSummaryUrl);
+        error_log('[ProductAPI] Fetching unique keywords from: ' . $this->uniqueCatalogKeywordUrl);
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->catalogSummaryUrl);
+        curl_setopt($ch, CURLOPT_URL, $this->uniqueCatalogKeywordUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
@@ -87,13 +87,13 @@ class ProductAPIService {
 
         // Save to cache
         file_put_contents($cacheFile, $response);
-        error_log('[ProductAPI] Catalog summary fetched and cached successfully');
+        error_log('[ProductAPI] Unique keywords fetched and cached successfully');
         return $response;
     }
 
     /**
-     * Search products by category names
-     * @param array $criterias Array of exact category names from the catalog
+     * Search products by keywords using fuzzy category matching
+     * @param array $criterias Array of keywords from the product search index
      * @return string|null Returns markdown formatted product details, or null on error
      */
     public function searchProducts($criterias) {

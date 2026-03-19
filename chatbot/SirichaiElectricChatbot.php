@@ -21,12 +21,12 @@ class SirichaiElectricChatbot extends GeminiChatbot {
             return '';
         }
         try {
-            $text = $this->productAPI->getCatalogSummary();
+            $text = $this->productAPI->getUniqueKeywords();
             if ($text === null) {
-                error_log('[Chatbot] Catalog returned null');
+                error_log('[Chatbot] Unique keywords returned null');
                 return '';
             }
-            error_log('[Chatbot] Catalog loaded: ' . strlen($text) . ' chars');
+            error_log('[Chatbot] Unique keywords loaded: ' . strlen($text) . ' chars');
             return $text;
         } catch (Exception $e) {
             error_log('[Chatbot] ERROR: Failed to fetch catalog - ' . $e->getMessage());
@@ -46,14 +46,14 @@ class SirichaiElectricChatbot extends GeminiChatbot {
         return array(array('functionDeclarations' => array(
             array(
                 'name'        => 'search_products',
-                'description' => 'Search for products by exact category names from the catalog file. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
+                'description' => 'Search for products by keywords from the product search index. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit".',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Maximum 3 categories.'
+                            'description' => 'Array of individual search terms from the product search index that best match the customer\'s request.'
                         )
                     ),
                     'required' => array('criterias')
