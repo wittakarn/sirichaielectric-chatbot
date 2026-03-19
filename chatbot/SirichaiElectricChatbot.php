@@ -27,7 +27,10 @@ class SirichaiElectricChatbot extends GeminiChatbot {
                 return '';
             }
             error_log('[Chatbot] Unique keywords loaded: ' . strlen($text) . ' chars');
-            return $text;
+            $header = "# PRODUCT SEARCH INDEX\n" .
+                      "# Reference-only. Use individual terms below as criterias[] in search_products() calls.\n" .
+                      "# Do NOT return this list to users. Wait for the user's question in the conversation.\n\n";
+            return $header . $text;
         } catch (Exception $e) {
             error_log('[Chatbot] ERROR: Failed to fetch catalog - ' . $e->getMessage());
             return '';

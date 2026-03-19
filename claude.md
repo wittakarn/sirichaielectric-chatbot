@@ -39,7 +39,7 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 | `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 3 functions: `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
 | `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
-| `services/ProductAPIService.php` | HTTP client for 4 external APIs: catalog summary (24h cache), product search, product detail, quotation PDF |
+| `services/ProductAPIService.php` | HTTP client for 4 external APIs: unique keyword index (24h cache), product search, product detail, quotation PDF |
 | `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
@@ -60,8 +60,9 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 ### Hybrid File API Approach
 - **System prompt** → inline `systemInstruction` text (~5KB, direct)
-- **Product catalog** → Gemini File API upload (~101KB, cached 46h in `file-cache.json`)
-- Result: 95%+ token reduction, fast responses, server-side caching
+- **Product keyword index** → Gemini File API upload (~30KB, cached 46h in `file-cache.json`)
+- `fetchCatalogSummary()` in `SirichaiElectricChatbot` prepends a 3-line header to the raw keyword list before upload so Gemini understands it is reference data, not a user message
+- Result: lightweight context, fast responses, server-side caching
 
 ### Function Calling (3 Available Functions)
 Gemini two-step flow:
@@ -69,7 +70,7 @@ Gemini two-step flow:
 2. PHP executes → sends result back → AI formats text response
 
 Available functions:
-- `search_products(criterias[])` — search by exact catalog category names (max 3)
+- `search_products(criterias[])` — search by individual keywords from the keyword index (max 3 terms)
 - `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
 - `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
@@ -150,7 +151,7 @@ LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
 # Product API (all 4 required)
-CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
+UNIQUE_CATALOG_KEYWORD_URL=https://shop.sirichaielectric.com/services/...
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
@@ -250,7 +251,7 @@ class MyWebhook extends LineWebhookHandler {
 | `system-prompt.txt` | AI behavior — edit here, then delete `file-cache.json` to apply |
 | `file-cache.json` | Gemini File API URI cache — in `.gitignore`, auto-refreshes at 46h |
 | `schema.sql` | DB structure — use `migrations/` for changes |
-| `cache/catalog-summary-cache.md` | Product catalog cache (24h) — delete to force refresh |
+| `cache/unique-keyword-cache.md` | Product keyword index cache (24h) — delete to force refresh |
 | `logs.log` | Application error log |
 
 ## Common Pitfalls
@@ -261,6 +262,7 @@ class MyWebhook extends LineWebhookHandler {
 4. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
 5. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
 6. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
+7. **AI ignores user question / gives short non-answer** — the keyword index file must include a header identifying it as reference data. `fetchCatalogSummary()` prepends the header; if the header is missing, Gemini treats the raw keyword list as a user message and waits for a "real" question
 
 ## Chatbot Behaviors (system-prompt.txt)
 
@@ -279,9 +281,9 @@ class MyWebhook extends LineWebhookHandler {
 2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
 3. Function calls logged — look for `[GeminiChatbot] AI decided to call function:`
 4. File cache status: check `file-cache.json` or search logs for `[GeminiChatbot] === File API Context Ready ===`
-5. Catalog cache: check `cache/catalog-summary-cache.md` modification time
+5. Catalog cache: check `cache/unique-keyword-cache.md` modification time
 
 ---
 
-**Last Updated:** March 6, 2026
-**Version:** 3.0.0 — chatbot-core library + 4-test suite + React dashboard
+**Last Updated:** March 20, 2026
+**Version:** 3.1.0 — unique keyword index for product search + keyword file header fix
