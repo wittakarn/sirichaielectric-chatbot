@@ -15,6 +15,9 @@ use ChatbotCore\ConversationManager;
  * - Q5: "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
  * - Q6: "มีราง wire way 4"x8" ไหม" (wire way size query - tests exact catalog name matching)
  * - Q7: "มอเตอร์สตาร์ท รุ่น LE1-M35Q710 380VAC" (specific motor starter model lookup)
+ * - Q8: "มี LC1D40AB7 ขายไหม" (model-only search — should ask for product type clarification)
+ * - Q9: "LC1D40AB7 2 ตัว มีของในสต็อกไหมคะ ถ้าไม่มี รอของกี่วันคะ" (stock availability — should redirect to agent)
+ * - Q10: "ออกใบกำกับภาษีได้ไหมครับ" (tax invoice — should redirect to agent)
  *
  * Each question is sent with no conversation history.
  *
@@ -105,6 +108,48 @@ $questions = array(
             return mb_strpos($response, 'LE1') !== false || mb_strpos($response, 'มอเตอร์สตาร์ท') !== false || mb_strpos($response, 'ราคา') !== false;
         },
         'validateMsg' => 'Response must contain product info about the motor starter (LE1 model, มอเตอร์สตาร์ท, or ราคา)'
+    ),
+    array(
+        'question' => 'มี LC1D40AB7 ขายไหม',
+        'expectation' => 'AI should NOT just say "not found" — should ask customer to clarify product type (e.g. แมกเนติก, คอนแทคเตอร์) since only model number was given',
+        'validate' => function($response) {
+            // Bare "ไม่พบ" alone with no follow-up is a fail
+            // Acceptable: ask for clarification OR redirect to agent with contact info
+            $hasNotFound = mb_strpos($response, 'ไม่พบ') !== false;
+            $hasClarificationRequest = mb_strpos($response, 'ประเภท') !== false
+                || mb_strpos($response, 'ยี่ห้อ') !== false
+                || mb_strpos($response, 'ระบุ') !== false
+                || mb_strpos($response, 'เพิ่มเติม') !== false;
+            $hasContactRedirect = mb_strpos($response, '02-111') !== false
+                || mb_strpos($response, '034-47') !== false
+                || mb_strpos($response, '@sirichaielectric') !== false
+                || mb_strpos($response, 'ติดต่อ') !== false;
+            return !$hasNotFound || $hasClarificationRequest || $hasContactRedirect;
+        },
+        'validateMsg' => 'When model-only search returns nothing, AI must ask for product type OR redirect to agent — not just say "ไม่พบ"'
+    ),
+    array(
+        'question' => 'LC1D40AB7 2 ตัว มีของในสต็อกไหมคะ ถ้าไม่มี รอของกี่วันคะ',
+        'expectation' => 'AI should NOT attempt to answer stock/lead time — should redirect to shop contact info',
+        'validate' => function($response) {
+            // Should contain contact info (phone numbers or LINE handle)
+            return mb_strpos($response, '02-111') !== false
+                || mb_strpos($response, '034-47') !== false
+                || mb_strpos($response, '@sirichaielectric') !== false
+                || mb_strpos($response, 'ติดต่อ') !== false;
+        },
+        'validateMsg' => 'Stock availability question must redirect to shop contact info'
+    ),
+    array(
+        'question' => 'ออกใบกำกับภาษีได้ไหมครับ',
+        'expectation' => 'AI should redirect to shop contact info — tax invoice requests are outside chatbot scope',
+        'validate' => function($response) {
+            return mb_strpos($response, '02-111') !== false
+                || mb_strpos($response, '034-47') !== false
+                || mb_strpos($response, '@sirichaielectric') !== false
+                || mb_strpos($response, 'ติดต่อ') !== false;
+        },
+        'validateMsg' => 'Tax invoice question must redirect to shop contact info'
     )
 );
 
@@ -256,6 +301,9 @@ try {
         printSuccess("✓ IMC conduit product identification");
         printSuccess("✓ Wire way size query with exact catalog name matching");
         printSuccess("✓ Specific motor starter model lookup");
+        printSuccess("✓ Model-only search asks for product type clarification");
+        printSuccess("✓ Stock availability redirects to agent");
+        printSuccess("✓ Tax invoice request redirects to agent");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");
