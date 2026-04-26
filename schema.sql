@@ -117,23 +117,20 @@ UNLOCK TABLES;
 
 --
 -- Table structure for table `catalog_embeddings`
--- Requires MySQL 9.0+ (VECTOR type support).
--- If running schema via phpMyAdmin, use the MySQL CLI instead:
---   mysql -u user -p dbname < schema.sql
+-- Stores embeddings as packed binary float32 (768 dims = 3072 bytes).
+-- Compatible with MySQL 5.7+. Cosine similarity is computed in PHP.
 --
 
 DROP TABLE IF EXISTS `catalog_embeddings`;
 CREATE TABLE `catalog_embeddings` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `category_name` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `content_hash` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `embedding` VECTOR(768) NOT NULL,
+  `embedding` BLOB NOT NULL,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `category_name` (`category_name`(255))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE VECTOR INDEX `idx_embedding` ON `catalog_embeddings` (`embedding`);
 
 --
 -- Dumping routines for database 'chatbotdb'
