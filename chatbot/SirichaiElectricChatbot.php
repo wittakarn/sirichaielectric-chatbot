@@ -5,18 +5,60 @@ use ChatbotCore\GeminiChatbot;
 /**
  * Sirichai Electric chatbot.
  * Extends ChatbotCore\GeminiChatbot with product-search, product-detail, and quotation functions.
+ *
+ * When a CatalogEmbeddingService is provided, RAG is active:
+ *   - fetchCatalogSummary() returns '' so the base class skips the 94 KB File API upload.
+ *   - chat() embeds the user message and retrieves the top-K relevant catalog categories.
+ *   - loadSystemPromptText() appends those categories so Gemini receives a focused context.
+ *
+ * When no CatalogEmbeddingService is provided, the chatbot falls back to the original
+ * full-catalog approach (backwards compatible).
  */
 class SirichaiElectricChatbot extends GeminiChatbot {
 
     /** @var ProductAPIService|null */
     private $productAPI;
 
-    public function __construct(array $config, $productAPI = null) {
-        $this->productAPI = $productAPI;
+    /** @var CatalogEmbeddingService|null */
+    private $embeddingService;
+
+    /** @var string[] Categories retrieved by RAG for the current request */
+    private $ragCategories = array();
+
+    public function __construct(array $config, $productAPI = null, $embeddingService = null) {
+        $this->productAPI       = $productAPI;
+        $this->embeddingService = $embeddingService;
         parent::__construct($config, __DIR__ . '/../file-cache.json');
     }
 
+    /**
+     * Before handing off to the parent, run RAG retrieval so that
+     * loadSystemPromptText() can inject the result inline.
+     */
+    public function chat($message, $history) {
+        $this->ragCategories = array();
+
+        if ($this->embeddingService !== null) {
+            try {
+                $this->ragCategories = $this->embeddingService->getRelevantCategories($message);
+                error_log('[RAG] Retrieved ' . count($this->ragCategories) . ' categories for query: ' . mb_substr($message, 0, 60, 'UTF-8'));
+            } catch (Exception $e) {
+                error_log('[RAG] Retrieval failed, falling back to no catalog context: ' . $e->getMessage());
+            }
+        }
+
+        return parent::chat($message, $history);
+    }
+
+    /**
+     * Return '' when RAG is active so the base class skips uploading the
+     * full catalog to Gemini File API.  Falls back to full catalog otherwise.
+     */
     protected function fetchCatalogSummary(): string {
+        if ($this->embeddingService !== null) {
+            return '';
+        }
+
         if ($this->productAPI === null) {
             return '';
         }
@@ -34,26 +76,37 @@ class SirichaiElectricChatbot extends GeminiChatbot {
         }
     }
 
+    /**
+     * System prompt + RAG catalog snippet (when available).
+     * The snippet lists only the top-K pre-filtered categories so Gemini
+     * never needs to scan the full 1 000+ category list.
+     */
     protected function loadSystemPromptText(): string {
         $promptFile = __DIR__ . '/../system-prompt.txt';
-        if (file_exists($promptFile)) {
-            return file_get_contents($promptFile);
+        $base = file_exists($promptFile)
+            ? file_get_contents($promptFile)
+            : 'You are a helpful customer service assistant for Sirichai Electric.';
+
+        if (!empty($this->ragCategories)) {
+            $base .= "\n\nRELEVANT CATALOG CATEGORIES (pre-filtered for this query — pick from these only):\n";
+            $base .= implode("\n", $this->ragCategories);
         }
-        return 'You are a helpful customer service assistant for Sirichai Electric.';
+
+        return $base;
     }
 
     protected function getFunctionDeclarations(): array {
         return array(array('functionDeclarations' => array(
             array(
                 'name'        => 'search_products',
-                'description' => 'Search for products by exact category names from the catalog file. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
+                'description' => 'Search for products by exact category names from the catalog. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Maximum 3 categories.'
+                            'description' => 'Array of EXACT category names from the list provided above. Maximum 3 categories.'
                         )
                     ),
                     'required' => array('criterias')

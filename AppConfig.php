@@ -30,6 +30,11 @@ class AppConfig extends Config {
             'username'      => $this->getEnv('ADMIN_USERNAME', ''),
             'password_hash' => $this->getEnv('ADMIN_PASSWORD_HASH', ''),
         );
+
+        $this->config['embedding'] = array(
+            'enabled' => $this->getEnv('CATALOG_RAG_ENABLED', 'true') === 'true',
+            'topK'    => intval($this->getEnv('CATALOG_RAG_TOP_K', '5')),
+        );
     }
 
     public function validate(): void {

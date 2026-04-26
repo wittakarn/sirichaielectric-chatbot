@@ -26,9 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
+require_once __DIR__ . '/services/CatalogEmbeddingService.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
 use ChatbotCore\ConversationManager;
+use ChatbotCore\DatabaseManager;
 
 // Initialize configuration
 try {
@@ -46,15 +48,27 @@ try {
 // Initialize Gemini configuration
 $geminiConfig = $config->get('gemini');
 
-// Initialize Product API Service (replaces context cache)
+// Initialize Product API Service
 $productAPIConfig = $config->get('productAPI');
 $productAPI = new ProductAPIService($productAPIConfig);
 
-// Initialize chatbot with Product API Service (zero context cache)
-$chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+// Initialize RAG embedding service (when enabled)
+$dbConfig        = $config->get('database');
+$embeddingConfig = $config->get('embedding');
+$embeddingService = null;
+if (!empty($embeddingConfig['enabled'])) {
+    $pdo = DatabaseManager::getInstance($dbConfig)->getConnection();
+    $embeddingService = new CatalogEmbeddingService(
+        $pdo,
+        isset($geminiConfig['apiKey']) ? $geminiConfig['apiKey'] : '',
+        isset($embeddingConfig['topK']) ? $embeddingConfig['topK'] : 5
+    );
+}
+
+// Initialize chatbot
+$chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI, $embeddingService);
 
 // Initialize conversation manager with database
-$dbConfig = $config->get('database');
 $conversationConfig = $config->get('conversation');
 $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
 $conversationManager = new ConversationManager($maxMessages, 'api', $dbConfig);

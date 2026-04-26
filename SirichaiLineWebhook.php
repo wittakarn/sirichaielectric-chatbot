@@ -2,6 +2,7 @@
 
 use ChatbotCore\LineWebhookHandler;
 use ChatbotCore\ConversationManager;
+use ChatbotCore\DatabaseManager;
 
 /**
  * Sirichai Electric LINE webhook handler.
@@ -21,8 +22,19 @@ class SirichaiLineWebhook extends LineWebhookHandler {
 
         $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
 
-        $productAPI   = new ProductAPIService($productAPIConfig);
-        $this->chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
+        $embeddingConfig  = $config->get('embedding');
+        $embeddingService = null;
+        if (!empty($embeddingConfig['enabled'])) {
+            $pdo = DatabaseManager::getInstance($dbConfig)->getConnection();
+            $embeddingService = new CatalogEmbeddingService(
+                $pdo,
+                isset($geminiConfig['apiKey']) ? $geminiConfig['apiKey'] : '',
+                isset($embeddingConfig['topK']) ? $embeddingConfig['topK'] : 5
+            );
+        }
+
+        $productAPI    = new ProductAPIService($productAPIConfig);
+        $this->chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI, $embeddingService);
 
         $this->conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);
     }

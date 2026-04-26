@@ -128,4 +128,22 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+--
+-- Table structure for table `catalog_embeddings`
+-- Requires MySQL 9.0+ (VECTOR data type, DISTANCE() function)
+-- Requires MySQL 9.2+ for ANN index (HNSW)
+--
+
+DROP TABLE IF EXISTS `catalog_embeddings`;
+CREATE TABLE `catalog_embeddings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_name` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Exact category name from catalog',
+  `content_hash` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'MD5 of category_name for change detection',
+  `embedding` VECTOR(768) NOT NULL COMMENT 'text-embedding-004 vector (768 dims, L2-normalized)',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `category_name` (`category_name`(255)),
+  VECTOR INDEX `idx_embedding` (`embedding`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='RAG embeddings for catalog category names';
+
 -- Dump completed on 2026-01-29  0:22:13
