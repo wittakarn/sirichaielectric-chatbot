@@ -17,21 +17,7 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     }
 
     protected function fetchCatalogSummary(): string {
-        if ($this->productAPI === null) {
-            return '';
-        }
-        try {
-            $text = $this->productAPI->getCatalogSummary();
-            if ($text === null) {
-                error_log('[Chatbot] Catalog returned null');
-                return '';
-            }
-            error_log('[Chatbot] Catalog loaded: ' . strlen($text) . ' chars');
-            return $text;
-        } catch (Exception $e) {
-            error_log('[Chatbot] ERROR: Failed to fetch catalog - ' . $e->getMessage());
-            return '';
-        }
+        return '';
     }
 
     protected function loadSystemPromptText(): string {
@@ -45,15 +31,29 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     protected function getFunctionDeclarations(): array {
         return array(array('functionDeclarations' => array(
             array(
+                'name'        => 'search_catalog',
+                'description' => 'Look up matching catalog category names from the customer\'s product question. Returns relevant catalog lines (categories). ALWAYS call this first to discover the EXACT catalog category names, then pass those names to search_products(). Pass the customer\'s product question as-is — no keyword extraction or rewriting needed.',
+                'parameters'  => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'query' => array(
+                            'type'        => 'string',
+                            'description' => 'The customer\'s product question, passed through as-is. Example: "มี SCHNEIDER LRD05 ไหม" or "ราคาสายไฟ THW 1x2.5".'
+                        )
+                    ),
+                    'required' => array('query')
+                )
+            ),
+            array(
                 'name'        => 'search_products',
-                'description' => 'Search for products by exact category names from the catalog file. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
+                'description' => 'Search for products by exact category names returned from search_catalog(). Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names from catalog (the part before " | "). Maximum 3 categories.'
+                            'description' => 'Array of EXACT category names returned from search_catalog(). Maximum 3 categories.'
                         )
                     ),
                     'required' => array('criterias')
@@ -114,6 +114,15 @@ class SirichaiElectricChatbot extends GeminiChatbot {
             return 'Product API service not available.';
         }
 
+        if ($functionName === 'search_catalog') {
+            $query = isset($args['query']) ? trim($args['query']) : '';
+            if ($query === '') {
+                return 'No search query provided.';
+            }
+            $result = $this->productAPI->searchCatalog($query);
+            return $result !== null && $result !== '' ? $result : 'No matching catalog entries found.';
+        }
+
         if ($functionName === 'search_products') {
             $criterias = isset($args['criterias']) ? $args['criterias'] : array();
             if (empty($criterias)) {
@@ -153,6 +162,10 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     }
 
     protected function extractSearchCriteria(string $functionName, array $args): ?string {
+        if ($functionName === 'search_catalog' && isset($args['query'])) {
+            return json_encode(array('query' => $args['query']), JSON_UNESCAPED_UNICODE);
+        }
+
         if ($functionName === 'search_products' && isset($args['criterias'])) {
             return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
         }

@@ -7,6 +7,7 @@
 
 class ProductAPIService {
     private $config;
+    private $searchCatalogUrl;
     private $catalogSummaryUrl;
     private $productSearchUrl;
     private $productDetailUrl;
@@ -16,7 +17,8 @@ class ProductAPIService {
 
     public function __construct($config) {
         $this->config = $config;
-        $this->catalogSummaryUrl = $config['catalogSummaryUrl'];
+        $this->searchCatalogUrl = isset($config['searchCatalogUrl']) ? $config['searchCatalogUrl'] : '';
+        $this->catalogSummaryUrl = isset($config['catalogSummaryUrl']) ? $config['catalogSummaryUrl'] : '';
         $this->productSearchUrl = $config['productSearchUrl'];
         $this->productDetailUrl = $config['productDetailUrl'];
         $this->quotationUrl = $config['quotationUrl'];
@@ -27,6 +29,54 @@ class ProductAPIService {
         if (!file_exists($this->cacheDir)) {
             mkdir($this->cacheDir, 0755, true);
         }
+    }
+
+    /**
+     * Search the product catalog by natural language query (Cloud Run search endpoint).
+     * Returns relevant catalog category lines, used by Gemini to pick exact category names.
+     * @param string $query Free-form search query (brand, model, product type, etc.)
+     * @return string|null Returns newline-joined catalog lines, or null on error
+     */
+    public function searchCatalog($query) {
+        error_log('[ProductAPI] Search catalog query: ' . $query);
+
+        $requestBody = json_encode(array('query' => $query), JSON_UNESCAPED_UNICODE);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->searchCatalogUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($requestBody)
+        ));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            error_log('[ProductAPI] cURL error: ' . $error);
+            return null;
+        }
+
+        if ($httpCode !== 200) {
+            error_log('[ProductAPI] HTTP error: ' . $httpCode . ' body: ' . $response);
+            return null;
+        }
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded) || !isset($decoded['results']) || !is_array($decoded['results'])) {
+            error_log('[ProductAPI] Unexpected search response: ' . substr($response, 0, 500));
+            return null;
+        }
+
+        $resultText = implode("\n", $decoded['results']);
+        error_log('[ProductAPI] Search catalog returned ' . count($decoded['results']) . ' results (' . strlen($resultText) . ' chars)');
+        return $resultText;
     }
 
     /**

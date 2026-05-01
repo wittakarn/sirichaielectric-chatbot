@@ -12,10 +12,10 @@ class AppConfig extends Config {
         parent::buildConfig();
 
         $this->config['productAPI'] = array(
-            'catalogSummaryUrl' => $this->getEnv('CATALOG_SUMMARY_URL', ''),
-            'productSearchUrl'  => $this->getEnv('PRODUCT_SEARCH_URL', ''),
-            'productDetailUrl'  => $this->getEnv('PRODUCT_DETAIL_URL', ''),
-            'quotationUrl'      => $this->getEnv('QUOTATION_URL', ''),
+            'searchCatalogUrl' => $this->getEnv('SEARCH_CATALOG_URL', ''),
+            'productSearchUrl' => $this->getEnv('PRODUCT_SEARCH_URL', ''),
+            'productDetailUrl' => $this->getEnv('PRODUCT_DETAIL_URL', ''),
+            'quotationUrl'     => $this->getEnv('QUOTATION_URL', ''),
         );
 
         $this->config['website'] = array(
@@ -39,8 +39,8 @@ class AppConfig extends Config {
             throw new \Exception('WEBSITE_URL is required in .env file');
         }
 
-        if (empty($this->config['productAPI']['catalogSummaryUrl'])) {
-            throw new \Exception('CATALOG_SUMMARY_URL is required in .env file');
+        if (empty($this->config['productAPI']['searchCatalogUrl'])) {
+            throw new \Exception('SEARCH_CATALOG_URL is required in .env file');
         }
 
         if (empty($this->config['productAPI']['productSearchUrl'])) {
