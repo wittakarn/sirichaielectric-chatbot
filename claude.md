@@ -36,10 +36,10 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 | File | Role |
 |------|------|
-| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 3 functions: `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
+| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 4 functions: `search_catalog`, `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
 | `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
-| `services/ProductAPIService.php` | HTTP client for 4 external APIs: catalog summary (24h cache), product search, product detail, quotation PDF |
+| `services/ProductAPIService.php` | HTTP client for 4 external APIs: RAG catalog search, product search by category, product detail, quotation PDF |
 | `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
@@ -58,18 +58,19 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 ## Key Architecture Decisions
 
-### Hybrid File API Approach
-- **System prompt** → inline `systemInstruction` text (~5KB, direct)
-- **Product catalog** → Gemini File API upload (~101KB, cached 46h in `file-cache.json`)
-- Result: 95%+ token reduction, fast responses, server-side caching
+### Catalog Lookup via RAG
+- **System prompt** → inline `systemInstruction` text (~7KB, direct, reloaded every request)
+- **Product catalog** → on-demand RAG search via `search_catalog` Gemini function (no File API upload, no local catalog cache)
+- The catalog is hosted/indexed on a Cloud Run endpoint; the chatbot calls it per query and Gemini picks category names from the returned lines.
 
-### Function Calling (3 Available Functions)
+### Function Calling (4 Available Functions)
 Gemini two-step flow:
 1. AI returns function call request
 2. PHP executes → sends result back → AI formats text response
 
 Available functions:
-- `search_products(criterias[])` — search by exact catalog category names (max 3)
+- `search_catalog(query)` — RAG lookup of catalog category names matching the customer's question
+- `search_products(criterias[])` — search products by exact catalog category names (max 3)
 - `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
 - `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
@@ -85,7 +86,7 @@ Chained calls: up to **6 additional** rounds (supports 5-product batch quotation
 `GeminiChatbot::executeWithRetry()`:
 1. Retry up to 3x with 2s/3s delays
 2. On retry 2+: force `tool_config.function_calling_config.mode = "ANY"` to prevent empty STOP
-3. After all retries fail: `chat()` calls `refreshFiles()` (force re-upload catalog) and retries once more
+3. After all retries fail: `chat()` calls `refreshFiles()` once more (no-op for this project — catalog is no longer File-API-uploaded)
 
 ### LINE Async Processing
 - Respond HTTP 200 immediately (`closeConnection()` — supports LiteSpeed, FastCGI, fallback)
@@ -150,7 +151,7 @@ LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
 # Product API (all 4 required)
-CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
+SEARCH_CATALOG_URL=https://<rag-cloud-run-endpoint>/search   # RAG catalog search
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
@@ -220,8 +221,7 @@ sleep 15
 1. Add declaration in `SirichaiElectricChatbot::getFunctionDeclarations()`
 2. Add handler in `SirichaiElectricChatbot::executeFunction()`
 3. Add logging in `SirichaiElectricChatbot::extractSearchCriteria()`
-4. Update `system-prompt.txt`
-5. Delete `file-cache.json` or call `$chatbot->refreshFiles()`
+4. Update `system-prompt.txt` (reloaded on next request — no cache to clear)
 
 ### Extending chatbot-core for a New Project
 ```php
@@ -247,20 +247,18 @@ class MyWebhook extends LineWebhookHandler {
 
 | File | Notes |
 |------|-------|
-| `system-prompt.txt` | AI behavior — edit here, then delete `file-cache.json` to apply |
-| `file-cache.json` | Gemini File API URI cache — in `.gitignore`, auto-refreshes at 46h |
+| `system-prompt.txt` | AI behavior — edit here; reloaded on next request (no cache to clear) |
 | `schema.sql` | DB structure — use `migrations/` for changes |
-| `cache/catalog-summary-cache.md` | Product catalog cache (24h) — delete to force refresh |
 | `logs.log` | Application error log |
 
 ## Common Pitfalls
 
-1. **system-prompt.txt not applied** — delete `file-cache.json` or call `$chatbot->refreshFiles()`
-2. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
-3. **Empty STOP from Gemini** — retry with `mode=ANY` + catalog refresh handles this automatically
-4. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
-5. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
-6. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
+1. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
+2. **Empty STOP from Gemini** — retry with `mode=ANY` handles this automatically
+3. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
+4. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
+5. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
+6. **`search_catalog` returns wrong/loose matches** — issue is on the RAG endpoint (recall/index), not the chatbot. AI is instructed to fall back to closest match in single-product mode (see `system-prompt.txt` WORKFLOW 1 FALLBACK).
 
 ## Chatbot Behaviors (system-prompt.txt)
 
@@ -277,9 +275,8 @@ class MyWebhook extends LineWebhookHandler {
 
 1. Check `logs.log` — all components log with `[ClassName]` prefix
 2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
-3. Function calls logged — look for `[GeminiChatbot] AI decided to call function:`
-4. File cache status: check `file-cache.json` or search logs for `[GeminiChatbot] === File API Context Ready ===`
-5. Catalog cache: check `cache/catalog-summary-cache.md` modification time
+3. Function calls logged — look for `[GeminiChatbot] Calling: <function>`
+4. RAG catalog search: look for `[ProductAPI] Search catalog query:` and the result lines that follow
 
 ---
 

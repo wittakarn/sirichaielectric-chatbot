@@ -122,7 +122,7 @@ function handleHealthCheck() {
         'status' => 'ok',
         'service' => 'Sirichai Electric Chatbot (PHP)',
         'version' => '3.0.0',
-        'mode' => 'Optimized (catalog in prompt, 3x faster)',
+        'mode' => 'RAG-based catalog search',
         'timestamp' => date('c'),
     ));
 }

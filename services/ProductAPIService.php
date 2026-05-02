@@ -1,34 +1,22 @@
 <?php
 /**
- * Product API Service - Handles catalog-summary and product-search API calls
- * Replaces context caching with on-demand API queries
+ * Product API Service - Handles catalog and product API calls
  * PHP 5.6 compatible
  */
 
 class ProductAPIService {
     private $config;
     private $searchCatalogUrl;
-    private $catalogSummaryUrl;
     private $productSearchUrl;
     private $productDetailUrl;
     private $quotationUrl;
-    private $cacheDir;
-    private $cacheDuration; // in seconds
 
     public function __construct($config) {
         $this->config = $config;
         $this->searchCatalogUrl = isset($config['searchCatalogUrl']) ? $config['searchCatalogUrl'] : '';
-        $this->catalogSummaryUrl = isset($config['catalogSummaryUrl']) ? $config['catalogSummaryUrl'] : '';
         $this->productSearchUrl = $config['productSearchUrl'];
         $this->productDetailUrl = $config['productDetailUrl'];
         $this->quotationUrl = $config['quotationUrl'];
-        $this->cacheDir = __DIR__ . '/../cache';
-        $this->cacheDuration = 86400; // 24 hours
-
-        // Create cache directory if it doesn't exist
-        if (!file_exists($this->cacheDir)) {
-            mkdir($this->cacheDir, 0755, true);
-        }
     }
 
     /**
@@ -75,70 +63,8 @@ class ProductAPIService {
         }
 
         $resultText = implode("\n", $decoded['results']);
-        error_log('[ProductAPI] Search catalog returned ' . count($decoded['results']) . ' results (' . strlen($resultText) . ' chars)');
+        error_log('[ProductAPI] Search catalog returned ' . count($decoded['results']) . ' results (' . strlen($resultText) . ' chars):' . PHP_EOL . $resultText);
         return $resultText;
-    }
-
-    /**
-     * Get catalog summary (categories with product IDs)
-     * Uses local cache to avoid repeated API calls
-     * @return string|null Returns markdown formatted catalog, or null on error
-     */
-    public function getCatalogSummary() {
-        $cacheFile = $this->cacheDir . '/catalog-summary-cache.md';
-
-        // Check if cache exists and is valid
-        if (file_exists($cacheFile)) {
-            $cacheAge = time() - filemtime($cacheFile);
-            if ($cacheAge < $this->cacheDuration) {
-                error_log('[ProductAPI] Using cached catalog summary (age: ' . $cacheAge . 's)');
-                $cachedData = file_get_contents($cacheFile);
-                if ($cachedData !== false && strlen($cachedData) > 0) {
-                    return $cachedData;
-                }
-                error_log('[ProductAPI] Cache file empty, fetching fresh data');
-            } else {
-                error_log('[ProductAPI] Cache expired (age: ' . $cacheAge . 's), fetching fresh data');
-            }
-        }
-
-        // Cache miss or expired - fetch from API
-        error_log('[ProductAPI] Fetching catalog summary from: ' . $this->catalogSummaryUrl);
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->catalogSummaryUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($response === false) {
-            error_log('[ProductAPI] cURL error: ' . $error);
-            // Try to return stale cache if available
-            if (file_exists($cacheFile)) {
-                error_log('[ProductAPI] Using stale cache due to API error');
-                return file_get_contents($cacheFile);
-            }
-            return null;
-        }
-
-        if ($httpCode !== 200) {
-            error_log('[ProductAPI] HTTP error: ' . $httpCode);
-            // Try to return stale cache if available
-            if (file_exists($cacheFile)) {
-                error_log('[ProductAPI] Using stale cache due to HTTP error');
-                return file_get_contents($cacheFile);
-            }
-            return null;
-        }
-
-        // Save to cache
-        file_put_contents($cacheFile, $response);
-        error_log('[ProductAPI] Catalog summary fetched and cached successfully');
-        return $response;
     }
 
     /**

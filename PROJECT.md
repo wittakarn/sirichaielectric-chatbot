@@ -135,7 +135,7 @@ sirichaielectric-chatbot/
 ├── system-prompt.txt                # AI behavior instructions (inline, NOT File API)
 │
 ├── chatbot/
-│   └── SirichaiElectricChatbot.php  # Extends GeminiChatbot: 3 functions, auth enforcement
+│   └── SirichaiElectricChatbot.php  # Extends GeminiChatbot: 4 functions, auth enforcement
 │
 ├── services/
 │   ├── ProductAPIService.php        # HTTP client: catalog, search, detail, quotation APIs
@@ -196,15 +196,11 @@ sirichaielectric-chatbot/
 │       └── Utils/
 │           └── LineWebhookUtils.php      # Signature verify, push, split, animation
 │
-├── cache/
-│   └── catalog-summary-cache.md    # Product catalog (24h local cache)
-│
 ├── cron/
 │   └── auto-resume-chatbot.php     # Cron job: auto-resume paused conversations
 │
 ├── migrations/                     # Schema migration scripts
 ├── schema.sql                      # Full database schema
-├── file-cache.json                 # Gemini File API URI cache (gitignored)
 ├── logs.log                        # Application error log (gitignored)
 ├── composer.json                   # Declares wittakarn/chatbot-core as path dependency
 └── .env                            # Environment variables (gitignored)
@@ -307,7 +303,7 @@ LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
 # Product API (all 4 required, validated by AppConfig::validate())
-CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
+SEARCH_CATALOG_URL=https://<rag-cloud-run-endpoint>/search   # RAG catalog search
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/product-detail-prompt.php
 QUOTATION_URL=https://shop.sirichaielectric.com/services/fast-quotation.php
@@ -439,8 +435,8 @@ This supports batch quotation with 5 products (5 searches + 1 quotation = 6 call
 
 `executeWithRetry()` (3 attempts):
 1. Attempt 1: normal call
-2. Attempt 2+: add `tool_config.function_calling_config.mode = "ANY"` to force function calling (prevents empty STOP from cached catalog)
-3. After 3 failures: `chat()` calls `refreshFiles()` and retries once more
+2. Attempt 2+: add `tool_config.function_calling_config.mode = "ANY"` to force function calling (prevents empty STOP)
+3. After 3 failures: `chat()` calls `refreshFiles()` once more (no-op for this project — catalog is RAG-based, not File-API-uploaded)
 
 ---
 
@@ -575,60 +571,15 @@ Authorization enforcement:
 
 ---
 
-## 11. File Cache Management
+## 11. Catalog Lookup (RAG)
 
-### Gemini File API Cache (`file-cache.json`)
+The catalog is **not** uploaded to Gemini File API and **not** cached locally. Each `search_catalog` Gemini function call makes a live HTTP POST to a Cloud Run RAG endpoint (`SEARCH_CATALOG_URL`), which returns the most relevant catalog category lines for the query.
 
-Only the **product catalog** is uploaded to File API. The system prompt is sent inline.
+- No local cache file (`file-cache.json`, `cache/catalog-summary-cache.md` are no longer generated)
+- No 24h/46h refresh cycle — recall is per-request
+- AI picks 1–3 returned category lines and passes them verbatim to `search_products`
 
-```json
-{
-  "catalog-summary": {
-    "uri": "https://generativelanguage.googleapis.com/v1beta/files/abc123",
-    "name": "files/abc123",
-    "uploadedAt": 1705449600,
-    "expiresAt": 1705622400
-  }
-}
-```
-
-Cache lifecycle: upload → cached 46h → auto-refresh → Gemini auto-deletes at 48h.
-
-### Managing File Cache
-
-```bash
-# List uploaded Gemini files
-php cleanup-files.php list
-
-# Delete all Gemini files
-php cleanup-files.php delete-all
-
-# Clear local cache only (triggers re-upload on next request)
-php cleanup-files.php clear-cache
-```
-
-### Product Catalog Cache (`cache/catalog-summary-cache.md`)
-
-The product catalog is fetched from the external API once per 24 hours and cached locally.
-
-```bash
-# Force refresh catalog cache
-rm cache/catalog-summary-cache.md
-```
-
-### Force Refresh Everything
-
-```php
-require_once 'vendor/autoload.php';
-require_once 'AppConfig.php';
-require_once 'services/ProductAPIService.php';
-require_once 'chatbot/SirichaiElectricChatbot.php';
-
-$config = AppConfig::getInstance();
-$productAPI = new ProductAPIService($config->get('productAPI'));
-$chatbot = new SirichaiElectricChatbot($config->get('gemini'), $productAPI);
-$chatbot->refreshFiles(); // clears file-cache.json, re-fetches catalog, re-uploads to File API
-```
+If `search_catalog` returns wrong / loose matches, the issue is on the RAG side (index quality, embedding model, top-k), not the chatbot.
 
 ---
 
@@ -637,10 +588,7 @@ $chatbot->refreshFiles(); // clears file-cache.json, re-fetches catalog, re-uplo
 ### Update AI Behavior
 
 1. Edit `system-prompt.txt`
-2. Delete `file-cache.json` (it only caches catalog, but safe to delete anyway)
-3. Next request will re-upload catalog automatically
-
-Note: system prompt is loaded via `loadSystemPromptText()` → sent inline each request. No File API cache for the prompt itself.
+2. Changes apply on the next request — `loadSystemPromptText()` reads the file inline every time. No cache to clear.
 
 ### Add an Authorized User
 
@@ -655,8 +603,7 @@ The `INSTR(?, user_id)` query means the stored value can be a substring of the a
 1. Add declaration to `SirichaiElectricChatbot::getFunctionDeclarations()`
 2. Add handler to `SirichaiElectricChatbot::executeFunction()`
 3. Add logging to `SirichaiElectricChatbot::extractSearchCriteria()`
-4. Update `system-prompt.txt` with usage instructions
-5. No file refresh needed (system prompt is inline)
+4. Update `system-prompt.txt` with usage instructions (applies on next request — no cache to clear)
 
 ### Deploying
 
@@ -674,12 +621,9 @@ mysql -u root -p chatbotdb < migrations/xxx.sql
 
 # 5. Update .env if new variables added
 
-# 6. Clear caches if config changed
-rm -f file-cache.json cache/catalog-summary-cache.md
+# 6. Verify LINE webhook URL in LINE console (Developers > Messaging API)
 
-# 7. Verify LINE webhook URL in LINE console (Developers > Messaging API)
-
-# 8. Monitor logs
+# 7. Monitor logs
 tail -f logs.log
 ```
 
@@ -691,12 +635,9 @@ tail -f logs.log
 
 **Symptom:** `finishReason: STOP` but no text in response.
 
-**Automatic recovery:** `GeminiChatbot` retries 3x with forced function calling mode, then refreshes catalog and retries once more.
+**Automatic recovery:** `GeminiChatbot` retries 3x with forced function calling mode (`tool_config.function_calling_config.mode = "ANY"`).
 
-**Manual fix if persisting:**
-```bash
-rm file-cache.json cache/catalog-summary-cache.md
-```
+**Manual fix if persisting:** check the Gemini API status page and the `[GeminiChatbot]` log entries for the failing model + finish reason.
 
 ### system-prompt.txt changes not taking effect
 

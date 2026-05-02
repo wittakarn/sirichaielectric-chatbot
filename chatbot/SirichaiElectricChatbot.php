@@ -13,11 +13,7 @@ class SirichaiElectricChatbot extends GeminiChatbot {
 
     public function __construct(array $config, $productAPI = null) {
         $this->productAPI = $productAPI;
-        parent::__construct($config, __DIR__ . '/../file-cache.json');
-    }
-
-    protected function fetchCatalogSummary(): string {
-        return '';
+        parent::__construct($config);
     }
 
     protected function loadSystemPromptText(): string {
@@ -32,7 +28,7 @@ class SirichaiElectricChatbot extends GeminiChatbot {
         return array(array('functionDeclarations' => array(
             array(
                 'name'        => 'search_catalog',
-                'description' => 'Look up matching catalog category names from the customer\'s product question. Returns relevant catalog lines (categories). ALWAYS call this first to discover the EXACT catalog category names, then pass those names to search_products(). Pass the customer\'s product question as-is — no keyword extraction or rewriting needed.',
+                'description' => 'Look up catalog category names relevant to the customer\'s product question. Returns catalog lines (categories) that match or closely match the query — exact and loose matches may both appear. ALWAYS call this first, then pass selected names to search_products(). Pass the customer\'s product question as-is — no keyword extraction or rewriting needed. Selection and fallback rules live in the system prompt (WORKFLOW 1 + FALLBACK).',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
