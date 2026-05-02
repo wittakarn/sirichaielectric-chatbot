@@ -408,11 +408,18 @@ Auto-resume: cron job in `cron/auto-resume-chatbot.php` resumes after `AUTO_RESU
 
 ### Available Functions
 
+#### `search_catalog(query)`
+- RAG lookup of catalog category names matching the customer's product question
+- Used only in WORKFLOW 1 Path B (no model/part number in customer's message)
+- Returns up to 5 newline-joined catalog lines (categories)
+
 #### `search_products(criterias[])`
-- Search by exact category names from the catalog file
-- Max 3 categories per call
-- Returns: product name, price, unit — grouped by category
-- Critical: category names must include ALL special chars: `{}`, `[]`, `()`
+- Two accepted shapes for `criterias`:
+  - **Path A (loose terms):** model/part number + optional brand name copied from customer's message, e.g. `["WEG5001K","PANASONIC"]`. Used when the customer's message contains an alphanumeric model code.
+  - **Path B (catalog names):** exact category names returned verbatim from `search_catalog()`. Used when the message has no model/part number.
+- Max 3 criteria items per call
+- Returns lines formatted: `Name | Price | Unit | Id`
+- Critical for Path B: category names must include ALL special chars: `{}`, `[]`, `()`
 
 #### `search_product_detail(productName)`
 - Get specs: weight, size, thickness, quantity per pack
@@ -571,15 +578,28 @@ Authorization enforcement:
 
 ---
 
-## 11. Catalog Lookup (RAG)
+## 11. Catalog Lookup — Two-Path Search
 
-The catalog is **not** uploaded to Gemini File API and **not** cached locally. Each `search_catalog` Gemini function call makes a live HTTP POST to a Cloud Run RAG endpoint (`SEARCH_CATALOG_URL`), which returns the most relevant catalog category lines for the query.
+The catalog is **not** uploaded to Gemini File API and **not** cached locally. Lookup happens at request time via one of two paths defined in `system-prompt.txt` WORKFLOW 1:
+
+### Path A — Fast path (model/part number in query)
+When the customer's message contains an alphanumeric code (e.g. `LRD05`, `WEG5001K`, `KWSS2038`):
+1. AI calls `search_products(criterias=[code, brand?])` directly with **loose terms** — no `search_catalog` call.
+2. If results returned → present.
+3. If empty → fall through to Path B.
+
+### Path B — Discovery path (no model/part number)
+When the message has only product type / brand / spec (e.g. `"เบรกเกอร์ 32A"`, `"สายไฟ THW สีดำ ยาซากิ"`):
+1. AI calls `search_catalog(query)` → live HTTP POST to the Cloud Run RAG endpoint (`SEARCH_CATALOG_URL`), returns up to 5 catalog category lines.
+2. AI picks the closest 1–2 lines (verbatim) — even if not an exact match for the customer's product.
+3. AI calls `search_products(criterias=[exact catalog names])`.
+
+### Properties
 
 - No local cache file (`file-cache.json`, `cache/catalog-summary-cache.md` are no longer generated)
 - No 24h/46h refresh cycle — recall is per-request
-- AI picks 1–3 returned category lines and passes them verbatim to `search_products`
-
-If `search_catalog` returns wrong / loose matches, the issue is on the RAG side (index quality, embedding model, top-k), not the chatbot.
+- Path A skips `search_catalog` entirely, saving one round trip + reducing AI's "which category to pick?" deliberation
+- If `search_catalog` returns wrong / loose matches, the issue is on the RAG side (index quality, embedding model, top-k), not the chatbot
 
 ---
 

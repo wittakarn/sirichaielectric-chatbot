@@ -58,10 +58,16 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 ## Key Architecture Decisions
 
-### Catalog Lookup via RAG
-- **System prompt** → inline `systemInstruction` text (~7KB, direct, reloaded every request)
-- **Product catalog** → on-demand RAG search via `search_catalog` Gemini function (no File API upload, no local catalog cache)
+### Catalog Lookup — Two-Path Search
+- **System prompt** → inline `systemInstruction` text (~8KB, direct, reloaded every request)
+- **Product catalog** → on-demand RAG search via `search_catalog` Gemini function when needed (no File API upload, no local catalog cache)
 - The catalog is hosted/indexed on a Cloud Run endpoint; the chatbot calls it per query and Gemini picks category names from the returned lines.
+
+WORKFLOW 1 in `system-prompt.txt` defines two paths:
+- **Path A (fast path)** — when the customer's message contains a model/part number (alphanumeric code like `LRD05`, `WEG5001K`, `KWSS2038`), AI calls `search_products(criterias=[code, brand?])` directly with **loose terms**. Skips `search_catalog` entirely. Falls through to Path B if results are empty.
+- **Path B (discovery path)** — when there's no model/part number (only product type, brand, spec), AI calls `search_catalog(query)` → picks the closest 1–2 returned category lines verbatim → calls `search_products(criterias=[exact catalog names])`.
+
+This means `search_products` accepts two shapes for its `criterias` array — see the function declaration in `chatbot/SirichaiElectricChatbot.php`.
 
 ### Function Calling (4 Available Functions)
 Gemini two-step flow:
@@ -69,12 +75,12 @@ Gemini two-step flow:
 2. PHP executes → sends result back → AI formats text response
 
 Available functions:
-- `search_catalog(query)` — RAG lookup of catalog category names matching the customer's question
-- `search_products(criterias[])` — search products by exact catalog category names (max 3)
+- `search_catalog(query)` — RAG lookup of catalog category names. Used in Path B only.
+- `search_products(criterias[])` — search products. Accepts (a) loose terms (model/part + brand) for Path A, or (b) exact catalog category names for Path B. Max 3 criteria.
 - `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
 - `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
-Chained calls: up to **6 additional** rounds (supports 5-product batch quotation).
+Chained calls: up to **6 additional** rounds. **Note:** 5-product batch with Path B for every item needs ~10 calls (5 × catalog+products) plus quotation = 11 — the cap is currently a known limit; Path A reduces this to 5–6 calls when items have model codes.
 
 ### Authorization System
 - `authorized_users` DB table — stores authorized LINE user IDs
@@ -258,7 +264,7 @@ class MyWebhook extends LineWebhookHandler {
 3. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
 4. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
 5. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
-6. **`search_catalog` returns wrong/loose matches** — issue is on the RAG endpoint (recall/index), not the chatbot. AI is instructed to fall back to closest match in single-product mode (see `system-prompt.txt` WORKFLOW 1 FALLBACK).
+6. **`search_catalog` returns wrong/loose matches** — issue is on the RAG endpoint (recall/index), not the chatbot. AI is instructed to pick the closest match anyway in single-product mode (see `system-prompt.txt` WORKFLOW 1 Path B + PRESENTING RESULTS LOOSE MATCH). For queries containing a model/part number, AI uses Path A and skips `search_catalog` altogether.
 
 ## Chatbot Behaviors (system-prompt.txt)
 

@@ -28,13 +28,13 @@ class SirichaiElectricChatbot extends GeminiChatbot {
         return array(array('functionDeclarations' => array(
             array(
                 'name'        => 'search_catalog',
-                'description' => 'Look up catalog category names relevant to the customer\'s product question. Returns catalog lines (categories) that match or closely match the query — exact and loose matches may both appear. ALWAYS call this first, then pass selected names to search_products(). Pass the customer\'s product question as-is — no keyword extraction or rewriting needed. Selection and fallback rules live in the system prompt (WORKFLOW 1 + FALLBACK).',
+                'description' => 'Look up catalog category names relevant to the customer\'s product question. Used in WORKFLOW 1 Path B — when the customer\'s message has NO specific model/part number, only a product type, brand, or spec. If the message DOES contain a model/part number (e.g. "LRD05", "WEG5001K"), skip this function and call search_products directly with loose terms (Path A). Returns catalog lines (categories) that match or closely match the query — exact and loose matches may both appear. Pass the customer\'s product question as-is — no keyword extraction or rewriting needed. Full path/selection rules live in the system prompt (WORKFLOW 1 Path A & Path B).',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'query' => array(
                             'type'        => 'string',
-                            'description' => 'The customer\'s product question, passed through as-is. Example: "มี SCHNEIDER LRD05 ไหม" or "ราคาสายไฟ THW 1x2.5".'
+                            'description' => 'The customer\'s product question, passed through as-is. Use only when the question has NO model/part number. Example: "ขอราคาเบรกเกอร์ 32A" or "สายไฟ THW สีดำ ยาซากิ" or "เบรกเกอร์ ABB 3P". (Queries containing a code like "LRD05" should go to search_products directly — do NOT call search_catalog for those.)'
                         )
                     ),
                     'required' => array('query')
@@ -42,14 +42,14 @@ class SirichaiElectricChatbot extends GeminiChatbot {
             ),
             array(
                 'name'        => 'search_products',
-                'description' => 'Search for products by exact category names returned from search_catalog(). Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Never exceed 3 categories.',
+                'description' => 'Search for products. The criterias array accepts either: (a) loose terms — a model/part number and optionally a brand name (e.g. ["WEG5001K","PANASONIC"]) — used in WORKFLOW 1 Path A when the customer\'s message contains a specific model/part code; or (b) exact catalog category names returned from search_catalog() — used in WORKFLOW 1 Path B. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Maximum 3 criteria items.',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of EXACT category names returned from search_catalog(). Maximum 3 categories.'
+                            'description' => 'Array of search criteria — either loose terms (model/part number, brand) for Path A, or EXACT category names returned from search_catalog() for Path B. Maximum 3 items. Never mix terms from different products in one call.'
                         )
                     ),
                     'required' => array('criterias')
