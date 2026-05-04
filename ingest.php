@@ -7,6 +7,8 @@
  *   php ingest.php --force   -- re-ingest even if unchanged
  */
 
+ini_set('error_log', __DIR__ . '/logs.log');
+
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
     exit('CLI only');
@@ -37,8 +39,19 @@ if (empty($supabaseCfg['key'])) {
     exit(1);
 }
 
+error_log('[Ingest] Started');
+
 $service = new IngestService($geminiApiKey, $ingestCfg['catalogUrl'], $supabaseCfg['restUrl'], $supabaseCfg['key']);
 $result  = $service->run($force);
 
-echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+if ($result['success']) {
+    if ($result['status'] === 'unchanged') {
+        error_log('[Ingest] Skipped — catalog unchanged');
+    } else {
+        error_log('[Ingest] Done — ingested ' . $result['documents'] . ' documents');
+    }
+} else {
+    error_log('[Ingest] FAILED — ' . $result['error']);
+}
+
 exit($result['success'] ? 0 : 1);
