@@ -21,7 +21,9 @@ class SirichaiLineWebhook extends LineWebhookHandler {
 
         $maxMessages = isset($conversationConfig['maxMessages']) ? $conversationConfig['maxMessages'] : 20;
 
-        $productAPI   = new ProductAPIService($productAPIConfig);
+        $supabaseCfg   = $config->get('supabase');
+        $searchService = new SearchService($geminiConfig['apiKey'], $supabaseCfg['restUrl'], $supabaseCfg['key']);
+        $productAPI    = new ProductAPIService($productAPIConfig, $searchService);
         $this->chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
 
         $this->conversationManager = new ConversationManager($maxMessages, 'line', $dbConfig);

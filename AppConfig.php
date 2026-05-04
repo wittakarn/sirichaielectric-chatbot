@@ -12,7 +12,6 @@ class AppConfig extends Config {
         parent::buildConfig();
 
         $this->config['productAPI'] = array(
-            'searchCatalogUrl' => $this->getEnv('SEARCH_CATALOG_URL', ''),
             'productSearchUrl' => $this->getEnv('PRODUCT_SEARCH_URL', ''),
             'productDetailUrl' => $this->getEnv('PRODUCT_DETAIL_URL', ''),
             'quotationUrl'     => $this->getEnv('QUOTATION_URL', ''),
@@ -30,6 +29,15 @@ class AppConfig extends Config {
             'username'      => $this->getEnv('ADMIN_USERNAME', ''),
             'password_hash' => $this->getEnv('ADMIN_PASSWORD_HASH', ''),
         );
+
+        $this->config['supabase'] = array(
+            'restUrl' => $this->getEnv('SUPABASE_REST_URL', ''),
+            'key'     => $this->getEnv('SUPABASE_KEY', ''),
+        );
+
+        $this->config['ingest'] = array(
+            'catalogUrl' => $this->getEnv('CATALOG_INGEST_URL', ''),
+        );
     }
 
     public function validate(): void {
@@ -37,10 +45,6 @@ class AppConfig extends Config {
 
         if (empty($this->config['website']['url'])) {
             throw new \Exception('WEBSITE_URL is required in .env file');
-        }
-
-        if (empty($this->config['productAPI']['searchCatalogUrl'])) {
-            throw new \Exception('SEARCH_CATALOG_URL is required in .env file');
         }
 
         if (empty($this->config['productAPI']['productSearchUrl'])) {
