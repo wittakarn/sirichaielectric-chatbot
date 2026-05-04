@@ -29,6 +29,7 @@ ini_set('error_log', __DIR__ . '/../logs.log');
 // Load dependencies
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../AppConfig.php';
+require_once __DIR__ . '/../services/SearchService.php';
 require_once __DIR__ . '/../services/ProductAPIService.php';
 require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
 
@@ -152,7 +153,9 @@ try {
         $dbConfig
     );
 
-    $productAPI = new ProductAPIService($productAPIConfig);
+    $supabaseConfig = $config->get('supabase');
+    $searchService = new SearchService($geminiConfig['apiKey'], $supabaseConfig['restUrl'], $supabaseConfig['key']);
+    $productAPI = new ProductAPIService($productAPIConfig, $searchService);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
     $chatbot->setAuthorized(true);

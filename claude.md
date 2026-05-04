@@ -39,7 +39,8 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 | `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 4 functions: `search_catalog`, `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
 | `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
-| `services/ProductAPIService.php` | HTTP client for 4 external APIs: RAG catalog search, product search by category, product detail, quotation PDF |
+| `services/SearchService.php` | Embeds a query via Gemini Embedding API then queries Supabase `search_product_catalog` RPC for vector-similar catalog entries |
+| `services/ProductAPIService.php` | Wraps `SearchService` for catalog RAG + HTTP client for 3 external APIs: product search by category, product detail, quotation PDF |
 | `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
@@ -61,7 +62,7 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 ### Catalog Lookup — Two-Path Search
 - **System prompt** → inline `systemInstruction` text (~8KB, direct, reloaded every request)
 - **Product catalog** → on-demand RAG search via `search_catalog` Gemini function when needed (no File API upload, no local catalog cache)
-- The catalog is hosted/indexed on a Cloud Run endpoint; the chatbot calls it per query and Gemini picks category names from the returned lines.
+- The catalog is indexed in **Supabase** as vector embeddings. `SearchService` embeds the query with `gemini-embedding-001`, then calls the Supabase `search_product_catalog` RPC; results are category name strings that Gemini picks from.
 
 WORKFLOW 1 in `system-prompt.txt` defines two paths:
 - **Path A (fast path)** — when the customer's message contains a model/part number (alphanumeric code like `LRD05`, `WEG5001K`, `KWSS2038`), AI calls `search_products(criterias=[code, brand?])` directly with **loose terms**. Skips `search_catalog` entirely. Falls through to Path B if results are empty.
@@ -156,8 +157,11 @@ LINE_CHANNEL_SECRET=xxx
 LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
-# Product API (all 4 required)
-SEARCH_CATALOG_URL=https://<rag-cloud-run-endpoint>/search   # RAG catalog search
+# Supabase RAG (catalog vector search)
+SUPABASE_REST_URL=https://<project>.supabase.co
+SUPABASE_KEY=xxx                              # service role or anon key with RPC access
+
+# Product API (all 3 required)
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
@@ -264,7 +268,7 @@ class MyWebhook extends LineWebhookHandler {
 3. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
 4. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
 5. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
-6. **`search_catalog` returns wrong/loose matches** — issue is on the RAG endpoint (recall/index), not the chatbot. AI is instructed to pick the closest match anyway in single-product mode (see `system-prompt.txt` WORKFLOW 1 Path B + PRESENTING RESULTS LOOSE MATCH). For queries containing a model/part number, AI uses Path A and skips `search_catalog` altogether.
+6. **`search_catalog` returns wrong/loose matches** — issue is in the Supabase vector index (embedding quality / catalog content), not the chatbot. AI is instructed to pick the closest match anyway in single-product mode (see `system-prompt.txt` WORKFLOW 1 Path B + PRESENTING RESULTS LOOSE MATCH). For queries containing a model/part number, AI uses Path A and skips `search_catalog` altogether.
 
 ## Chatbot Behaviors (system-prompt.txt)
 
@@ -282,9 +286,9 @@ class MyWebhook extends LineWebhookHandler {
 1. Check `logs.log` — all components log with `[ClassName]` prefix
 2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
 3. Function calls logged — look for `[GeminiChatbot] Calling: <function>`
-4. RAG catalog search: look for `[ProductAPI] Search catalog query:` and the result lines that follow
+4. RAG catalog search: look for `[ProductAPI] Search catalog query:` (embed + Supabase RPC) and the result lines that follow; also `[SearchService]` for embed/Supabase errors
 
 ---
 
-**Last Updated:** March 6, 2026
-**Version:** 3.0.0 — chatbot-core library + 4-test suite + React dashboard
+**Last Updated:** May 4, 2026
+**Version:** 3.1.0 — Supabase vector RAG replaces Cloud Run catalog endpoint
