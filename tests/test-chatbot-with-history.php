@@ -11,7 +11,7 @@ use ChatbotCore\ConversationManager;
  * - Q1: "มีเบรกเกอร์ abb ไหม" (product search — must include product links)
  * - Q2: "เพิ่มรายการ ลูกเซอร์กิตเบรกเกอร์ 1P 6A 6KA SH201-C6 ABB 2 ตัว" (product selection)
  * - Q3: "ใช้กับสายไฟไหนได้บ้าง" (compatibility question)
- * - Q4: "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น" (accessory selection)
+ * - Q4: "เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 ม้วน" (accessory selection)
  * - Q5: "สรุปรายการ พร้อมราคาให้หน่อย" (summary with pricing)
  * - Q6: "ออกใบเสนอราคาได้เลย" (quotation without rate - expect PDF link using default rate c)
  * - Q7: "ออกใบเสนอราคา ด้วยเรท vb" (quotation with explicit rate vb - expect PDF link)
@@ -32,6 +32,7 @@ ini_set('error_log', __DIR__ . '/../logs.log');
 // Load dependencies
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../AppConfig.php';
+require_once __DIR__ . '/../services/SearchService.php';
 require_once __DIR__ . '/../services/ProductAPIService.php';
 require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
 
@@ -96,8 +97,8 @@ $questions = array(
         'expectation' => 'AI should recommend compatible wire/cable for the selected breaker'
     ),
     array(
-        'question' => 'เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 เส้น',
-        'expectation' => 'AI should acknowledge the cable selection with quantity 1'
+        'question' => 'เพิ่มรายการ สายไฟ VCT 2x1 ไทยยูเนี่ยน THAI UNION 1 ม้วน',
+        'expectation' => 'AI should acknowledge the cable selection with quantity 1 roll'
     ),
     array(
         'question' => 'สรุปรายการ พร้อมราคาให้หน่อย',
@@ -105,11 +106,23 @@ $questions = array(
     ),
     array(
         'question' => 'ออกใบเสนอราคาได้เลย',
-        'expectation' => 'AI should call generate_quotation with default priceType c and return a PDF download link'
+        'expectation' => 'AI should call generate_quotation with default priceType c and return a PDF download link',
+        'validate' => function($response) {
+            if (mb_strpos($response, '.pdf') === false) {
+                return 'Response must contain a PDF download link (default rate c)';
+            }
+            return null;
+        }
     ),
     array(
         'question' => 'ออกใบเสนอราคา ด้วยเรท vb',
-        'expectation' => 'AI should call generate_quotation and return a PDF download link'
+        'expectation' => 'AI should call generate_quotation and return a PDF download link',
+        'validate' => function($response) {
+            if (mb_strpos($response, '.pdf') === false) {
+                return 'Response must contain a PDF download link (rate vb)';
+            }
+            return null;
+        }
     ),
     // New test cases: verify shopping phrases do NOT trigger quotation workflow
     array(
@@ -126,7 +139,13 @@ $questions = array(
     ),
     array(
         'question' => 'ออกใบเสนอราคา เรท a',
-        'expectation' => 'AI should call generate_quotation with all accumulated products and return a PDF link'
+        'expectation' => 'AI should call generate_quotation with all accumulated products and return a PDF link',
+        'validate' => function($response) {
+            if (mb_strpos($response, '.pdf') === false) {
+                return 'Response must contain a PDF download link (rate a, all accumulated products)';
+            }
+            return null;
+        }
     ),
     // Hallucination guard: AI must not fabricate color variants
     array(
@@ -183,17 +202,7 @@ try {
         printInfo("logs.log does not exist (will be created on first log)");
     }
 
-    // Step 5: Clear file-cache.json to force system prompt reload
-    printStep("Clearing file-cache.json...");
-    $fileCachePath = __DIR__ . '/../file-cache.json';
-    if (file_exists($fileCachePath)) {
-        unlink($fileCachePath);
-        printSuccess("file-cache.json cleared");
-    } else {
-        printInfo("file-cache.json does not exist (will be created on first run)");
-    }
-
-    // Step 6: Initialize services
+    // Step 5: Initialize services
     printStep("Initializing chatbot services...");
     $conversationManager = new ConversationManager(
         $config->get('conversation', 'maxMessages', 20),
@@ -201,7 +210,9 @@ try {
         $dbConfig
     );
 
-    $productAPI = new ProductAPIService($productAPIConfig);
+    $supabaseConfig = $config->get('supabase');
+    $searchService = new SearchService($geminiConfig['apiKey'], $supabaseConfig['restUrl'], $supabaseConfig['key']);
+    $productAPI = new ProductAPIService($productAPIConfig, $searchService);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
     $chatbot->setAuthorized(true);

@@ -135,7 +135,7 @@ sirichaielectric-chatbot/
 ├── system-prompt.txt                # AI behavior instructions (inline, NOT File API)
 │
 ├── chatbot/
-│   └── SirichaiElectricChatbot.php  # Extends GeminiChatbot: 3 functions, auth enforcement
+│   └── SirichaiElectricChatbot.php  # Extends GeminiChatbot: 4 functions, auth enforcement
 │
 ├── services/
 │   ├── ProductAPIService.php        # HTTP client: catalog, search, detail, quotation APIs
@@ -196,15 +196,11 @@ sirichaielectric-chatbot/
 │       └── Utils/
 │           └── LineWebhookUtils.php      # Signature verify, push, split, animation
 │
-├── cache/
-│   └── catalog-summary-cache.md    # Product catalog (24h local cache)
-│
 ├── cron/
 │   └── auto-resume-chatbot.php     # Cron job: auto-resume paused conversations
 │
 ├── migrations/                     # Schema migration scripts
 ├── schema.sql                      # Full database schema
-├── file-cache.json                 # Gemini File API URI cache (gitignored)
 ├── logs.log                        # Application error log (gitignored)
 ├── composer.json                   # Declares wittakarn/chatbot-core as path dependency
 └── .env                            # Environment variables (gitignored)
@@ -307,7 +303,7 @@ LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
 # Product API (all 4 required, validated by AppConfig::validate())
-CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
+SEARCH_CATALOG_URL=https://<rag-cloud-run-endpoint>/search   # RAG catalog search
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/product-detail-prompt.php
 QUOTATION_URL=https://shop.sirichaielectric.com/services/fast-quotation.php
@@ -412,11 +408,18 @@ Auto-resume: cron job in `cron/auto-resume-chatbot.php` resumes after `AUTO_RESU
 
 ### Available Functions
 
+#### `search_catalog(query)`
+- RAG lookup of catalog category names matching the customer's product question
+- Used only in WORKFLOW 1 Path B (no model/part number in customer's message)
+- Returns up to 5 newline-joined catalog lines (categories)
+
 #### `search_products(criterias[])`
-- Search by exact category names from the catalog file
-- Max 3 categories per call
-- Returns: product name, price, unit — grouped by category
-- Critical: category names must include ALL special chars: `{}`, `[]`, `()`
+- Two accepted shapes for `criterias`:
+  - **Path A (loose terms):** model/part number + optional brand name copied from customer's message, e.g. `["WEG5001K","PANASONIC"]`. Used when the customer's message contains an alphanumeric model code.
+  - **Path B (catalog names):** exact category names returned verbatim from `search_catalog()`. Used when the message has no model/part number.
+- Max 3 criteria items per call
+- Returns lines formatted: `Name | Price | Unit | Id`
+- Critical for Path B: category names must include ALL special chars: `{}`, `[]`, `()`
 
 #### `search_product_detail(productName)`
 - Get specs: weight, size, thickness, quantity per pack
@@ -439,8 +442,8 @@ This supports batch quotation with 5 products (5 searches + 1 quotation = 6 call
 
 `executeWithRetry()` (3 attempts):
 1. Attempt 1: normal call
-2. Attempt 2+: add `tool_config.function_calling_config.mode = "ANY"` to force function calling (prevents empty STOP from cached catalog)
-3. After 3 failures: `chat()` calls `refreshFiles()` and retries once more
+2. Attempt 2+: add `tool_config.function_calling_config.mode = "ANY"` to force function calling (prevents empty STOP)
+3. After 3 failures: `chat()` calls `refreshFiles()` once more (no-op for this project — catalog is RAG-based, not File-API-uploaded)
 
 ---
 
@@ -575,60 +578,28 @@ Authorization enforcement:
 
 ---
 
-## 11. File Cache Management
+## 11. Catalog Lookup — Two-Path Search
 
-### Gemini File API Cache (`file-cache.json`)
+The catalog is **not** uploaded to Gemini File API and **not** cached locally. Lookup happens at request time via one of two paths defined in `system-prompt.txt` WORKFLOW 1:
 
-Only the **product catalog** is uploaded to File API. The system prompt is sent inline.
+### Path A — Fast path (model/part number in query)
+When the customer's message contains an alphanumeric code (e.g. `LRD05`, `WEG5001K`, `KWSS2038`):
+1. AI calls `search_products(criterias=[code, brand?])` directly with **loose terms** — no `search_catalog` call.
+2. If results returned → present.
+3. If empty → fall through to Path B.
 
-```json
-{
-  "catalog-summary": {
-    "uri": "https://generativelanguage.googleapis.com/v1beta/files/abc123",
-    "name": "files/abc123",
-    "uploadedAt": 1705449600,
-    "expiresAt": 1705622400
-  }
-}
-```
+### Path B — Discovery path (no model/part number)
+When the message has only product type / brand / spec (e.g. `"เบรกเกอร์ 32A"`, `"สายไฟ THW สีดำ ยาซากิ"`):
+1. AI calls `search_catalog(query)` → live HTTP POST to the Cloud Run RAG endpoint (`SEARCH_CATALOG_URL`), returns up to 5 catalog category lines.
+2. AI picks the closest 1–2 lines (verbatim) — even if not an exact match for the customer's product.
+3. AI calls `search_products(criterias=[exact catalog names])`.
 
-Cache lifecycle: upload → cached 46h → auto-refresh → Gemini auto-deletes at 48h.
+### Properties
 
-### Managing File Cache
-
-```bash
-# List uploaded Gemini files
-php cleanup-files.php list
-
-# Delete all Gemini files
-php cleanup-files.php delete-all
-
-# Clear local cache only (triggers re-upload on next request)
-php cleanup-files.php clear-cache
-```
-
-### Product Catalog Cache (`cache/catalog-summary-cache.md`)
-
-The product catalog is fetched from the external API once per 24 hours and cached locally.
-
-```bash
-# Force refresh catalog cache
-rm cache/catalog-summary-cache.md
-```
-
-### Force Refresh Everything
-
-```php
-require_once 'vendor/autoload.php';
-require_once 'AppConfig.php';
-require_once 'services/ProductAPIService.php';
-require_once 'chatbot/SirichaiElectricChatbot.php';
-
-$config = AppConfig::getInstance();
-$productAPI = new ProductAPIService($config->get('productAPI'));
-$chatbot = new SirichaiElectricChatbot($config->get('gemini'), $productAPI);
-$chatbot->refreshFiles(); // clears file-cache.json, re-fetches catalog, re-uploads to File API
-```
+- No local cache file (`file-cache.json`, `cache/catalog-summary-cache.md` are no longer generated)
+- No 24h/46h refresh cycle — recall is per-request
+- Path A skips `search_catalog` entirely, saving one round trip + reducing AI's "which category to pick?" deliberation
+- If `search_catalog` returns wrong / loose matches, the issue is on the RAG side (index quality, embedding model, top-k), not the chatbot
 
 ---
 
@@ -637,10 +608,7 @@ $chatbot->refreshFiles(); // clears file-cache.json, re-fetches catalog, re-uplo
 ### Update AI Behavior
 
 1. Edit `system-prompt.txt`
-2. Delete `file-cache.json` (it only caches catalog, but safe to delete anyway)
-3. Next request will re-upload catalog automatically
-
-Note: system prompt is loaded via `loadSystemPromptText()` → sent inline each request. No File API cache for the prompt itself.
+2. Changes apply on the next request — `loadSystemPromptText()` reads the file inline every time. No cache to clear.
 
 ### Add an Authorized User
 
@@ -655,8 +623,7 @@ The `INSTR(?, user_id)` query means the stored value can be a substring of the a
 1. Add declaration to `SirichaiElectricChatbot::getFunctionDeclarations()`
 2. Add handler to `SirichaiElectricChatbot::executeFunction()`
 3. Add logging to `SirichaiElectricChatbot::extractSearchCriteria()`
-4. Update `system-prompt.txt` with usage instructions
-5. No file refresh needed (system prompt is inline)
+4. Update `system-prompt.txt` with usage instructions (applies on next request — no cache to clear)
 
 ### Deploying
 
@@ -674,12 +641,9 @@ mysql -u root -p chatbotdb < migrations/xxx.sql
 
 # 5. Update .env if new variables added
 
-# 6. Clear caches if config changed
-rm -f file-cache.json cache/catalog-summary-cache.md
+# 6. Verify LINE webhook URL in LINE console (Developers > Messaging API)
 
-# 7. Verify LINE webhook URL in LINE console (Developers > Messaging API)
-
-# 8. Monitor logs
+# 7. Monitor logs
 tail -f logs.log
 ```
 
@@ -691,12 +655,9 @@ tail -f logs.log
 
 **Symptom:** `finishReason: STOP` but no text in response.
 
-**Automatic recovery:** `GeminiChatbot` retries 3x with forced function calling mode, then refreshes catalog and retries once more.
+**Automatic recovery:** `GeminiChatbot` retries 3x with forced function calling mode (`tool_config.function_calling_config.mode = "ANY"`).
 
-**Manual fix if persisting:**
-```bash
-rm file-cache.json cache/catalog-summary-cache.md
-```
+**Manual fix if persisting:** check the Gemini API status page and the `[GeminiChatbot]` log entries for the failing model + finish reason.
 
 ### system-prompt.txt changes not taking effect
 

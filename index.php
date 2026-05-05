@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
+require_once __DIR__ . '/services/SearchService.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
 use ChatbotCore\ConversationManager;
@@ -46,9 +47,11 @@ try {
 // Initialize Gemini configuration
 $geminiConfig = $config->get('gemini');
 
-// Initialize Product API Service (replaces context cache)
+// Initialize Product API Service with Supabase-backed search
+$supabaseCfg   = $config->get('supabase');
+$searchService = new SearchService($config->get('gemini', 'apiKey'), $supabaseCfg['restUrl'], $supabaseCfg['key']);
 $productAPIConfig = $config->get('productAPI');
-$productAPI = new ProductAPIService($productAPIConfig);
+$productAPI = new ProductAPIService($productAPIConfig, $searchService);
 
 // Initialize chatbot with Product API Service (zero context cache)
 $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
@@ -103,6 +106,8 @@ if ($requestMethod === 'GET' && ($path === '' || $path === 'health')) {
     handleHealthCheck();
 } elseif ($requestMethod === 'POST' && $path === 'chat') {
     handleChat($chatbot, $conversationManager);
+} elseif ($requestMethod === 'POST' && $path === 'search') {
+    handleSearch($config);
 } elseif ($requestMethod === 'GET' && strpos($path, 'conversation/') === 0) {
     handleGetConversation($conversationManager, $path);
 } elseif ($requestMethod === 'DELETE' && strpos($path, 'conversation/') === 0) {
@@ -122,7 +127,7 @@ function handleHealthCheck() {
         'status' => 'ok',
         'service' => 'Sirichai Electric Chatbot (PHP)',
         'version' => '3.0.0',
-        'mode' => 'Optimized (catalog in prompt, 3x faster)',
+        'mode' => 'RAG-based catalog search',
         'timestamp' => date('c'),
     ));
 }
@@ -218,6 +223,33 @@ function handleGetConversation($conversationManager, $path) {
         'success' => true,
         'conversation' => $conversation,
     ));
+}
+
+function handleSearch($config) {
+    $input    = json_decode(file_get_contents('php://input'), true);
+    $query    = isset($input['query']) ? trim($input['query']) : '';
+    $nResults = isset($input['n_results']) ? intval($input['n_results']) : 5;
+
+    if (empty($query)) {
+        http_response_code(400);
+        echo json_encode(array('success' => false, 'error' => 'query is required'));
+        return;
+    }
+
+    $supabaseCfg = $config->get('supabase');
+    $service     = new SearchService(
+        $config->get('gemini', 'apiKey'),
+        $supabaseCfg['restUrl'],
+        $supabaseCfg['key']
+    );
+
+    $result = $service->search($query, $nResults);
+
+    if (!$result['success']) {
+        http_response_code(500);
+    }
+
+    echo json_encode($result);
 }
 
 function handleClearConversation($conversationManager, $path) {

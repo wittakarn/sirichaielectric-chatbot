@@ -36,10 +36,11 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 | File | Role |
 |------|------|
-| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 3 functions: `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
+| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 4 functions: `search_catalog`, `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
 | `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
-| `services/ProductAPIService.php` | HTTP client for 4 external APIs: catalog summary (24h cache), product search, product detail, quotation PDF |
+| `services/SearchService.php` | Embeds a query via Gemini Embedding API then queries Supabase `search_product_catalog` RPC for vector-similar catalog entries |
+| `services/ProductAPIService.php` | Wraps `SearchService` for catalog RAG + HTTP client for 3 external APIs: product search by category, product detail, quotation PDF |
 | `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
@@ -58,22 +59,29 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 ## Key Architecture Decisions
 
-### Hybrid File API Approach
-- **System prompt** → inline `systemInstruction` text (~5KB, direct)
-- **Product catalog** → Gemini File API upload (~101KB, cached 46h in `file-cache.json`)
-- Result: 95%+ token reduction, fast responses, server-side caching
+### Catalog Lookup — Two-Path Search
+- **System prompt** → inline `systemInstruction` text (~8KB, direct, reloaded every request)
+- **Product catalog** → on-demand RAG search via `search_catalog` Gemini function when needed (no File API upload, no local catalog cache)
+- The catalog is indexed in **Supabase** as vector embeddings. `SearchService` embeds the query with `gemini-embedding-001`, then calls the Supabase `search_product_catalog` RPC; results are category name strings that Gemini picks from.
 
-### Function Calling (3 Available Functions)
+WORKFLOW 1 in `system-prompt.txt` defines two paths:
+- **Path A (fast path)** — when the customer's message contains a model/part number (alphanumeric code like `LRD05`, `WEG5001K`, `KWSS2038`), AI calls `search_products(criterias=[code, brand?])` directly with **loose terms**. Skips `search_catalog` entirely. Falls through to Path B if results are empty.
+- **Path B (discovery path)** — when there's no model/part number (only product type, brand, spec), AI calls `search_catalog(query)` → picks the closest 1–2 returned category lines verbatim → calls `search_products(criterias=[exact catalog names])`.
+
+This means `search_products` accepts two shapes for its `criterias` array — see the function declaration in `chatbot/SirichaiElectricChatbot.php`.
+
+### Function Calling (4 Available Functions)
 Gemini two-step flow:
 1. AI returns function call request
 2. PHP executes → sends result back → AI formats text response
 
 Available functions:
-- `search_products(criterias[])` — search by exact catalog category names (max 3)
+- `search_catalog(query)` — RAG lookup of catalog category names. Used in Path B only.
+- `search_products(criterias[])` — search products. Accepts (a) loose terms (model/part + brand) for Path A, or (b) exact catalog category names for Path B. Max 3 criteria.
 - `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
 - `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
-Chained calls: up to **6 additional** rounds (supports 5-product batch quotation).
+Chained calls: up to **6 additional** rounds. **Note:** 5-product batch with Path B for every item needs ~10 calls (5 × catalog+products) plus quotation = 11 — the cap is currently a known limit; Path A reduces this to 5–6 calls when items have model codes.
 
 ### Authorization System
 - `authorized_users` DB table — stores authorized LINE user IDs
@@ -85,7 +93,7 @@ Chained calls: up to **6 additional** rounds (supports 5-product batch quotation
 `GeminiChatbot::executeWithRetry()`:
 1. Retry up to 3x with 2s/3s delays
 2. On retry 2+: force `tool_config.function_calling_config.mode = "ANY"` to prevent empty STOP
-3. After all retries fail: `chat()` calls `refreshFiles()` (force re-upload catalog) and retries once more
+3. After all retries fail: `chat()` calls `refreshFiles()` once more (no-op for this project — catalog is no longer File-API-uploaded)
 
 ### LINE Async Processing
 - Respond HTTP 200 immediately (`closeConnection()` — supports LiteSpeed, FastCGI, fallback)
@@ -149,8 +157,11 @@ LINE_CHANNEL_SECRET=xxx
 LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
-# Product API (all 4 required)
-CATALOG_SUMMARY_URL=https://shop.sirichaielectric.com/services/category-products-prompt.php
+# Supabase RAG (catalog vector search)
+SUPABASE_REST_URL=https://<project>.supabase.co
+SUPABASE_KEY=xxx                              # service role or anon key with RPC access
+
+# Product API (all 3 required)
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
@@ -220,8 +231,7 @@ sleep 15
 1. Add declaration in `SirichaiElectricChatbot::getFunctionDeclarations()`
 2. Add handler in `SirichaiElectricChatbot::executeFunction()`
 3. Add logging in `SirichaiElectricChatbot::extractSearchCriteria()`
-4. Update `system-prompt.txt`
-5. Delete `file-cache.json` or call `$chatbot->refreshFiles()`
+4. Update `system-prompt.txt` (reloaded on next request — no cache to clear)
 
 ### Extending chatbot-core for a New Project
 ```php
@@ -247,20 +257,18 @@ class MyWebhook extends LineWebhookHandler {
 
 | File | Notes |
 |------|-------|
-| `system-prompt.txt` | AI behavior — edit here, then delete `file-cache.json` to apply |
-| `file-cache.json` | Gemini File API URI cache — in `.gitignore`, auto-refreshes at 46h |
+| `system-prompt.txt` | AI behavior — edit here; reloaded on next request (no cache to clear) |
 | `schema.sql` | DB structure — use `migrations/` for changes |
-| `cache/catalog-summary-cache.md` | Product catalog cache (24h) — delete to force refresh |
 | `logs.log` | Application error log |
 
 ## Common Pitfalls
 
-1. **system-prompt.txt not applied** — delete `file-cache.json` or call `$chatbot->refreshFiles()`
-2. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
-3. **Empty STOP from Gemini** — retry with `mode=ANY` + catalog refresh handles this automatically
-4. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
-5. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
-6. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
+1. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
+2. **Empty STOP from Gemini** — retry with `mode=ANY` handles this automatically
+3. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
+4. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
+5. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
+6. **`search_catalog` returns wrong/loose matches** — issue is in the Supabase vector index (embedding quality / catalog content), not the chatbot. AI is instructed to pick the closest match anyway in single-product mode (see `system-prompt.txt` WORKFLOW 1 Path B + PRESENTING RESULTS LOOSE MATCH). For queries containing a model/part number, AI uses Path A and skips `search_catalog` altogether.
 
 ## Chatbot Behaviors (system-prompt.txt)
 
@@ -277,11 +285,10 @@ class MyWebhook extends LineWebhookHandler {
 
 1. Check `logs.log` — all components log with `[ClassName]` prefix
 2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
-3. Function calls logged — look for `[GeminiChatbot] AI decided to call function:`
-4. File cache status: check `file-cache.json` or search logs for `[GeminiChatbot] === File API Context Ready ===`
-5. Catalog cache: check `cache/catalog-summary-cache.md` modification time
+3. Function calls logged — look for `[GeminiChatbot] Calling: <function>`
+4. RAG catalog search: look for `[ProductAPI] Search catalog query:` (embed + Supabase RPC) and the result lines that follow; also `[SearchService]` for embed/Supabase errors
 
 ---
 
-**Last Updated:** March 6, 2026
-**Version:** 3.0.0 — chatbot-core library + 4-test suite + React dashboard
+**Last Updated:** May 4, 2026
+**Version:** 3.1.0 — Supabase vector RAG replaces Cloud Run catalog endpoint
