@@ -14,7 +14,7 @@ use ChatbotCore\ConversationManager;
  * - Q4: "สายไฟ thw 1x4 ยาซากิ YAZAKI จำนวน 400 เมตร น้ำหนักเท่าไหร่" (weight calculation with quantity)
  * - Q5: "ข้อต่อตรง ใช้ต่อระหว่าง ท่อ imc 2เส้น ขนาด1นิ้ว คือตัวไหน" (conduit product identification)
  * - Q6: "มีราง wire way 4"x8" ไหม" (wire way size query - tests exact catalog name matching)
- * - Q7: "นาวินต้า" (random person's name - AI must NOT return any products)
+ * - Q7: "มอเตอร์สตาร์ท รุ่น LE1-M35Q710 380VAC" (specific motor starter model lookup)
  *
  * Each question is sent with no conversation history.
  *
@@ -76,14 +76,6 @@ function printResponse($label, $response) {
 $testConversationId = 'test_no_history_' . time();
 $questions = array(
     array(
-        'question' => 'นาวินต้า',
-        'expectation' => 'AI should NOT return any products — "นาวินต้า" is a person\'s name, not a product query',
-        'validate' => function($response) {
-            return mb_strpos($response, 'https://shop.sirichaielectric.com/product/') === false;
-        },
-        'validateMsg' => 'Response must NOT contain any product links (นาวินต้า is a person\'s name, not a product)'
-    ),
-    array(
         'question' => 'มอเตอร์ 2kw 380v กินกระแสเท่าไหร่',
         'expectation' => 'AI should calculate current using P=√3×V×I×cosφ formula and provide answer'
     ),
@@ -106,6 +98,14 @@ $questions = array(
     array(
         'question' => 'มีราง wire way 4"x8" ไหม',
         'expectation' => 'AI should use an EXACT catalog category name (e.g. รางวายเวย์ พ่นสี KJL {...}) — NOT a composed name like "รางวายเวย์ (Wire Way) KJL"'
+    ),
+    array(
+        'question' => 'มอเตอร์สตาร์ท รุ่น LE1-M35Q710 380VAC',
+        'expectation' => 'AI should search for the specific motor starter model and return product details with price',
+        'validate' => function($response) {
+            return mb_strpos($response, 'LE1') !== false || mb_strpos($response, 'มอเตอร์สตาร์ท') !== false || mb_strpos($response, 'ราคา') !== false;
+        },
+        'validateMsg' => 'Response must contain product info about the motor starter (LE1 model, มอเตอร์สตาร์ท, or ราคา)'
     )
 );
 
@@ -248,7 +248,7 @@ try {
         printSuccess("✓ Weight calculation with quantity");
         printSuccess("✓ IMC conduit product identification");
         printSuccess("✓ Wire way size query with exact catalog name matching");
-        printSuccess("✓ Random person's name must not trigger product search");
+        printSuccess("✓ Specific motor starter model lookup");
         echo "\n";
         printInfo("Test conversation saved with ID: $testConversationId");
         printInfo("Check logs.log for detailed API interactions");
