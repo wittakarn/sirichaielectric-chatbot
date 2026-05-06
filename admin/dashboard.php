@@ -533,8 +533,8 @@ unset($conv); // Break reference
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge badge-<?php echo $conv['platform']; ?>">
-                                                <?php echo strtoupper($conv['platform']); ?>
+                                            <span class="badge badge-<?php echo htmlspecialchars($conv['platform']); ?>">
+                                                <?php echo htmlspecialchars(strtoupper($conv['platform'])); ?>
                                             </span>
                                         </td>
                                         <td class="user-cell">
@@ -612,8 +612,8 @@ unset($conv); // Break reference
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge badge-<?php echo $conv['platform']; ?>">
-                                                <?php echo strtoupper($conv['platform']); ?>
+                                            <span class="badge badge-<?php echo htmlspecialchars($conv['platform']); ?>">
+                                                <?php echo htmlspecialchars(strtoupper($conv['platform'])); ?>
                                             </span>
                                         </td>
                                         <td class="user-cell">
