@@ -8,15 +8,17 @@ class ProductAPIService {
     private $config;
     private $searchService;
     private $productSearchUrl;
+    private $productKeywordsUrl;
     private $productDetailUrl;
     private $quotationUrl;
 
     public function __construct($config, $searchService) {
-        $this->config          = $config;
-        $this->searchService   = $searchService;
-        $this->productSearchUrl = $config['productSearchUrl'];
-        $this->productDetailUrl = $config['productDetailUrl'];
-        $this->quotationUrl     = $config['quotationUrl'];
+        $this->config             = $config;
+        $this->searchService      = $searchService;
+        $this->productSearchUrl   = $config['productSearchUrl'];
+        $this->productKeywordsUrl = isset($config['productKeywordsUrl']) ? $config['productKeywordsUrl'] : '';
+        $this->productDetailUrl   = $config['productDetailUrl'];
+        $this->quotationUrl       = $config['quotationUrl'];
     }
 
     /**
@@ -41,17 +43,32 @@ class ProductAPIService {
     }
 
     /**
-     * Search products by category names
-     * @param array $criterias Array of exact category names from the catalog
-     * @return string|null Returns markdown formatted product details, or null on error
+     * Search products. Tries the keywords endpoint first (better for model/part numbers
+     * and partial codes), then falls back to the category endpoint (better for exact
+     * catalog category names from search_catalog).
+     * @param array $criterias Search terms — model/part numbers, brand names, or category names
+     * @return string|null Returns markdown formatted product list, or null on error
      */
     public function searchProducts($criterias) {
         error_log('[ProductAPI] Searching products with criteria: ' . json_encode($criterias, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
+        if ($this->productKeywordsUrl !== '') {
+            $keywordsResult = $this->postCriterias($this->productKeywordsUrl, $criterias, 'keywords');
+            if ($this->hasProductLines($keywordsResult)) {
+                error_log('[ProductAPI] Keywords endpoint returned results — using those');
+                return $keywordsResult;
+            }
+            error_log('[ProductAPI] Keywords endpoint empty — falling back to categories endpoint');
+        }
+
+        return $this->postCriterias($this->productSearchUrl, $criterias, 'categories');
+    }
+
+    private function postCriterias($url, $criterias, $label) {
         $requestBody = json_encode(array('criterias' => $criterias));
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->productSearchUrl);
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
@@ -63,21 +80,25 @@ class ProductAPIService {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
+        $error    = curl_error($ch);
         curl_close($ch);
 
         if ($response === false) {
-            error_log('[ProductAPI] cURL error: ' . $error);
+            error_log('[ProductAPI] cURL error (' . $label . '): ' . $error);
             return null;
         }
-
         if ($httpCode !== 200) {
-            error_log('[ProductAPI] HTTP error: ' . $httpCode);
+            error_log('[ProductAPI] HTTP error (' . $label . '): ' . $httpCode);
             return null;
         }
-
-        error_log('[ProductAPI] Product search completed (' . strlen($response) . ' chars)');
+        error_log('[ProductAPI] ' . $label . ' search completed (' . strlen($response) . ' chars)');
         return $response;
+    }
+
+    private function hasProductLines($response) {
+        if ($response === null || $response === '') return false;
+        // Product lines start with "- " (markdown bullets). Empty payloads only have the format header.
+        return strpos($response, "\n- ") !== false || strpos($response, "- ") === 0;
     }
 
     /**

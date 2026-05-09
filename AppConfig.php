@@ -12,9 +12,10 @@ class AppConfig extends Config {
         parent::buildConfig();
 
         $this->config['productAPI'] = array(
-            'productSearchUrl' => $this->getEnv('PRODUCT_SEARCH_URL', ''),
-            'productDetailUrl' => $this->getEnv('PRODUCT_DETAIL_URL', ''),
-            'quotationUrl'     => $this->getEnv('QUOTATION_URL', ''),
+            'productSearchUrl'   => $this->getEnv('PRODUCT_SEARCH_URL', ''),
+            'productKeywordsUrl' => $this->getEnv('PRODUCT_KEYWORDS_URL', ''),
+            'productDetailUrl'   => $this->getEnv('PRODUCT_DETAIL_URL', ''),
+            'quotationUrl'       => $this->getEnv('QUOTATION_URL', ''),
         );
 
         $this->config['website'] = array(

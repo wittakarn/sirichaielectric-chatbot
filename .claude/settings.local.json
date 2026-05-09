@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php tests/test-chatbot-without-history.php)",
+      "Bash(php tests/test-chatbot-with-history.php)",
+      "Bash(php tests/test-chatbot-batch-price.php)",
+      "Bash(php tests/test-chatbot-unauthorized.php)",
+      "Bash(php -l services/ProductAPIService.php)",
+      "Bash(php -l AppConfig.php)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(php tests/test-path-a-fix.php)",
+      "Bash(php tests/test-quality-fixes.php)"
+    ]
+  }
+}
