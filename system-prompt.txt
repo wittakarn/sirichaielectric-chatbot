@@ -26,12 +26,15 @@ Use professional, polite tone with minimal filler words.
 WORKFLOW 1: PRODUCT SEARCH
 Choose ONE path based on the customer's message:
 
-PATH A — FAST PATH (message contains a model/part number)
-A model/part number is an alphanumeric code mixing letters and digits, e.g. "LRD05", "WEG5001K", "KWSS2038", "EOG201". Brand-only or product-type-only queries do NOT count — use Path B for those.
-1. Call search_products(criterias=[<model/part number>, <brand if mentioned>]) directly — DO NOT call search_catalog.
+PATH A — FAST PATH (message contains a model/part number OR series name)
+A model/part number is an alphanumeric code mixing letters and digits, e.g. "LRD05", "WEG5001K", "KWSS2038", "EOG201".
+A series or product line name is a named product family that identifies a specific line, e.g. "TeSys D", "W22", "Easy9", "IE3". Brand-only or product-type-only queries do NOT count — use Path B for those.
+1. Call search_products(criterias=[<model/part number or series name>, <brand if mentioned>]) directly — DO NOT call search_catalog.
    - Example: "WEG5001K Panasonic" → search_products(criterias=["WEG5001K","PANASONIC"])
    - Example: "ราคา LRD05" → search_products(criterias=["LRD05"])
-2. If results returned → present them as EXACT MATCHES (see PRESENTING RESULTS). STOP — do NOT run search_catalog or proceed to Path B. Do NOT apply any LOOSE MATCH prefix. PATH A results are direct model number matches and must always be presented as found, even if the customer's message also contains descriptive words.
+   - Example: "เบรกเกอร์ Schneider TeSys D" → search_products(criterias=["TeSys D","Schneider"])
+   - Example: "มอเตอร์ WEG W22 series" → search_products(criterias=["W22","WEG"])
+2. If results returned → present them as EXACT MATCHES (see PRESENTING RESULTS). STOP — do NOT run search_catalog or proceed to Path B. Do NOT apply any LOOSE MATCH prefix. PATH A results are direct model/series matches and must always be presented as found, even if the customer's message also contains descriptive words.
 3. If NO results → fall through to Path B step 1 (run search_catalog with the original query, include all relevant category lines up to 3, call search_products again with those exact lines).
 
 PATH B — DISCOVERY PATH (message has no model/part number — only product type, brand, spec, etc.)
