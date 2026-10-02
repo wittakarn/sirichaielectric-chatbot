@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0783c774159b4695f22ad4b454bfb933",
+    "content-hash": "4eca24a6c5f8a34945c10ea4a56d1556",
     "packages": [
         {
             "name": "wittakarn/chatbot-core",
-            "version": "v1.2.2",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:wittakarn/chatbot-core.git",
-                "reference": "55caf2d78807d93b3ebec175fec08a79e5343b3d"
+                "reference": "b1cba7e94e71d17c3659eb75915b31ea02071b7b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wittakarn/chatbot-core/zipball/55caf2d78807d93b3ebec175fec08a79e5343b3d",
-                "reference": "55caf2d78807d93b3ebec175fec08a79e5343b3d",
+                "url": "https://api.github.com/repos/wittakarn/chatbot-core/zipball/b1cba7e94e71d17c3659eb75915b31ea02071b7b",
+                "reference": "b1cba7e94e71d17c3659eb75915b31ea02071b7b",
                 "shasum": ""
             },
             "require": {
@@ -34,10 +34,10 @@
             ],
             "description": "Core library for AI chatbots (Gemini + LINE + MySQL)",
             "support": {
-                "source": "https://github.com/wittakarn/chatbot-core/tree/v1.2.2",
+                "source": "https://github.com/wittakarn/chatbot-core/tree/v1.3.0",
                 "issues": "https://github.com/wittakarn/chatbot-core/issues"
             },
-            "time": "2026-09-28T16:16:14+00:00"
+            "time": "2026-10-02T13:45:47+00:00"
         }
     ],
     "packages-dev": [],
