@@ -292,3 +292,24 @@ class MyWebhook extends LineWebhookHandler {
 
 **Last Updated:** May 4, 2026
 **Version:** 3.1.0 — Supabase vector RAG replaces Cloud Run catalog endpoint
+
+## Guardrails (proof-tested)
+
+Security-relevant rules live in `guardrails/` as **Gates** (Rules + one Check + Proofs), adapted from [redproof](https://github.com/schalermthai/redproof). A passing Check only says the current code is fine; a **RED proof** plants a violation in a throw-away copy, reruns the *same* Check, and requires it to fail on the *targeted* Rule.
+
+```bash
+php guardrails/run.php check      # Checks against the real tree (exit 0/1/2)
+php guardrails/run.php prove      # prove every Rule can fail; a Rule with no RED proof is UNPROVEN
+php guardrails/run.php describe   # list Gates, Rules, Proofs
+```
+
+| Gate | Guards |
+|------|--------|
+| `prompt-injection` | each rule of `services/PromptInjectionDetector.php`, plus no false positives on real queries |
+| `input-guard` | 1000-char limit (inclusive boundary) and injection refusal in `services/InputGuard.php` |
+| `quotation-price-type` | unauthorized users forced to tier `c` (`services/PriceTypePolicy.php`) |
+| `wiring` | chatbot still calls the guard/policy; `system-prompt.txt` keeps its SECURITY block |
+
+Exit codes: `0` ok, `1` breach / proof failed, `2` refused (Check inspected nothing, unknown gate, unhealthy baseline).
+
+Conventions: detector rules are one line each with a stable id (`sub/…`, `rx/…`) because proofs disable a rule by rewriting its line. Adding a rule means adding its payload and a RED proof in `guardrails/gates/prompt-injection.php`. Run `prove` before merging changes to the guarded files.

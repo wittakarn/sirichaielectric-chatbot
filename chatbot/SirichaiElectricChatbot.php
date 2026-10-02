@@ -2,6 +2,9 @@
 
 use ChatbotCore\GeminiChatbot;
 
+require_once __DIR__ . '/../services/InputGuard.php';
+require_once __DIR__ . '/../services/PriceTypePolicy.php';
+
 /**
  * Sirichai Electric chatbot.
  * Extends ChatbotCore\GeminiChatbot with product-search, product-detail, and quotation functions.
@@ -11,8 +14,16 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     /** @var ProductAPIService|null */
     private $productAPI;
 
-    public function __construct(array $config, $productAPI = null) {
+    /** @var InputGuard */
+    private $inputGuard;
+
+    /** @var PriceTypePolicy */
+    private $priceTypePolicy;
+
+    public function __construct(array $config, $productAPI = null, ?InputGuard $inputGuard = null, ?PriceTypePolicy $priceTypePolicy = null) {
         $this->productAPI = $productAPI;
+        $this->inputGuard = $inputGuard !== null ? $inputGuard : new InputGuard();
+        $this->priceTypePolicy = $priceTypePolicy !== null ? $priceTypePolicy : new PriceTypePolicy();
         parent::__construct($config);
     }
 
@@ -25,78 +36,27 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     }
 
     public function chat(string $message, array $conversationHistory = array()): array {
-        if (mb_strlen($message, 'UTF-8') > 1000) {
+        $reason = $this->inputGuard->refusalReason($message);
+        if ($reason === InputGuard::REASON_TOO_LONG) {
             error_log('[SirichaiElectricChatbot] Message too long blocked: ' . mb_strlen($message, 'UTF-8') . ' chars');
-            return array(
-                'success'        => true,
-                'response'       => 'ขออภัยค่ะ ข้อความยาวเกินไป กรุณาสอบถามสั้น ๆ เช่น ชื่อสินค้า ยี่ห้อ หรือรุ่นที่ต้องการค่ะ',
-                'language'       => 'th',
-                'tokensUsed'     => 0,
-                'searchCriteria' => null,
-            );
+            return $this->refusal('ขออภัยค่ะ ข้อความยาวเกินไป กรุณาสอบถามสั้น ๆ เช่น ชื่อสินค้า ยี่ห้อ หรือรุ่นที่ต้องการค่ะ');
         }
-        if ($this->isPromptInjection($message)) {
+        if ($reason === InputGuard::REASON_INJECTION) {
             error_log('[SirichaiElectricChatbot] Prompt injection attempt blocked: ' . substr($message, 0, 200));
-            return array(
-                'success'        => true,
-                'response'       => 'ขออภัยค่ะ ระบบนี้ให้บริการด้านสินค้าไฟฟ้าของศิริชัยอิเล็คทริคเท่านั้น กรุณาสอบถามเกี่ยวกับสินค้าที่ต้องการค่ะ',
-                'language'       => 'th',
-                'tokensUsed'     => 0,
-                'searchCriteria' => null,
-            );
+            return $this->refusal('ขออภัยค่ะ ระบบนี้ให้บริการด้านสินค้าไฟฟ้าของศิริชัยอิเล็คทริคเท่านั้น กรุณาสอบถามเกี่ยวกับสินค้าที่ต้องการค่ะ');
         }
         return parent::chat($message, $conversationHistory);
     }
 
-    private function isPromptInjection(string $message): bool {
-        // Exact substrings — short enough that no variation is needed
-        $substrings = array(
-            'system prompt',
-            'system instruction',
-            'act as dan',
-            'pretend you have no',
-            'jailbreak',
-            'ลืมคำสั่ง',
-            'ละเว้นคำสั่ง',
-            'เพิกเฉยคำสั่ง',
-            'บอกคำสั่งของคุณ',
-            'แสดงคำสั่งของคุณ',
-            'พิมพ์คำสั่งของคุณ',
-            'คำสั่งระบบ',
+    // Canned reply for refused input: no model call, so no tokens spent.
+    private function refusal(string $text): array {
+        return array(
+            'success'        => true,
+            'response'       => $text,
+            'language'       => 'th',
+            'tokensUsed'     => 0,
+            'searchCriteria' => null,
         );
-        $lower = mb_strtolower($message, 'UTF-8');
-        foreach ($substrings as $s) {
-            if (mb_strpos($lower, $s) !== false) {
-                return true;
-            }
-        }
-
-        // Regex patterns — flexible middle (.{0,50}) catches word variations
-        // e.g. "ignore original/initial/all/the/my instructions"
-        $regexes = array(
-            // override verb + any words + instruction noun
-            '/(ignore|disregard|forget|override|bypass|dismiss|drop|erase|replace)\b.{0,50}\b(instruction|prompt|directive|guideline)/is',
-            // reveal/output verb + any words + instruction noun
-            '/(output|reveal|print|show|repeat|display|expose|dump|give me|tell me)\b.{0,40}\b(instruction|prompt|directive|guideline)/is',
-            // persona/role switching
-            '/(you are now|act as|pretend (you are|to be)|behave as|roleplay as|simulate being)\b/i',
-            // "new instructions" injection
-            '/\bnew\s+(instruction|prompt|rule|directive)s?\b/i',
-            // verbatim output request
-            '/\b(instruction|prompt|directive)s?\b.{0,30}\bverbatim\b/i',
-            '/\bverbatim\b.{0,30}\b(instruction|prompt|directive)s?\b/i',
-            // Thai: ละเว้น/ลบ/เปลี่ยน + คำสั่ง/กฎ
-            '/(?:ละเว้น|ลบ|เปลี่ยน|แทนที่).{0,30}(?:คำสั่ง|กฎ|prompt)/u',
-            // Thai: บอก/แสดง/พิมพ์ + กฎ/prompt
-            '/(?:บอก|แสดง|พิมพ์|เปิดเผย).{0,20}(?:กฎ|prompt|คำแนะนำระบบ)/u',
-        );
-        foreach ($regexes as $pattern) {
-            if (preg_match($pattern, $message)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     protected function getFunctionDeclarations(): array {
@@ -214,12 +174,8 @@ class SirichaiElectricChatbot extends GeminiChatbot {
 
         if ($functionName === 'generate_quotation') {
             $quotaDetail = isset($args['quotaDetail']) ? $args['quotaDetail'] : array();
-            $priceType   = isset($args['priceType']) ? $args['priceType'] : 'c';
-
-            $validTypes = array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f');
-            if (!in_array($priceType, $validTypes) || !$this->isAuthorized) {
-                $priceType = 'c';
-            }
+            // Model-supplied priceType is untrusted; the policy forces tier 'c' for unauthorized users.
+            $priceType   = $this->priceTypePolicy->resolve(isset($args['priceType']) ? $args['priceType'] : null, $this->isAuthorized);
 
             if (empty($quotaDetail)) {
                 return 'No products provided for quotation.';
