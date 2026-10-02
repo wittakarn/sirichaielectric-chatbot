@@ -191,9 +191,16 @@ sleep 15
 /Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-batch-price.php
 sleep 15
 /Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-unauthorized.php
+sleep 15
+/Applications/MAMP/bin/php/php7.4.33/bin/php tests/test-chatbot-english.php
 ```
 
 ### Test Coverage
+
+**`test-chatbot-english.php`** — English conversation (3 turns):
+1. "hi" → English fallback, no Thai, no security refusal
+2. English price question → product links with "Price: X THB/Unit", no Thai template text
+3. "Please create a quotation …" → English trigger generates PDF
 
 **`test-chatbot-without-history.php`** — 5 independent questions (no history):
 1. Motor current calculation (general electrical engineering)
