@@ -73,7 +73,8 @@ class SirichaiLineWebhook extends LineWebhookHandler {
 
         // Store placeholder with search criteria captured from AI response
         $searchCriteria = isset($response['searchCriteria']) ? $response['searchCriteria'] : null;
-        $this->conversationManager->addMessage($conversationId, 'user', '[ผู้ใช้ส่งรูปภาพ]', 0, $searchCriteria);
+        $placeholder = '[รูปภาพ]' . ($text !== '' ? ' ' . $text : '');
+        $this->conversationManager->addMessage($conversationId, 'user', $placeholder, 0, $searchCriteria);
 
         if ($response['success']) {
             $tokensUsed = isset($response['tokensUsed']) ? $response['tokensUsed'] : 0;
