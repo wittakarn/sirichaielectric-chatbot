@@ -102,29 +102,15 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     protected function getFunctionDeclarations(): array {
         return array(array('functionDeclarations' => array(
             array(
-                'name'        => 'search_catalog',
-                'description' => 'Look up catalog category names relevant to the customer\'s product question. Used in WORKFLOW 1 Path B — when the customer\'s message has NO specific model/part number, only a product type, brand, or spec. If the message DOES contain a model/part number (e.g. "LRD05", "WEG5001K"), skip this function and call search_products directly with loose terms (Path A). Returns the closest matching catalog category lines — use them verbatim to call search_products; whether the results count as a LOOSE MATCH (requiring the "ไม่พบ" prefix) is determined by the PRESENTING RESULTS rule in the system prompt, not by this function\'s output alone. Pass the customer\'s product question as-is — no keyword extraction or rewriting needed. Full path/selection rules live in the system prompt (WORKFLOW 1 Path A & Path B).',
-                'parameters'  => array(
-                    'type'       => 'object',
-                    'properties' => array(
-                        'query' => array(
-                            'type'        => 'string',
-                            'description' => 'The customer\'s product question, passed through as-is. Use only when the question has NO model/part number. Example: "ขอราคาเบรกเกอร์ 32A" or "สายไฟ THW สีดำ ยาซากิ" or "เบรกเกอร์ ABB 3P". (Queries containing a code like "LRD05" should go to search_products directly — do NOT call search_catalog for those.)'
-                        )
-                    ),
-                    'required' => array('query')
-                )
-            ),
-            array(
                 'name'        => 'search_products',
-                'description' => 'Search for products. The criterias array accepts either: (a) loose terms — a model/part number and optionally a brand name (e.g. ["WEG5001K","PANASONIC"]) — used in WORKFLOW 1 Path A when the customer\'s message contains a specific model/part code; or (b) exact catalog category names returned from search_catalog() — used in WORKFLOW 1 Path B. Returns results as lines formatted: "Name | Price | Unit | Id". Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Maximum 3 criteria items.',
+                'description' => 'Search for products. Each criterias item is the search query for ONE product — the words the customer used for that product (type, brand, model/part number, size, colour). For a list of several products, pass every product in ONE call, one item each. Results come back grouped under a "## <query>" heading per item, as lines formatted: "Name | Price | Unit | Id", best match first. Use the numeric Id (4th field) to render every product as a markdown link: "[Name](https://shop.sirichaielectric.com/product/Id) ราคา: Price บาท/Unit". Maximum 10 items.',
                 'parameters'  => array(
                     'type'       => 'object',
                     'properties' => array(
                         'criterias' => array(
                             'type'        => 'array',
                             'items'       => array('type' => 'string'),
-                            'description' => 'Array of search criteria — either loose terms (model/part number, brand) for Path A, or EXACT category names returned from search_catalog() for Path B. Maximum 3 items. Never mix terms from different products in one call.'
+                            'description' => 'One search query per product, e.g. ["เบรกเกอร์ ABB 3P 32A"] or, for a list, ["สายไฟ THW 1x2.5 ยาซากิ สีดำ", "LRD05", "รางวายเวย์ KWSS2038"]. Keep the words for each product together in its own item; never merge two products into one item. Maximum 10 items.'
                         )
                     ),
                     'required' => array('criterias')
@@ -185,17 +171,8 @@ class SirichaiElectricChatbot extends GeminiChatbot {
             return 'Product API service not available.';
         }
 
-        if ($functionName === 'search_catalog') {
-            $query = isset($args['query']) ? trim($args['query']) : '';
-            if ($query === '') {
-                return 'No search query provided.';
-            }
-            $result = $this->productAPI->searchCatalog($query);
-            return $result !== null && $result !== '' ? $result : 'No matching catalog entries found.';
-        }
-
         if ($functionName === 'search_products') {
-            $criterias = isset($args['criterias']) ? $args['criterias'] : array();
+            $criterias = isset($args['criterias']) ? array_slice(array_filter(array_map('trim', (array) $args['criterias']), 'strlen'), 0, 10) : array();
             if (empty($criterias)) {
                 return 'No search criteria provided.';
             }
@@ -233,10 +210,6 @@ class SirichaiElectricChatbot extends GeminiChatbot {
     }
 
     protected function extractSearchCriteria(string $functionName, array $args): ?string {
-        if ($functionName === 'search_catalog' && isset($args['query'])) {
-            return json_encode(array('query' => $args['query']), JSON_UNESCAPED_UNICODE);
-        }
-
         if ($functionName === 'search_products' && isset($args['criterias'])) {
             return json_encode($args['criterias'], JSON_UNESCAPED_UNICODE);
         }

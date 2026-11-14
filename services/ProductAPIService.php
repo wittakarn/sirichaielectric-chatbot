@@ -9,6 +9,7 @@ class ProductAPIService {
     private $searchService;
     private $productSearchUrl;
     private $productKeywordsUrl;
+    private $productByIdsUrl;
     private $productDetailUrl;
     private $quotationUrl;
 
@@ -17,40 +18,27 @@ class ProductAPIService {
         $this->searchService      = $searchService;
         $this->productSearchUrl   = $config['productSearchUrl'];
         $this->productKeywordsUrl = isset($config['productKeywordsUrl']) ? $config['productKeywordsUrl'] : '';
+        $this->productByIdsUrl    = isset($config['productByIdsUrl']) ? $config['productByIdsUrl'] : '';
         $this->productDetailUrl   = $config['productDetailUrl'];
         $this->quotationUrl       = $config['quotationUrl'];
     }
 
     /**
-     * Search the product catalog via Supabase vector similarity search.
-     * Returns relevant catalog category lines, used by Gemini to pick exact category names.
-     * @param string $query Free-form search query (brand, model, product type, etc.)
-     * @return string|null Returns newline-joined catalog lines, or null on error
-     */
-    public function searchCatalog($query) {
-        error_log('[ProductAPI] Search catalog query: ' . $query);
-
-        $result = $this->searchService->search($query);
-
-        if (!$result['success']) {
-            error_log('[ProductAPI] Search failed: ' . (isset($result['error']) ? $result['error'] : 'unknown'));
-            return null;
-        }
-
-        $resultText = implode("\n", $result['results']);
-        error_log('[ProductAPI] Search catalog returned ' . count($result['results']) . ' results (' . strlen($resultText) . ' chars):' . PHP_EOL . $resultText);
-        return $resultText;
-    }
-
-    /**
-     * Search products. Tries the keywords endpoint first (better for model/part numbers
-     * and partial codes), then falls back to the category endpoint (better for exact
-     * catalog category names from search_catalog).
-     * @param array $criterias Search terms — model/part numbers, brand names, or category names
+     * Search products, one query per product. The OneElectric Supabase index finds the
+     * product IDs (all queries in parallel), Sirichai's by-IDs endpoint prices them.
+     * If that finds nothing, falls back to the keywords endpoint, then the category endpoint.
+     * @param array $criterias One search query per product
      * @return string|null Returns markdown formatted product list, or null on error
      */
     public function searchProducts($criterias) {
         error_log('[ProductAPI] Searching products with criteria: ' . json_encode($criterias, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $indexed = $this->searchIndex($criterias);
+        if ($indexed !== null) {
+            error_log('[ProductAPI] Index search returned (' . strlen($indexed) . ' chars):' . PHP_EOL . $indexed);
+            return $indexed;
+        }
+        error_log('[ProductAPI] Index search empty — falling back to keywords endpoint');
 
         if ($this->productKeywordsUrl !== '') {
             $keywordsResult = $this->postCriterias($this->productKeywordsUrl, $criterias, 'keywords');
@@ -64,8 +52,62 @@ class ProductAPIService {
         return $this->postCriterias($this->productSearchUrl, $criterias, 'categories');
     }
 
+    /** @return string|null product lines grouped per query, or null when nothing was found */
+    private function searchIndex($queries) {
+        if ($this->productByIdsUrl === '') {
+            return null;
+        }
+        $found = $this->searchService->searchMany($queries);
+        if ($found === null) {
+            return null;
+        }
+        $ids = array();
+        foreach ($found as $rows) {
+            foreach ($rows as $row) {
+                $ids[(int) $row['product_id']] = true;
+            }
+        }
+        if (empty($ids)) {
+            return null;
+        }
+        $priced = $this->pricesById(array_keys($ids));
+
+        $output = "# PRODUCTS\n\nFormat: Name | Price | Unit | Id\n";
+        $lines  = 0;
+        foreach ($found as $query => $rows) {
+            $output .= "\n## " . $query . "\n";
+            foreach ($rows as $row) {
+                $id = (int) $row['product_id'];
+                if (isset($priced[$id])) { // missing = not sold at Sirichai, or discontinued
+                    $output .= $priced[$id] . "\n";
+                    $lines++;
+                }
+            }
+        }
+        return $lines > 0 ? $output : null;
+    }
+
+    /**
+     * Sirichai name, price and unit for product IDs (shop endpoint services/products-by-ids.php).
+     * @return array id => "- Name | Price | Unit | Id"
+     */
+    private function pricesById($ids) {
+        $response = $this->postJson($this->productByIdsUrl, array('product_ids' => $ids), 'by-ids');
+        $priced = array();
+        foreach (explode("\n", (string) $response) as $line) {
+            if (preg_match('/^- .* \| (\d+)\s*$/u', $line, $m)) {
+                $priced[(int) $m[1]] = rtrim($line);
+            }
+        }
+        return $priced;
+    }
+
     private function postCriterias($url, $criterias, $label) {
-        $requestBody = json_encode(array('criterias' => $criterias));
+        return $this->postJson($url, array('criterias' => $criterias), $label);
+    }
+
+    private function postJson($url, $payload, $label) {
+        $requestBody = json_encode($payload);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);

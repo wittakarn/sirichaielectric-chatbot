@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0783c774159b4695f22ad4b454bfb933",
+    "content-hash": "0fd18999c72617133d612d054927d69d",
     "packages": [
         {
             "name": "wittakarn/chatbot-core",
-            "version": "v1.2.1",
+            "version": "v1.3.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:wittakarn/chatbot-core.git",
-                "reference": "13c90529951954e53a7cb84a339f95059190f3be"
+                "reference": "20b145d298d5b1cf908aac24a912140219c1c136"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wittakarn/chatbot-core/zipball/13c90529951954e53a7cb84a339f95059190f3be",
-                "reference": "13c90529951954e53a7cb84a339f95059190f3be",
+                "url": "https://api.github.com/repos/wittakarn/chatbot-core/zipball/20b145d298d5b1cf908aac24a912140219c1c136",
+                "reference": "20b145d298d5b1cf908aac24a912140219c1c136",
                 "shasum": ""
             },
             "require": {
@@ -34,21 +34,21 @@
             ],
             "description": "Core library for AI chatbots (Gemini + LINE + MySQL)",
             "support": {
-                "source": "https://github.com/wittakarn/chatbot-core/tree/v1.2.1",
+                "source": "https://github.com/wittakarn/chatbot-core/tree/v1.3.1",
                 "issues": "https://github.com/wittakarn/chatbot-core/issues"
             },
-            "time": "2026-03-16T06:36:01+00:00"
+            "time": "2026-11-14T07:20:07+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": ">=7.4"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
 }
