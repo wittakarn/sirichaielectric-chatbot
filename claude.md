@@ -8,7 +8,7 @@ This file provides context for Claude AI when working on this codebase.
 
 **Name:** Sirichai Electric Chatbot
 **Purpose:** AI-powered customer service chatbot for electrical product inquiries
-**Tech Stack:** PHP 7.4+, MySQL 5.7+, Google Gemini 2.5 Flash API, LINE Messaging API
+**Tech Stack:** PHP 7.4+, MySQL 5.7+, Google Gemini 3.8 Flash API (thinking level `low`), LINE Messaging API
 **Architecture:** chatbot-core library (Composer package) + Sirichai application layer
 
 ## Architecture: Two-Layer Design
@@ -36,14 +36,15 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 | File | Role |
 |------|------|
-| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 4 functions: `search_catalog`, `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
+| `chatbot/SirichaiElectricChatbot.php` | Extends `GeminiChatbot` — implements 3 functions: `search_products`, `search_product_detail`, `generate_quotation`. Forces `priceType=c` for unauthorized users |
 | `SirichaiLineWebhook.php` | Extends `LineWebhookHandler` — wires chatbot + ConversationManager, checks authorization per user |
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
-| `services/SearchService.php` | Embeds a query via Gemini Embedding API then queries Supabase `search_product_catalog` RPC for vector-similar catalog entries |
-| `services/ProductAPIService.php` | Wraps `SearchService` for catalog RAG + HTTP client for 3 external APIs: product search by category, product detail, quotation PDF |
+| `services/SearchService.php` | Product search on the **OneElectric** Supabase index (product IDs are shared by both shops): one batch Gemini embedding call (1536 dims) for all queries, then the `search_products_all` RPC per query in parallel. Returns product IDs + names |
+| `services/ProductAPIService.php` | `searchProducts()`: IDs from `SearchService`, then Sirichai names/prices from the shop's `products-by-ids.php` (falls back to the keywords, then categories endpoint when the index finds nothing). Also product detail + quotation PDF |
 | `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
+| `supabase/search_products_all.sql` | The RPC Sirichai calls, stored in the OneElectric Supabase. Same vector + keyword RRF as OneElectric's `search_products`, but ignores sales |
 
 ### Admin & Dashboard
 
@@ -59,29 +60,31 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 
 ## Key Architecture Decisions
 
-### Catalog Lookup — Two-Path Search
-- **System prompt** → inline `systemInstruction` text (~8KB, direct, reloaded every request)
-- **Product catalog** → on-demand RAG search via `search_catalog` Gemini function when needed (no File API upload, no local catalog cache)
-- The catalog is indexed in **Supabase** as vector embeddings. `SearchService` embeds the query with `gemini-embedding-001`, then calls the Supabase `search_product_catalog` RPC; results are category name strings that Gemini picks from.
+### Product Search — One Call, OneElectric Index
+- **System prompt** → inline `systemInstruction` text, reloaded every request
+- **Products** → `search_products(criterias=[one query per product])`, the customer's own words per item. A batch list is ONE call.
+- Pipeline (`ProductAPIService::searchProducts`):
+  1. `SearchService::searchMany` — one Gemini `batchEmbedContents` call (`gemini-embedding-001`, `RETRIEVAL_QUERY`, 1536 dims), then `rpc/search_products_all` for every query in parallel (curl_multi) on the **OneElectric** Supabase. Up to 20 `{product_id, name}` per query.
+  2. `POST {PRODUCT_BY_IDS_URL}` with `{"product_ids":[...]}` → Sirichai `Name | Price | Unit | Id` lines (discontinued/hidden products dropped).
+  3. Output grouped under `## <query>` per item; Gemini picks the matching lines.
+  4. If the index finds nothing priced → keywords endpoint → categories endpoint.
+- The index is owned by OneElectric (`oneelectric-chatbot/supabase/schema.sql`, nightly ingest there). Sirichai only reads it; products sold only by Sirichai are found through the fallback endpoints.
+- Sales are ignored on purpose (`search_products_all`, not OneElectric's sales-filtered `search_products`).
 
-WORKFLOW 1 in `system-prompt.txt` defines two paths:
-- **Path A (fast path)** — when the customer's message contains a model/part number (alphanumeric code like `LRD05`, `WEG5001K`, `KWSS2038`), AI calls `search_products(criterias=[code, brand?])` directly with **loose terms**. Skips `search_catalog` entirely. Falls through to Path B if results are empty.
-- **Path B (discovery path)** — when there's no model/part number (only product type, brand, spec), AI calls `search_catalog(query)` → picks the closest 1–2 returned category lines verbatim → calls `search_products(criterias=[exact catalog names])`.
-
-This means `search_products` accepts two shapes for its `criterias` array — see the function declaration in `chatbot/SirichaiElectricChatbot.php`.
-
-### Function Calling (4 Available Functions)
+### Function Calling (3 Available Functions)
 Gemini two-step flow:
 1. AI returns function call request
 2. PHP executes → sends result back → AI formats text response
 
 Available functions:
-- `search_catalog(query)` — RAG lookup of catalog category names. Used in Path B only.
-- `search_products(criterias[])` — search products. Accepts (a) loose terms (model/part + brand) for Path A, or (b) exact catalog category names for Path B. Max 3 criteria.
+- `search_products(criterias[])` — one query per product, max 10. Returns lines grouped per query.
 - `search_product_detail(productName)` — get specs (weight, size, qty/pack) by fuzzy name match
 - `generate_quotation(quotaDetail[], priceType)` — generate PDF, forces `priceType=c` if unauthorized
 
-Chained calls: up to **6 additional** rounds. **Note:** 5-product batch with Path B for every item needs ~10 calls (5 × catalog+products) plus quotation = 11 — the cap is currently a known limit; Path A reduces this to 5–6 calls when items have model codes.
+Chained calls: up to **6 additional** rounds. A 5-product batch + quotation now needs 2 calls (was ~11 with the old catalog → products path).
+
+### Gemini Thinking
+`GEMINI_THINKING_LEVEL=low` (chatbot-core ≥ v1.3.1). Gemini time was 75–93% of every answer; `low` cut answers from 12–28 s to 8–9 s with all tests passing and harder electrical questions still answered correctly (it can skip extra nuance, e.g. star-delta overload setting). chatbot-core ≥ v1.3.0 is also required for Gemini 3.x `thoughtSignature` on function calls.
 
 ### Authorization System
 - `authorized_users` DB table — stores authorized LINE user IDs
@@ -141,7 +144,8 @@ user_id   VARCHAR(100)           -- LINE user ID substring match
 ```bash
 # Gemini
 GEMINI_API_KEY=xxx
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_THINKING_LEVEL=low   # chatbot-core >= 1.3.1; minimal|low|medium|high
 GEMINI_TEMPERATURE=0.7
 GEMINI_MAX_OUTPUT_TOKENS=2048
 
@@ -157,11 +161,13 @@ LINE_CHANNEL_SECRET=xxx
 LINE_CHANNEL_ACCESS_TOKEN=xxx
 VERIFY_LINE_SIGNATURE=true
 
-# Supabase RAG (catalog vector search)
-SUPABASE_REST_URL=https://<project>.supabase.co
-SUPABASE_KEY=xxx                              # service role or anon key with RPC access
+# Supabase product index — the OneElectric project (shared product IDs)
+SUPABASE_REST_URL=https://<oneelectric-project>.supabase.co
+SUPABASE_KEY=xxx                              # key with RPC access to search_products_all
 
-# Product API (all 3 required)
+# Product API
+PRODUCT_BY_IDS_URL=https://shop.sirichaielectric.com/services/products-by-ids.php   # prices for index hits
+PRODUCT_KEYWORDS_URL=https://shop.sirichaielectric.com/services/products-by-keywords-prompt.php  # fallback 1
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
@@ -217,7 +223,7 @@ sleep 15
 12. Color inquiry — AI must NOT fabricate variants not in data
 
 **`test-chatbot-batch-price.php`** — Batch price workflow (WORKFLOW 1B):
-- Multiple products searched sequentially
+- All products searched in ONE `search_products` call (one criteria item each)
 - All prices shown (not 3-max rule)
 - Quotation offered at end
 
@@ -263,12 +269,13 @@ class MyWebhook extends LineWebhookHandler {
 
 ## Common Pitfalls
 
-1. **Batch quotation cut short** — chained call limit is 6 (was 2, increased for 5-product batches)
+1. **Batch quotation cut short** — chained call limit is 6; a batch is now one `search_products` call, so this should no longer trigger
 2. **Empty STOP from Gemini** — retry with `mode=ANY` handles this automatically
 3. **Unauthorized user gets wrong rate** — `priceType` override is in `executeFunction()` in `SirichaiElectricChatbot`
 4. **LINE reply timeout** — not applicable, Push API is used (not Reply API)
 5. **Config not loading** — `AppConfig::validate()` throws on missing required keys; check `.env`
-6. **`search_catalog` returns wrong/loose matches** — issue is in the Supabase vector index (embedding quality / catalog content), not the chatbot. AI is instructed to pick the closest match anyway in single-product mode (see `system-prompt.txt` WORKFLOW 1 Path B + PRESENTING RESULTS LOOSE MATCH). For queries containing a model/part number, AI uses Path A and skips `search_catalog` altogether.
+6. **Search returns wrong/loose matches** — the ranking comes from the OneElectric index (`search_products_all`: embedding quality + name tokens). Check with the OneElectric CLI `php bin/search.php "<query>"`. A product missing from results may not exist in OneElectric's index — the keywords/categories fallback only runs when the index finds nothing.
+7. **`HTTP 400 ... missing a thought_signature`** — chatbot-core older than v1.3.0 with a Gemini 3.x model. Run `composer install`.
 
 ## Chatbot Behaviors (system-prompt.txt)
 
@@ -276,19 +283,20 @@ class MyWebhook extends LineWebhookHandler {
 - Default priceType: `"c"` when no rate specified
 - Unauthorized users: always forced to `"c"`
 - All prices include VAT
-- **WORKFLOW 1B (Batch Price):** One search per product sequentially, show ALL prices, offer quotation at end: "ต้องการออกใบเสนอราคาไหมคะ?"
+- **WORKFLOW 1B (Batch Price):** One `search_products` call with one item per product, show ALL prices, offer quotation at end: "ต้องการออกใบเสนอราคาไหมคะ?"
 - Quotation TRIGGER: message contains "ออกใบเสนอราคา" or "สร้างใบเสนอราคา"
 - NEVER auto-generate quotation from price inquiry alone
 - Must use EXACT product names from search results for `generate_quotation`
+- Customer asks for a quotation instead of answering a set-or-add quantity question → treat "เอา X" as set to X, generate, and state the quantity used
 
 ## Debugging
 
 1. Check `logs.log` — all components log with `[ClassName]` prefix
 2. Token usage logged per Gemini call — look for `[GeminiChatbot] Token Usage`
 3. Function calls logged — look for `[GeminiChatbot] Calling: <function>`
-4. RAG catalog search: look for `[ProductAPI] Search catalog query:` (embed + Supabase RPC) and the result lines that follow; also `[SearchService]` for embed/Supabase errors
+4. Product search: `[ProductAPI] Searching products with criteria:` then `Index search returned` (or `Index search empty — falling back`); `[SearchService]` for embed/Supabase errors
 
 ---
 
-**Last Updated:** May 4, 2026
-**Version:** 3.1.0 — Supabase vector RAG replaces Cloud Run catalog endpoint
+**Last Updated:** November 14, 2026
+**Version:** 4.0.0 — product search on the OneElectric Supabase index (one call per message), Gemini thinking `low`, chatbot-core 1.3.1
