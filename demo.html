@@ -378,6 +378,7 @@
     </style>
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="chat-render.js?v=2"></script>
 </head>
 <body>
     <div class="container">
@@ -535,22 +536,14 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message ' + role;
 
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-
-            // Parse markdown for assistant messages, use plain text for user
-            if (role === 'assistant' && typeof marked !== 'undefined') {
-                // Configure marked for security
-                marked.setOptions({
-                    breaks: true,
-                    gfm: true
-                });
-                contentDiv.innerHTML = marked.parse(content);
+            if (role === 'assistant') {
+                renderAssistant(messageDiv, content);
             } else {
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
                 contentDiv.textContent = content;
+                messageDiv.appendChild(contentDiv);
             }
-
-            messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
 
             // Scroll to bottom

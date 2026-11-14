@@ -15,8 +15,8 @@
     var scriptEl = scripts[scripts.length - 1];          // current script
     var scriptSrc = scriptEl.src || '';
     var BASE_URL  = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
-    var CHAT_URL  = BASE_URL + 'chat.html';
-
+    // Hourly cache-buster: prod sends no Cache-Control, so browsers otherwise keep a stale chat.html.
+    var CHAT_URL  = BASE_URL + 'chat.html?v=' + Math.floor(Date.now() / 36e5);
     // ── Inject CSS ────────────────────────────────────────────────────
     var css = [
         '#se-launcher{',

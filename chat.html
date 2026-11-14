@@ -248,6 +248,7 @@
         #sendButton:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="chat-render.js?v=2"></script>
 </head>
 <body>
 <div id="app">
@@ -379,22 +380,14 @@
         const msgDiv     = document.createElement('div');
         msgDiv.className = 'message ' + role;
 
-        const contentDiv     = document.createElement('div');
-        contentDiv.className = 'message-content';
-
-        if (role === 'assistant' && typeof marked !== 'undefined') {
-            const renderer = new marked.Renderer();
-            renderer.link = (token) => {
-                const t = token.title ? ` title="${token.title}"` : '';
-                return `<a href="${token.href}"${t} target="_blank" rel="noopener noreferrer">${token.text}</a>`;
-            };
-            marked.setOptions({ breaks: true, gfm: true, renderer });
-            contentDiv.innerHTML = marked.parse(content);
+        if (role === 'assistant') {
+            renderAssistant(msgDiv, content);
         } else {
+            const contentDiv     = document.createElement('div');
+            contentDiv.className = 'message-content';
             contentDiv.textContent = content;
+            msgDiv.appendChild(contentDiv);
         }
-
-        msgDiv.appendChild(contentDiv);
         container.appendChild(msgDiv);
         scrollToBottom();
     }
