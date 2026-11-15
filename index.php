@@ -9,6 +9,17 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
 ini_set('error_log', dirname(__FILE__) . '/logs.log');
+ini_set('log_errors', '1'); // some hosts default this off, which hides every failure
+
+// Last resort: any uncaught error is logged (with file:line) and answered as JSON, never a blank 500.
+set_exception_handler(function ($e) {
+    error_log('[API] Uncaught ' . get_class($e) . ': ' . $e->getMessage() . ' at ' . basename($e->getFile()) . ':' . $e->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+    }
+    echo json_encode(array('success' => false, 'error' => 'Internal server error'));
+});
 
 // Set headers
 header('Content-Type: application/json');
