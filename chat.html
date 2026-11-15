@@ -55,17 +55,16 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-        .btn-clear {
+        .btn-new-chat {
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.35);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
+            border: none;
+            padding: 4px;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
+            line-height: 0;
+            opacity: 0.85;
+            transition: opacity 0.2s;
         }
-        .btn-clear:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.55); }
+        .btn-new-chat:hover { opacity: 1; }
 
         .btn-close-mobile {
             display: none;
@@ -263,7 +262,14 @@
         </div>
         <div class="chat-header-right">
             <div class="status-dot" title="Online"></div>
-            <button class="btn-clear" onclick="clearConversation()">Clear</button>
+            <button class="btn-new-chat" onclick="newChat()" title="New chat" aria-label="New chat">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 1 1 21 11.5z"/>
+                    <line x1="12" y1="8" x2="12" y2="14"/>
+                    <line x1="9" y1="11" x2="15" y2="11"/>
+                </svg>
+            </button>
             <button class="btn-close-mobile" onclick="closeWidget()" title="Close chat">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                      stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -300,17 +306,81 @@
 
 </div>
 
+<div id="turnstileBox" style="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:50"></div>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script>
     // API URL: same origin as chat.html (works whether loaded directly or in iframe)
     const API_BASE_URL = window.location.origin + window.location.pathname.replace(/chat\.html.*$/, '');
 
+    // --- Cloudflare Turnstile: prove the visitor is human once, get a short-lived chat token ---
+    const TURNSTILE_SITE_KEY = '0x4AAAAAAGCHMI_9-iewhy_W';
+    let chatToken = sessionStorage.getItem('sirichai_chat_token');
+
+    async function getChatToken() {
+        if (chatToken) return chatToken;
+        while (!window.turnstile) await new Promise(r => setTimeout(r, 100)); // api.js loads async
+        return new Promise((resolve, reject) => {
+            const box = document.getElementById('turnstileBox');
+            box.innerHTML = '';
+            turnstile.render(box, {
+                sitekey: TURNSTILE_SITE_KEY,
+                appearance: 'interaction-only', // visible only if Cloudflare needs a click
+                callback: async (t) => {
+                    try {
+                        const r = await fetch(API_BASE_URL + 'verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ turnstileToken: t })
+                        });
+                        const d = await r.json();
+                        if (!d.success) throw new Error(d.error || 'Verification failed');
+                        chatToken = d.token;
+                        sessionStorage.setItem('sirichai_chat_token', chatToken);
+                        resolve(chatToken);
+                    } catch (e) { reject(e); }
+                },
+                'error-callback': () => reject(new Error('Verification failed'))
+            });
+        });
+    }
+
+    // POST /chat with the token; on 401 (expired) verify again and retry once.
+    async function chatFetch(body) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const token = await getChatToken();
+            const res = await fetch(API_BASE_URL + 'chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Chat-Token': token },
+                body: JSON.stringify(body)
+            });
+            if (res.status !== 401) return res;
+            chatToken = null;
+            sessionStorage.removeItem('sirichai_chat_token');
+        }
+        throw new Error('Verification failed');
+    }
+
     function closeWidget() {
         window.parent.postMessage({ type: 'sirichai:close' }, '*');
     }
-    let conversationId = sessionStorage.getItem('sirichai_conversation_id');
     let isProcessing = false;
 
+    // Redraw this browser's conversation (identified by the server-side cookie) after a refresh.
+    async function loadHistory() {
+        try {
+            const res  = await fetch(API_BASE_URL + 'history');
+            const data = await res.json();
+            if (!data.success || !data.messages.length) return;
+            const welcome = document.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+            const qq = document.getElementById('quickQuestions');
+            if (qq) qq.style.display = 'none';
+            data.messages.forEach(m => addMessage(m.role, m.content));
+        } catch (e) { /* start with an empty chat */ }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+        loadHistory();
         document.getElementById('messageInput').focus();
     });
 
@@ -341,19 +411,11 @@
         showTypingIndicator();
 
         try {
-            const res  = await fetch(API_BASE_URL + 'chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, conversationId })
-            });
+            const res  = await chatFetch({ message });
             const data = await res.json();
             hideTypingIndicator();
 
             if (data.success) {
-                if (data.conversationId) {
-                    conversationId = data.conversationId;
-                    sessionStorage.setItem('sirichai_conversation_id', conversationId);
-                }
                 if (data.reset) {
                     clearUI();
                 } else {
@@ -428,16 +490,12 @@
         btn.textContent = isProcessing ? '...' : 'Send';
     }
 
-    async function clearConversation() {
-        if (!conversationId) { clearUI(); return; }
-        if (!confirm('Clear this conversation?')) return;
-
+    // New chat: drop the conversation cookie (server-side, it is HttpOnly). History stays stored.
+    async function newChat() {
+        if (isProcessing) return;
         try {
-            await fetch(API_BASE_URL + 'conversation/' + conversationId, { method: 'DELETE' });
+            await fetch(API_BASE_URL + 'new-chat', { method: 'POST' });
         } catch (e) { /* ignore */ }
-
-        conversationId = null;
-        sessionStorage.removeItem('sirichai_conversation_id');
         clearUI();
     }
 

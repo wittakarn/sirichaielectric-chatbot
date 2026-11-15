@@ -5,7 +5,7 @@
  * freely without ever touching the real working tree (no restore step to forget).
  */
 final class Workspace {
-    const COPIED = array('guardrails', 'services', 'chatbot', 'system-prompt.txt');
+    const COPIED = array('guardrails', 'services', 'chatbot', 'system-prompt.txt', 'index.php');
 
     public static function create(string $root): string {
         $dir = sys_get_temp_dir() . '/guardrail-' . bin2hex(random_bytes(6));
