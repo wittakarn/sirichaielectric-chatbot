@@ -169,19 +169,29 @@ function requireChatAccess($config, $dbConfig) {
         exit;
     }
 
-    $pdo = \ChatbotCore\DatabaseManager::getInstance($dbConfig)->getConnection();
-    $hit = function ($tokenId, $window) use ($pdo) {
-        $pdo->prepare('INSERT INTO chat_rate_limits (token_id, window_start, hits) VALUES (?, ?, 1)
-                       ON DUPLICATE KEY UPDATE hits = hits + 1')->execute(array($tokenId, $window));
-        $q = $pdo->prepare('SELECT hits FROM chat_rate_limits WHERE token_id = ? AND window_start = ?');
-        $q->execute(array($tokenId, $window));
-        if (mt_rand(1, 100) === 1) { // housekeeping
-            $pdo->prepare('DELETE FROM chat_rate_limits WHERE window_start < ?')->execute(array($window - 60));
-        }
-        return (int)$q->fetchColumn();
-    };
+    try {
+        $pdo = \ChatbotCore\DatabaseManager::getInstance($dbConfig)->getConnection();
+        $hit = function ($tokenId, $window) use ($pdo) {
+            $pdo->prepare('INSERT INTO chat_rate_limits (token_id, window_start, hits) VALUES (?, ?, 1)
+                           ON DUPLICATE KEY UPDATE hits = hits + 1')->execute(array($tokenId, $window));
+            $q = $pdo->prepare('SELECT hits FROM chat_rate_limits WHERE token_id = ? AND window_start = ?');
+            $q->execute(array($tokenId, $window));
+            $hits = (int)$q->fetchColumn();
+            if (mt_rand(1, 100) === 1) { // housekeeping
+                $pdo->prepare('DELETE FROM chat_rate_limits WHERE window_start < ?')->execute(array($window - 60));
+            }
+            return $hits;
+        };
+        $allowed = ChatAccess::withinLimit($hit, $id, $now, $config->get('turnstile', 'maxPerMinute'));
+    } catch (\Throwable $e) {
+        // Fail closed, but say why in the log instead of a blank 500.
+        error_log('[ChatAccess] rate limiter failed: ' . get_class($e) . ': ' . $e->getMessage());
+        http_response_code(503);
+        echo json_encode(array('success' => false, 'error' => 'Service temporarily unavailable. Please try again shortly.'));
+        exit;
+    }
 
-    if (!ChatAccess::withinLimit($hit, $id, $now, $config->get('turnstile', 'maxPerMinute'))) {
+    if (!$allowed) {
         http_response_code(429);
         header('Retry-After: 60');
         echo json_encode(array('success' => false, 'error' => 'Too many requests. Please wait a minute and try again.'));
