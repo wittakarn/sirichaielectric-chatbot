@@ -16,6 +16,20 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     Deny from all
 </Files>
 
+# Prevent direct access to logs, prompts, data and project files (logs.log holds customer messages)
+<FilesMatch "\.(log|txt|json|lock|md|sql|zip|sh)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Browsers must re-check chat pages/scripts on every load (cheap 304 when unchanged),
+# so an upload reaches everyone at once instead of after a guessed cache time.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|js)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
 # Prevent directory listing
 Options -Indexes
 
