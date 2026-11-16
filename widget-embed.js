@@ -17,6 +17,8 @@
     var BASE_URL  = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
     // Hourly cache-buster: prod sends no Cache-Control, so browsers otherwise keep a stale chat.html.
     var CHAT_URL  = BASE_URL + 'chat.html?v=' + Math.floor(Date.now() / 36e5);
+    // Voice call button: host turns it on with widget-embed.js?call=1 (all pages) or page-url?call=1 (one visit).
+    if (/[?&]call=1\b/.test(scriptSrc) || /[?&]call=1\b/.test(location.search)) CHAT_URL += '&call=1';
     // ── Inject CSS ────────────────────────────────────────────────────
     var css = [
         '#se-launcher{',
@@ -83,7 +85,7 @@
     var panel = document.createElement('iframe');
     panel.id    = 'se-panel';
     panel.title = 'SirichaiElectric Chatbot';
-    panel.setAttribute('allow', 'clipboard-write');
+    panel.setAttribute('allow', 'clipboard-write; microphone'); // microphone: voice call (call.js)
 
     document.body.appendChild(launcher);
     document.body.appendChild(panel);
