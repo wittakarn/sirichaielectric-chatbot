@@ -376,6 +376,7 @@
             const qq = document.getElementById('quickQuestions');
             if (qq) qq.style.display = 'none';
             data.messages.forEach(m => addMessage(m.role, m.content));
+            window.parent.postMessage({ type: 'sirichai:hasHistory' }, '*'); // embed opens the panel
         } catch (e) { /* start with an empty chat */ }
     }
 

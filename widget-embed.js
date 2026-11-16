@@ -91,20 +91,16 @@
     // ── Widget logic ──────────────────────────────────────────────────
     var badge        = document.getElementById('se-badge');
     var isOpen       = false;
-    var iframeLoaded = false;
+
+    // Load chat.html right away (hidden): it reads the HttpOnly conversation cookie via /history
+    // and posts sirichai:hasHistory back, so a returning visitor gets the chat opened.
+    panel.src = CHAT_URL;
 
     function toggle() {
         isOpen = !isOpen;
         panel.classList.toggle('se-open', isOpen);
         launcher.classList.toggle('se-open', isOpen);
-
-        if (isOpen) {
-            badge.classList.remove('se-visible');
-            if (!iframeLoaded) {
-                panel.src  = CHAT_URL;
-                iframeLoaded = true;
-            }
-        }
+        if (isOpen) badge.classList.remove('se-visible');
     }
 
     launcher.addEventListener('click', toggle);
@@ -119,6 +115,9 @@
         if (!e.data) return;
         if (e.data.type === 'sirichai:newMessage' && !isOpen) {
             badge.classList.add('se-visible');
+        }
+        if (e.data.type === 'sirichai:hasHistory' && !isOpen) {
+            toggle();
         }
         if (e.data.type === 'sirichai:close' && isOpen) {
             toggle();
