@@ -27,6 +27,13 @@ class AppConfig extends Config {
             'maxRequestsPerMinute' => intval($this->getEnv('MAX_REQUESTS_PER_MINUTE', '15')),
         );
 
+        $this->config['turnstile'] = array(
+            'secret'      => $this->getEnv('TURNSTILE_SECRET', ''),
+            'tokenSecret' => $this->getEnv('CHAT_TOKEN_SECRET', ''),
+            // Per session token, per minute. Separate from MAX_REQUESTS_PER_MINUTE (Gemini quota sizing).
+            'maxPerMinute' => intval($this->getEnv('CHAT_MAX_REQUESTS_PER_MINUTE', '15')),
+        );
+
         $this->config['admin'] = array(
             'username'      => $this->getEnv('ADMIN_USERNAME', ''),
             'password_hash' => $this->getEnv('ADMIN_PASSWORD_HASH', ''),

@@ -128,7 +128,7 @@ callGeminiWithFunctions()  ← catalog file URI prepended to first message
 ```
 sirichaielectric-chatbot/
 │
-├── index.php                        # REST API — /health, /chat, /conversation/:id
+├── index.php                        # REST API — /health, /verify, /chat, /history, /new-chat
 ├── line-webhook.php                 # LINE webhook entry point
 ├── AppConfig.php                    # Extends Config: adds productAPI, website, admin sections
 ├── SirichaiLineWebhook.php          # Extends LineWebhookHandler: wires chatbot + DB

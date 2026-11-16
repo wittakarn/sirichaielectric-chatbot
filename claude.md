@@ -41,7 +41,8 @@ Located at `vendor/wittakarn/chatbot-core/src/`:
 | `AppConfig.php` | Extends `Config` — adds `productAPI`, `website`, `rateLimit`, `admin` config sections |
 | `services/SearchService.php` | Product search on the **OneElectric** Supabase index (product IDs are shared by both shops): one batch Gemini embedding call (1536 dims) for all queries, then the `search_products_all` RPC per query in parallel. Returns product IDs + names |
 | `services/ProductAPIService.php` | `searchProducts()`: IDs from `SearchService`, then Sirichai names/prices from the shop's `products-by-ids.php` (falls back to the keywords, then categories endpoint when the index finds nothing). Also product detail + quotation PDF |
-| `index.php` | REST API entry point — routes: `GET /health`, `POST /chat`, `GET /conversation/:id`, `DELETE /conversation/:id` |
+| `index.php` | REST API entry point — routes: `GET /health`, `POST /verify`, `POST /chat` (needs `X-Chat-Token`), `GET /history`, `POST /new-chat` |
+| `services/ChatAccess.php` | Signed session token (HMAC) + per-token rate limit + Turnstile `siteverify`. Table `chat_rate_limits` (`migrations/`) |
 | `line-webhook.php` | LINE webhook entry — boots `SirichaiLineWebhook()->run()` |
 | `system-prompt.txt` | AI behavior instructions — loaded as `systemInstruction` text (NOT File API) |
 | `supabase/search_products_all.sql` | The RPC Sirichai calls, stored in the OneElectric Supabase. Same vector + keyword RRF as OneElectric's `search_products`, but ignores sales |
@@ -103,6 +104,15 @@ Chained calls: up to **6 additional** rounds. A 5-product batch + quotation now 
 - `initialize()` runs after 200 is sent
 - Loading animation (60s) for 1:1 chats only
 - Push API (not Reply API) — no 60s reply token expiry
+
+### Web Chat Access (Turnstile + cookie)
+- `chat.html`/`demo.html` render a Cloudflare Turnstile widget (`interaction-only`), POST the result to `/verify`, get a 30-min HMAC token (`ChatAccess`), and send it as `X-Chat-Token` on every `/chat`. 401 = missing/expired (page re-verifies), 429 = over `CHAT_MAX_REQUESTS_PER_MINUTE` (default 15, per token; separate from `MAX_REQUESTS_PER_MINUTE`).
+- The conversation is identified ONLY by the HttpOnly cookie `sirichai_cid` (SameSite=Lax, 7 days). A client-supplied `conversationId` is ignored, so ids can't be guessed to read someone else's chat.
+- `GET /history` redraws the chat after a refresh. `POST /new-chat` expires the cookie (history stays in the DB); the next message gets a new id.
+- Removed: `POST /search`, `GET`/`DELETE /conversation/:id` (unauthenticated, no callers).
+- CORS is same-origin only; `ALLOWED_ORIGINS` (comma-separated) opens it to other sites.
+- Env: `TURNSTILE_SECRET`, `CHAT_TOKEN_SECRET` (`openssl rand -hex 32`), `CHAT_MAX_REQUESTS_PER_MINUTE`, `ALLOWED_ORIGINS`. The site key is public, in the two HTML files. Real values go in `.env` (only file loaded), never in the tracked `.env.local` template.
+- Turnstile widget hostnames: `assistant.sirichaielectric.com` (the iframe's own origin, not the shop) + `localhost`.
 
 ### Conversation ID Format
 - API conversations: `conv_{timestamp}_{9chars}`
@@ -324,6 +334,7 @@ php guardrails/run.php describe   # list Gates, Rules, Proofs
 | `input-guard` | 1000-char limit (inclusive boundary) and injection refusal in `services/InputGuard.php` |
 | `quotation-price-type` | unauthorized users forced to tier `c` (`services/PriceTypePolicy.php`) |
 | `wiring` | chatbot still calls the guard/policy; `system-prompt.txt` keeps its SECURITY block |
+| `chat-access` | token verify (tamper/wrong secret/expired/empty secret), per-token rate limit, `/chat` calls `requireChatAccess()` (`services/ChatAccess.php`, `index.php`) |
 
 Exit codes: `0` ok, `1` breach / proof failed, `2` refused (Check inspected nothing, unknown gate, unhealthy baseline).
 

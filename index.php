@@ -9,12 +9,30 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in production
 ini_set('error_log', dirname(__FILE__) . '/logs.log');
+ini_set('log_errors', '1'); // some hosts default this off, which hides every failure
+
+// Last resort: any uncaught error is logged (with file:line) and answered as JSON, never a blank 500.
+set_exception_handler(function ($e) {
+    error_log('[API] Uncaught ' . get_class($e) . ': ' . $e->getMessage() . ' at ' . basename($e->getFile()) . ':' . $e->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+    }
+    echo json_encode(array('success' => false, 'error' => 'Internal server error'));
+});
 
 // Set headers
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// Same-origin by default (chat.html calls its own host, also when iframed).
+// ALLOWED_ORIGINS="https://a.com,https://b.com" opens it to other sites.
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+$allowedOrigins = array_filter(array_map('trim', explode(',', (string)getenv('ALLOWED_ORIGINS'))));
+if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+}
 header('Access-Control-Allow-Methods: POST, GET, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, X-Chat-Token');
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -27,9 +45,13 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
 require_once __DIR__ . '/services/SearchService.php';
+require_once __DIR__ . '/services/ChatAccess.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
 use ChatbotCore\ConversationManager;
+
+const CHAT_COOKIE = 'sirichai_cid';
+const CHAT_COOKIE_TTL = 604800; // 7 days
 
 // Initialize configuration
 try {
@@ -104,14 +126,15 @@ $path = trim($path, '/');
 // Route handling
 if ($requestMethod === 'GET' && ($path === '' || $path === 'health')) {
     handleHealthCheck();
+} elseif ($requestMethod === 'POST' && $path === 'verify') {
+    handleVerify($config);
 } elseif ($requestMethod === 'POST' && $path === 'chat') {
+    requireChatAccess($config, $dbConfig);
     handleChat($chatbot, $conversationManager);
-} elseif ($requestMethod === 'POST' && $path === 'search') {
-    handleSearch($config);
-} elseif ($requestMethod === 'GET' && strpos($path, 'conversation/') === 0) {
-    handleGetConversation($conversationManager, $path);
-} elseif ($requestMethod === 'DELETE' && strpos($path, 'conversation/') === 0) {
-    handleClearConversation($conversationManager, $path);
+} elseif ($requestMethod === 'GET' && $path === 'history') {
+    handleGetHistory($conversationManager);
+} elseif ($requestMethod === 'POST' && $path === 'new-chat') {
+    handleNewChat();
 } else {
     http_response_code(404);
     echo json_encode(array(
@@ -130,6 +153,96 @@ function handleHealthCheck() {
         'mode' => 'RAG-based catalog search',
         'timestamp' => date('c'),
     ));
+}
+
+function handleVerify($config) {
+    $cfg  = $config->get('turnstile');
+    $data = json_decode(file_get_contents('php://input'), true);
+    $resp = is_array($data) && isset($data['turnstileToken']) ? (string)$data['turnstileToken'] : '';
+    $ip   = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+
+    if ($cfg['tokenSecret'] === '' || !ChatAccess::verifyTurnstile($cfg['secret'], $resp, $ip)) {
+        http_response_code(403);
+        echo json_encode(array('success' => false, 'error' => 'Verification failed'));
+        exit;
+    }
+    echo json_encode(array('success' => true, 'token' => ChatAccess::issueToken($cfg['tokenSecret'], time())));
+}
+
+/** Rejects /chat without a valid session token (401) or over the per-token limit (429). */
+function requireChatAccess($config, $dbConfig) {
+    $token = isset($_SERVER['HTTP_X_CHAT_TOKEN']) ? $_SERVER['HTTP_X_CHAT_TOKEN'] : '';
+    $now   = time();
+    $id    = ChatAccess::verifyToken($token, $config->get('turnstile', 'tokenSecret'), $now);
+    if ($id === null) {
+        http_response_code(401);
+        echo json_encode(array('success' => false, 'error' => 'Verification required', 'verify' => true));
+        exit;
+    }
+
+    try {
+        $pdo = \ChatbotCore\DatabaseManager::getInstance($dbConfig)->getConnection();
+        $hit = function ($tokenId, $window) use ($pdo) {
+            $pdo->prepare('INSERT INTO chat_rate_limits (token_id, window_start, hits) VALUES (?, ?, 1)
+                           ON DUPLICATE KEY UPDATE hits = hits + 1')->execute(array($tokenId, $window));
+            $q = $pdo->prepare('SELECT hits FROM chat_rate_limits WHERE token_id = ? AND window_start = ?');
+            $q->execute(array($tokenId, $window));
+            $hits = (int)$q->fetchColumn();
+            if (mt_rand(1, 100) === 1) { // housekeeping
+                $pdo->prepare('DELETE FROM chat_rate_limits WHERE window_start < ?')->execute(array($window - 60));
+            }
+            return $hits;
+        };
+        $allowed = ChatAccess::withinLimit($hit, $id, $now, $config->get('turnstile', 'maxPerMinute'));
+    } catch (\Throwable $e) {
+        // Fail closed, but say why in the log instead of a blank 500.
+        error_log('[ChatAccess] rate limiter failed: ' . get_class($e) . ': ' . $e->getMessage());
+        http_response_code(503);
+        echo json_encode(array('success' => false, 'error' => 'Service temporarily unavailable. Please try again shortly.'));
+        exit;
+    }
+
+    if (!$allowed) {
+        http_response_code(429);
+        header('Retry-After: 60');
+        echo json_encode(array('success' => false, 'error' => 'Too many requests. Please wait a minute and try again.'));
+        exit;
+    }
+}
+
+function currentConversationId() {
+    $id = isset($_COOKIE[CHAT_COOKIE]) ? $_COOKIE[CHAT_COOKIE] : '';
+    return preg_match('/^conv_[0-9]+_[a-f0-9]{9}$/', $id) ? $id : '';
+}
+
+function setConversationCookie($id, $expires) {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    setcookie(CHAT_COOKIE, $id, array(
+        'expires'  => $expires,
+        'path'     => '/',
+        'secure'   => $https,
+        'httponly' => true,
+        'samesite' => 'Lax', // iframe on shop.* is same-site as assistant.*
+    ));
+}
+
+/** Messages of this browser's conversation, for redrawing the chat after a refresh. */
+function handleGetHistory($conversationManager) {
+    $id = currentConversationId();
+    $messages = $id === '' ? array() : $conversationManager->getConversationHistory($id);
+    echo json_encode(array(
+        'success'  => true,
+        'messages' => array_map(function ($m) {
+            return array('role' => $m['role'], 'content' => $m['content']);
+        }, $messages),
+    ));
+}
+
+/** "New chat": forget the cookie only. The old conversation stays in the database; the next message starts a new one. */
+function handleNewChat() {
+    setConversationCookie('', time() - 3600);
+    echo json_encode(array('success' => true));
 }
 
 function handleChat($chatbot, $conversationManager) {
@@ -157,9 +270,13 @@ function handleChat($chatbot, $conversationManager) {
     }
 
     $message = trim($data['message']);
-    $conversationId = isset($data['conversationId']) && !empty($data['conversationId'])
-        ? $data['conversationId']
-        : $conversationManager->generateConversationId();
+    // The conversation is identified by an HttpOnly cookie only (never by a client-supplied id),
+    // so one visitor cannot read or continue another's conversation by guessing an id.
+    $conversationId = currentConversationId();
+    if ($conversationId === '') {
+        $conversationId = $conversationManager->generateConversationId();
+    }
+    setConversationCookie($conversationId, time() + CHAT_COOKIE_TTL);
 
     // Handle /reset command
     if ($message === '/reset') {
@@ -205,60 +322,3 @@ function handleChat($chatbot, $conversationManager) {
     }
 }
 
-function handleGetConversation($conversationManager, $path) {
-    $conversationId = str_replace('conversation/', '', $path);
-
-    $conversation = $conversationManager->getConversation($conversationId);
-
-    if ($conversation === null) {
-        http_response_code(404);
-        echo json_encode(array(
-            'success' => false,
-            'error' => 'Conversation not found',
-        ));
-        return;
-    }
-
-    echo json_encode(array(
-        'success' => true,
-        'conversation' => $conversation,
-    ));
-}
-
-function handleSearch($config) {
-    $input    = json_decode(file_get_contents('php://input'), true);
-    $query    = isset($input['query']) ? trim($input['query']) : '';
-    $nResults = isset($input['n_results']) ? intval($input['n_results']) : 5;
-
-    if (empty($query)) {
-        http_response_code(400);
-        echo json_encode(array('success' => false, 'error' => 'query is required'));
-        return;
-    }
-
-    $supabaseCfg = $config->get('supabase');
-    $service     = new SearchService(
-        $config->get('gemini', 'apiKey'),
-        $supabaseCfg['restUrl'],
-        $supabaseCfg['key']
-    );
-
-    $result = $service->search($query, $nResults);
-
-    if (!$result['success']) {
-        http_response_code(500);
-    }
-
-    echo json_encode($result);
-}
-
-function handleClearConversation($conversationManager, $path) {
-    $conversationId = str_replace('conversation/', '', $path);
-
-    $deleted = $conversationManager->clearConversation($conversationId);
-
-    echo json_encode(array(
-        'success' => $deleted,
-        'message' => $deleted ? 'Conversation cleared' : 'Conversation not found',
-    ));
-}
