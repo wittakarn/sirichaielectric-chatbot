@@ -46,10 +46,12 @@ require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
 require_once __DIR__ . '/services/SearchService.php';
 require_once __DIR__ . '/services/ChatAccess.php';
-require_once __DIR__ . '/services/ChatCookie.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
 use ChatbotCore\ConversationManager;
+
+const CHAT_COOKIE = 'sirichai_cid';
+const CHAT_COOKIE_TTL = 604800; // 7 days
 
 // Initialize configuration
 try {
@@ -133,6 +135,9 @@ if ($requestMethod === 'GET' && ($path === '' || $path === 'health')) {
     handleGetHistory($conversationManager);
 } elseif ($requestMethod === 'POST' && $path === 'new-chat') {
     handleNewChat();
+} elseif ($requestMethod === 'POST' && $path === 'voice-log') {
+    requireChatAccess($config, $dbConfig);
+    handleVoiceLog($conversationManager);
 } else {
     http_response_code(404);
     echo json_encode(array(
@@ -208,6 +213,23 @@ function requireChatAccess($config, $dbConfig) {
     }
 }
 
+function currentConversationId() {
+    $id = isset($_COOKIE[CHAT_COOKIE]) ? $_COOKIE[CHAT_COOKIE] : '';
+    return preg_match('/^conv_[0-9]+_[a-f0-9]{9}$/', $id) ? $id : '';
+}
+
+function setConversationCookie($id, $expires) {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    setcookie(CHAT_COOKIE, $id, array(
+        'expires'  => $expires,
+        'path'     => '/',
+        'secure'   => $https,
+        'httponly' => true,
+        'samesite' => 'Lax', // iframe on shop.* is same-site as assistant.*
+    ));
+}
+
 /** Messages of this browser's conversation, for redrawing the chat after a refresh. */
 function handleGetHistory($conversationManager) {
     $id = currentConversationId();
@@ -223,6 +245,27 @@ function handleGetHistory($conversationManager) {
 /** "New chat": forget the cookie only. The old conversation stays in the database; the next message starts a new one. */
 function handleNewChat() {
     setConversationCookie('', time() - 3600);
+    echo json_encode(array('success' => true));
+}
+
+/** End of a voice call (call.js): the transcript joins this browser's conversation, each line tagged [voice]. */
+function handleVoiceLog($conversationManager) {
+    $data  = json_decode(file_get_contents('php://input'), true);
+    $lines = isset($data['lines']) && is_array($data['lines']) ? array_slice($data['lines'], 0, 200) : array();
+    $conversationId = currentConversationId();
+    if ($conversationId === '') {
+        $conversationId = $conversationManager->generateConversationId();
+    }
+    setConversationCookie($conversationId, time() + CHAT_COOKIE_TTL);
+    $saved = 0;
+    foreach ($lines as $l) {
+        $text = is_array($l) && isset($l['content']) ? trim(mb_substr((string)$l['content'], 0, 2000)) : '';
+        if ($text === '') continue;
+        $role = isset($l['role']) && $l['role'] === 'assistant' ? 'assistant' : 'user';
+        $conversationManager->addMessage($conversationId, $role, $text . ' [voice]');
+        $saved++;
+    }
+    error_log('[Call] saved ' . $saved . ' voice lines to ' . $conversationId);
     echo json_encode(array('success' => true));
 }
 

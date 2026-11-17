@@ -16,7 +16,6 @@ require_once __DIR__ . '/services/ProductAPIService.php';
 require_once __DIR__ . '/services/SearchService.php';
 require_once __DIR__ . '/services/ChatAccess.php';
 require_once __DIR__ . '/services/InputGuard.php';
-require_once __DIR__ . '/services/ChatCookie.php';
 
 const CALL_MAX_SECONDS = 600; // the Live token expires after this, which ends the call
 
@@ -110,25 +109,6 @@ if ($action === 'tool') {
     $args = isset($in['args']) && is_array($in['args']) ? $in['args'] : array();
     error_log('[Call] tool ' . $name . ' ' . json_encode($args, JSON_UNESCAPED_UNICODE));
     out(200, array('success' => true, 'result' => runTool($config, $name, $args)));
-}
-
-// End of call: the transcript goes into the same conversation as the text chat, each line tagged [voice].
-if ($action === 'log') {
-    $in    = json_decode(file_get_contents('php://input'), true);
-    $lines = isset($in['lines']) && is_array($in['lines']) ? array_slice($in['lines'], 0, 200) : array();
-    $cm    = new \ChatbotCore\ConversationManager((int)$config->get('conversation', 'maxMessages') ?: 20, 'api', $config->get('database'));
-    $cid   = currentConversationId() ?: $cm->generateConversationId();
-    setConversationCookie($cid, $now + CHAT_COOKIE_TTL);
-    $saved = 0;
-    foreach ($lines as $l) {
-        $text = is_array($l) && isset($l['content']) ? trim(mb_substr((string)$l['content'], 0, 2000)) : '';
-        if ($text === '') continue;
-        $role = isset($l['role']) && $l['role'] === 'assistant' ? 'assistant' : 'user';
-        $cm->addMessage($cid, $role, $text . ' [voice]');
-        $saved++;
-    }
-    error_log('[Call] saved ' . $saved . ' voice lines to ' . $cid);
-    out(200, array('success' => true));
 }
 
 out(404, array('success' => false, 'error' => 'Unknown action'));

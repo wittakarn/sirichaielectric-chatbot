@@ -141,7 +141,7 @@ function initCall() {
     function saveLog(lines) {
         if (!lines.length || !chatToken) return;
         const body = JSON.stringify({ lines });
-        fetch(API_BASE_URL + 'call.php?action=log', {
+        fetch(API_BASE_URL + 'voice-log', {
             method: 'POST', keepalive: body.length < 60000,
             headers: { 'Content-Type': 'application/json', 'X-Chat-Token': chatToken },
             body
