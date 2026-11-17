@@ -46,12 +46,10 @@ require_once __DIR__ . '/AppConfig.php';
 require_once __DIR__ . '/services/ProductAPIService.php';
 require_once __DIR__ . '/services/SearchService.php';
 require_once __DIR__ . '/services/ChatAccess.php';
+require_once __DIR__ . '/services/ChatCookie.php';
 require_once __DIR__ . '/chatbot/SirichaiElectricChatbot.php';
 
 use ChatbotCore\ConversationManager;
-
-const CHAT_COOKIE = 'sirichai_cid';
-const CHAT_COOKIE_TTL = 604800; // 7 days
 
 // Initialize configuration
 try {
@@ -208,23 +206,6 @@ function requireChatAccess($config, $dbConfig) {
         echo json_encode(array('success' => false, 'error' => 'Too many requests. Please wait a minute and try again.'));
         exit;
     }
-}
-
-function currentConversationId() {
-    $id = isset($_COOKIE[CHAT_COOKIE]) ? $_COOKIE[CHAT_COOKIE] : '';
-    return preg_match('/^conv_[0-9]+_[a-f0-9]{9}$/', $id) ? $id : '';
-}
-
-function setConversationCookie($id, $expires) {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-    setcookie(CHAT_COOKIE, $id, array(
-        'expires'  => $expires,
-        'path'     => '/',
-        'secure'   => $https,
-        'httponly' => true,
-        'samesite' => 'Lax', // iframe on shop.* is same-site as assistant.*
-    ));
 }
 
 /** Messages of this browser's conversation, for redrawing the chat after a refresh. */

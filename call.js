@@ -53,7 +53,7 @@ function initCall() {
         if (!t.success) throw new Error(t.error);
 
         const ws = new WebSocket(WS + encodeURIComponent(t.token));
-        call = { ws, mic, userText: '', botText: '', sources: new Set(), playAt: 0, ends: Date.now() + t.maxSeconds * 1000 };
+        call = { ws, mic, userText: '', botText: '', log: [], sources: new Set(), playAt: 0, ends: Date.now() + t.maxSeconds * 1000 };
         call.inCtx = new AudioContext({ sampleRate: 16000 });
         call.outCtx = new AudioContext({ sampleRate: 24000 });
 
@@ -123,19 +123,36 @@ function initCall() {
             if (fc.name === 'generate_quotation') {
                 // Service answers {"pdfUrl":"https:\/\/…"} — JSON-escaped slashes, so unescape before matching.
                 const url = String(result).replace(/\\\//g, '/').match(/https?:\/\/[^\s"'<>\\]+/);
-                if (url) addMessage('assistant', '📄 [ดาวน์โหลดใบเสนอราคา](' + url[0] + ')');
+                if (url) {
+                    addMessage('assistant', '📄 [ดาวน์โหลดใบเสนอราคา](' + url[0] + ')');
+                    if (call) call.log.push({ role: 'assistant', content: '📄 [ดาวน์โหลดใบเสนอราคา](' + url[0] + ')' });
+                }
             }
             return { id: fc.id, name: fc.name, response: { result: String(result) } };
         }));
         if (call) call.ws.send(JSON.stringify({ toolResponse: { functionResponses: responses } }));
     }
 
-    function flushUser() { if (call && call.userText.trim()) { addMessage('user', '🎙 ' + call.userText.trim()); call.userText = ''; } }
-    function flushBot() { if (call && call.botText.trim()) { addMessage('assistant', call.botText.trim()); call.botText = ''; } }
+    function flushUser() { if (call && call.userText.trim()) { addMessage('user', '🎙 ' + call.userText.trim()); call.log.push({ role: 'user', content: call.userText.trim() }); call.userText = ''; } }
+    function flushBot() { if (call && call.botText.trim()) { addMessage('assistant', call.botText.trim()); call.log.push({ role: 'assistant', content: call.botText.trim() }); call.botText = ''; } }
+
+    // One POST per call (not per turn) so a call doesn't eat the per-minute limit.
+    // keepalive lets it finish when the tab closes; browsers cap keepalive bodies at 64KB.
+    function saveLog(lines) {
+        if (!lines.length || !chatToken) return;
+        const body = JSON.stringify({ lines });
+        fetch(API_BASE_URL + 'call.php?action=log', {
+            method: 'POST', keepalive: body.length < 60000,
+            headers: { 'Content-Type': 'application/json', 'X-Chat-Token': chatToken },
+            body
+        }).catch(() => {});
+    }
+    window.addEventListener('pagehide', () => { if (call) hangUp(); });
 
     function hangUp(note) {
         if (call) {
             flushUser(); flushBot();
+            saveLog(call.log);
             clearInterval(call.timer);
             try { call.ws.close(1000); } catch (e) {}
             if (call.proc) call.proc.disconnect();
