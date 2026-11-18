@@ -17,6 +17,7 @@ class AppConfig extends Config {
             'productByIdsUrl'    => $this->getEnv('PRODUCT_BY_IDS_URL', ''),
             'productDetailUrl'   =>$this->getEnv('PRODUCT_DETAIL_URL', ''),
             'quotationUrl'       => $this->getEnv('QUOTATION_URL', ''),
+            'quotationToken'     => $this->getEnv('QUOTATION_TOKEN', ''),
         );
 
         $this->config['website'] = array(

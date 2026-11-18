@@ -31,6 +31,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../AppConfig.php';
 require_once __DIR__ . '/../services/SearchService.php';
 require_once __DIR__ . '/../services/ProductAPIService.php';
+require_once __DIR__ . '/MockQuotationProductAPI.php';
 require_once __DIR__ . '/../chatbot/SirichaiElectricChatbot.php';
 
 // ANSI color codes for terminal output
@@ -155,7 +156,7 @@ try {
 
     $supabaseConfig = $config->get('supabase');
     $searchService = new SearchService($geminiConfig['apiKey'], $supabaseConfig['restUrl'], $supabaseConfig['key']);
-    $productAPI = new ProductAPIService($productAPIConfig, $searchService);
+    $productAPI = new MockQuotationProductAPI($productAPIConfig, $searchService);
 
     $chatbot = new SirichaiElectricChatbot($geminiConfig, $productAPI);
     $chatbot->setAuthorized(true);

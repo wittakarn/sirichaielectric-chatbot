@@ -187,15 +187,17 @@ class ProductAPIService {
      * Generate a fast quotation PDF from product list
      * @param array $quotaDetail Array of objects with productName and amount
      * @param string $priceType Price type: 'vc', 'a', or 'b'
+     * @param string $remark Customer contact printed on the PDF (optional)
      * @return string|null Returns PDF download URL, or null on error
      */
-    public function generateFastQuotation($quotaDetail, $priceType) {
+    public function generateFastQuotation($quotaDetail, $priceType, $remark = '') {
         error_log('[ProductAPI] Generating fast quotation with ' . count($quotaDetail) . ' products, priceType: ' . $priceType);
 
-        $requestBody = json_encode(array(
-            'quotaDetail' => $quotaDetail,
-            'priceType' => $priceType
-        ), JSON_UNESCAPED_UNICODE);
+        $body = array('quotaDetail' => $quotaDetail, 'priceType' => $priceType);
+        if ($remark !== '') {
+            $body['remark'] = $remark;
+        }
+        $requestBody = json_encode($body, JSON_UNESCAPED_UNICODE);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->quotationUrl);
@@ -205,7 +207,8 @@ class ProductAPIService {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
-            'Content-Length: ' . strlen($requestBody)
+            'Content-Length: ' . strlen($requestBody),
+            'X-Quotation-Token: ' . (isset($this->config['quotationToken']) ? $this->config['quotationToken'] : '')
         ));
 
         $response = curl_exec($ch);
@@ -219,7 +222,7 @@ class ProductAPIService {
         }
 
         if ($httpCode !== 200) {
-            error_log('[ProductAPI] HTTP error: ' . $httpCode);
+            error_log('[ProductAPI] HTTP error: ' . $httpCode . ' ' . substr($response, 0, 500));
             return null;
         }
 
