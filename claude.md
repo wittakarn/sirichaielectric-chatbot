@@ -181,6 +181,7 @@ PRODUCT_KEYWORDS_URL=https://shop.sirichaielectric.com/services/products-by-keyw
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
+QUOTATION_TOKEN=xxx                           # shared secret, = QUOTATION_TOKEN in shop configuration config.php
 
 WEBSITE_URL=https://shop.sirichaielectric.com/
 
