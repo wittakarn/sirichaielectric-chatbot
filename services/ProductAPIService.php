@@ -227,7 +227,35 @@ class ProductAPIService {
         }
 
         error_log('[ProductAPI] Quotation generated successfully');
+        if ($remark !== '') {
+            $this->notifyQuotationRemark($response, $remark);
+        }
         return $response;
+    }
+
+    /**
+     * Push the customer's contact to the staff LINE chat so someone calls back.
+     * LINE_QUOTATION_NOTIFY_TO: a group/user ID, or 'broadcast' (all friends). Skipped when unset; a failed push never fails the quotation.
+     */
+    private function notifyQuotationRemark($response, $remark) {
+        $to    = isset($this->config['quotationNotifyTo']) ? $this->config['quotationNotifyTo'] : '';
+        $token = isset($this->config['quotationNotifyToken']) ? $this->config['quotationNotifyToken'] : '';
+        if ($to === '' || $token === '') {
+            return;
+        }
+        $data = json_decode($response, true);
+        $text = "ลูกค้าขอใบเสนอราคา ฝากข้อมูลติดต่อ\n"
+            . (isset($data['quotNo']) ? 'เลขที่: ' . $data['quotNo'] . "\n" : '')
+            . 'ติดต่อ: ' . $remark
+            . (isset($data['pdfUrl']) ? "\nPDF: " . $data['pdfUrl'] : '');
+        // 'broadcast' = every friend of the account; only safe because it is a staff-only account
+        $sent = $to === 'broadcast'
+            ? \ChatbotCore\Utils\LineWebhookUtils::sendLineRequest('https://api.line.me/v2/bot/message/broadcast',
+                array('messages' => array(array('type' => 'text', 'text' => $text))), $token, 'Broadcast')
+            : \ChatbotCore\Utils\LineWebhookUtils::sendPushMessage($to, $text, $token);
+        if (!$sent) {
+            error_log('[ProductAPI] Quotation remark LINE push failed');
+        }
     }
 
 }

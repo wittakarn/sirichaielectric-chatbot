@@ -18,6 +18,11 @@ class AppConfig extends Config {
             'productDetailUrl'   =>$this->getEnv('PRODUCT_DETAIL_URL', ''),
             'quotationUrl'       => $this->getEnv('QUOTATION_URL', ''),
             'quotationToken'     => $this->getEnv('QUOTATION_TOKEN', ''),
+            // Staff LINE chat (group/user ID) told about quotations that carry a customer contact
+            'quotationNotifyTo'    => $this->getEnv('LINE_QUOTATION_NOTIFY_TO', ''),
+            // No fallback for 'broadcast': the chatbot's own account has customers as friends
+            'quotationNotifyToken' => $this->getEnv('LINE_QUOTATION_NOTIFY_TOKEN',
+                $this->getEnv('LINE_QUOTATION_NOTIFY_TO', '') === 'broadcast' ? '' : $this->getEnv('LINE_CHANNEL_ACCESS_TOKEN', '')),
         );
 
         $this->config['website'] = array(
