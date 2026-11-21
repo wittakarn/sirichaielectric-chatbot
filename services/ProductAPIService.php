@@ -235,7 +235,7 @@ class ProductAPIService {
 
     /**
      * Push the customer's contact to the staff LINE chat so someone calls back.
-     * LINE_QUOTATION_NOTIFY_TO: a group/user ID, or 'broadcast' (all friends). Skipped when unset; a failed push never fails the quotation.
+     * LINE_QUOTATION_NOTIFY_TO: comma-separated group/user IDs, or 'broadcast' (all friends). Skipped when unset; a failed push never fails the quotation.
      */
     private function notifyQuotationRemark($response, $remark) {
         $to    = isset($this->config['quotationNotifyTo']) ? $this->config['quotationNotifyTo'] : '';
@@ -249,12 +249,19 @@ class ProductAPIService {
             . 'ติดต่อ: ' . $remark
             . (isset($data['pdfUrl']) ? "\nPDF: " . $data['pdfUrl'] : '');
         // 'broadcast' = every friend of the account; only safe because it is a staff-only account
-        $sent = $to === 'broadcast'
-            ? \ChatbotCore\Utils\LineWebhookUtils::sendLineRequest('https://api.line.me/v2/bot/message/broadcast',
-                array('messages' => array(array('type' => 'text', 'text' => $text))), $token, 'Broadcast')
-            : \ChatbotCore\Utils\LineWebhookUtils::sendPushMessage($to, $text, $token);
-        if (!$sent) {
-            error_log('[ProductAPI] Quotation remark LINE push failed');
+        if ($to === 'broadcast') {
+            $sent = \ChatbotCore\Utils\LineWebhookUtils::sendLineRequest('https://api.line.me/v2/bot/message/broadcast',
+                array('messages' => array(array('type' => 'text', 'text' => $text))), $token, 'Broadcast');
+            if (!$sent) {
+                error_log('[ProductAPI] Quotation remark LINE broadcast failed');
+            }
+            return;
+        }
+        // comma-separated IDs: each group/user gets its own push, one failure doesn't stop the rest
+        foreach (array_filter(array_map('trim', explode(',', $to))) as $id) {
+            if (!\ChatbotCore\Utils\LineWebhookUtils::sendPushMessage($id, $text, $token)) {
+                error_log("[ProductAPI] Quotation remark LINE push failed: {$id}");
+            }
         }
     }
 

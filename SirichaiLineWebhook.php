@@ -12,6 +12,13 @@ class SirichaiLineWebhook extends LineWebhookHandler {
     /** @var SirichaiElectricChatbot */
     private $chatbot;
 
+    /** Logs each event's source (groupId / roomId / userId) so an ID can be copied into LINE_QUOTATION_NOTIFY_TO. */
+    protected function handleEvent(array $event, string $botUserId): void {
+        error_log('[SirichaiLineWebhook] ' . (isset($event['type']) ? $event['type'] : '?')
+            . ' event, source: ' . json_encode(isset($event['source']) ? $event['source'] : null));
+        parent::handleEvent($event, $botUserId);
+    }
+
     protected function initialize(): void {
         $config             = AppConfig::getInstance();
         $geminiConfig       = $config->get('gemini');
