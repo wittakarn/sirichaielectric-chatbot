@@ -166,6 +166,12 @@ $questions = array(
             if (mb_strpos($response, '02-111-7801') !== false) {
                 return 'Response must NOT push the customer to call the shop';
             }
+            // The remark on generate_quotation is what pushes the contact to staff
+            global $productAPI;
+            $last = end($productAPI->quotationCalls);
+            if ($last === false || mb_strpos($last['remark'], '081-234-5678') === false) {
+                return 'generate_quotation must be re-called with the contact as remark';
+            }
             return null;
         }
     ),
