@@ -181,6 +181,9 @@ PRODUCT_KEYWORDS_URL=https://shop.sirichaielectric.com/services/products-by-keyw
 PRODUCT_SEARCH_URL=https://shop.sirichaielectric.com/services/products-by-categories-prompt.php
 PRODUCT_DETAIL_URL=https://shop.sirichaielectric.com/services/...
 QUOTATION_URL=https://shop.sirichaielectric.com/services/...
+QUOTATION_TOKEN=xxx                           # shared secret, = QUOTATION_TOKEN in shop configuration config.php
+LINE_QUOTATION_NOTIFY_TO=                     # staff LINE group/user IDs (comma-separated) or 'broadcast' (staff-only OA); quotation with remark → push contact + PDF. Empty = off
+LINE_QUOTATION_NOTIFY_TOKEN=                  # sender account's token; empty = LINE_CHANNEL_ACCESS_TOKEN (required for 'broadcast')
 
 WEBSITE_URL=https://shop.sirichaielectric.com/
 

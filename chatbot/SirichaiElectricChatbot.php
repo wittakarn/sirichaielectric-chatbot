@@ -118,6 +118,10 @@ class SirichaiElectricChatbot extends GeminiChatbot {
                             'type'        => 'string',
                             'enum'        => array('ss', 's', 'a', 'b', 'c', 'vb', 'vc', 'd', 'e', 'f'),
                             'description' => 'Price type extracted from user message'
+                        ),
+                        'remark' => array(
+                            'type'        => 'string',
+                            'description' => 'Customer contact the customer gave for this quotation (name, phone, LINE ID), as they wrote it. Omit if none.'
                         )
                     ),
                     'required' => array('quotaDetail', 'priceType')
@@ -158,7 +162,8 @@ class SirichaiElectricChatbot extends GeminiChatbot {
                 return 'No products provided for quotation.';
             }
 
-            $result = $this->productAPI->generateFastQuotation($quotaDetail, $priceType);
+            $remark = isset($args['remark']) && is_string($args['remark']) ? trim($args['remark']) : '';
+            $result = $this->productAPI->generateFastQuotation($quotaDetail, $priceType, $remark);
             return $result !== null ? $result : 'Failed to generate quotation.';
         }
 
@@ -178,6 +183,7 @@ class SirichaiElectricChatbot extends GeminiChatbot {
             return json_encode(array(
                 'quotaDetail' => isset($args['quotaDetail']) ? $args['quotaDetail'] : array(),
                 'priceType'   => isset($args['priceType']) ? $args['priceType'] : '',
+                'remark'      => isset($args['remark']) ? $args['remark'] : '',
             ), JSON_UNESCAPED_UNICODE);
         }
 

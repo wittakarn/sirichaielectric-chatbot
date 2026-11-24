@@ -187,15 +187,17 @@ class ProductAPIService {
      * Generate a fast quotation PDF from product list
      * @param array $quotaDetail Array of objects with productName and amount
      * @param string $priceType Price type: 'vc', 'a', or 'b'
+     * @param string $remark Customer contact printed on the PDF (optional)
      * @return string|null Returns PDF download URL, or null on error
      */
-    public function generateFastQuotation($quotaDetail, $priceType) {
+    public function generateFastQuotation($quotaDetail, $priceType, $remark = '') {
         error_log('[ProductAPI] Generating fast quotation with ' . count($quotaDetail) . ' products, priceType: ' . $priceType);
 
-        $requestBody = json_encode(array(
-            'quotaDetail' => $quotaDetail,
-            'priceType' => $priceType
-        ), JSON_UNESCAPED_UNICODE);
+        $body = array('quotaDetail' => $quotaDetail, 'priceType' => $priceType);
+        if ($remark !== '') {
+            $body['remark'] = $remark;
+        }
+        $requestBody = json_encode($body, JSON_UNESCAPED_UNICODE);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->quotationUrl);
@@ -205,7 +207,8 @@ class ProductAPIService {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
-            'Content-Length: ' . strlen($requestBody)
+            'Content-Length: ' . strlen($requestBody),
+            'X-Quotation-Token: ' . (isset($this->config['quotationToken']) ? $this->config['quotationToken'] : '')
         ));
 
         $response = curl_exec($ch);
@@ -219,12 +222,47 @@ class ProductAPIService {
         }
 
         if ($httpCode !== 200) {
-            error_log('[ProductAPI] HTTP error: ' . $httpCode);
+            error_log('[ProductAPI] HTTP error: ' . $httpCode . ' ' . substr($response, 0, 500));
             return null;
         }
 
         error_log('[ProductAPI] Quotation generated successfully');
+        if ($remark !== '') {
+            $this->notifyQuotationRemark($response, $remark);
+        }
         return $response;
+    }
+
+    /**
+     * Push the customer's contact to the staff LINE chat so someone calls back.
+     * LINE_QUOTATION_NOTIFY_TO: comma-separated group/user IDs, or 'broadcast' (all friends). Skipped when unset; a failed push never fails the quotation.
+     */
+    private function notifyQuotationRemark($response, $remark) {
+        $to    = isset($this->config['quotationNotifyTo']) ? $this->config['quotationNotifyTo'] : '';
+        $token = isset($this->config['quotationNotifyToken']) ? $this->config['quotationNotifyToken'] : '';
+        if ($to === '' || $token === '') {
+            return;
+        }
+        $data = json_decode($response, true);
+        $text = "ลูกค้าขอใบเสนอราคา ฝากข้อมูลติดต่อ\n"
+            . (isset($data['quotNo']) ? 'เลขที่: ' . $data['quotNo'] . "\n" : '')
+            . 'ติดต่อ: ' . $remark
+            . (isset($data['pdfUrl']) ? "\nPDF: " . $data['pdfUrl'] : '');
+        // 'broadcast' = every friend of the account; only safe because it is a staff-only account
+        if ($to === 'broadcast') {
+            $sent = \ChatbotCore\Utils\LineWebhookUtils::sendLineRequest('https://api.line.me/v2/bot/message/broadcast',
+                array('messages' => array(array('type' => 'text', 'text' => $text))), $token, 'Broadcast');
+            if (!$sent) {
+                error_log('[ProductAPI] Quotation remark LINE broadcast failed');
+            }
+            return;
+        }
+        // comma-separated IDs: each group/user gets its own push, one failure doesn't stop the rest
+        foreach (array_filter(array_map('trim', explode(',', $to))) as $id) {
+            if (!\ChatbotCore\Utils\LineWebhookUtils::sendPushMessage($id, $text, $token)) {
+                error_log("[ProductAPI] Quotation remark LINE push failed: {$id}");
+            }
+        }
     }
 
 }
