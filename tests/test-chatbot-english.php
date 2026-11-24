@@ -108,9 +108,9 @@ $questions = array(
         'validate' => function($response) {
             $hasPdf = mb_strpos($response, 'http') !== false
                 && (mb_stripos($response, 'pdf') !== false || mb_stripos($response, 'quotation') !== false);
-            return $hasPdf && !hasThaiReplyMarkers($response);
+            return $hasPdf && mb_stripos($response, 'contact') !== false && !hasThaiReplyMarkers($response);
         },
-        'validateMsg' => 'Response must contain a PDF/quotation link and no Thai reply markers'
+        'validateMsg' => 'Response must contain a PDF/quotation link, a contact-callback invite, and no Thai reply markers'
     ),
 );
 

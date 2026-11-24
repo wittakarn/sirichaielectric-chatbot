@@ -107,6 +107,16 @@ $questions = array(
             return mb_strpos($response, 'LE1') !== false || mb_strpos($response, 'มอเตอร์สตาร์ท') !== false || mb_strpos($response, 'ราคา') !== false;
         },
         'validateMsg' => 'Response must contain product info about the motor starter (LE1 model, มอเตอร์สตาร์ท, or ราคา)'
+    ),
+    array(
+        'question' => 'ช่วยให้ร้านติดต่อกลับหน่อยค่ะ เบอร์ 081-234-5678',
+        'expectation' => 'No quotation yet: AI asks for products and quantities to make one, does NOT redirect to shop phone numbers',
+        'validate' => function($response) {
+            return mb_strpos($response, '.pdf') === false
+                && mb_strpos($response, '02-111-7801') === false
+                && mb_strpos($response, 'จำนวน') !== false;
+        },
+        'validateMsg' => 'Response must ask for products/quantities (จำนวน), with no PDF link and no shop phone redirect'
     )
 );
 

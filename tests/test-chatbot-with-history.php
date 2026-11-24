@@ -19,7 +19,8 @@ use ChatbotCore\ConversationManager;
  * - Q9: "เพิ่ม รายการแรก 5 ชิ้น" (shopping phrase - must NOT ask for price type)
  * - Q10: "เอา ตัวแรก 2 อัน" (another shopping phrase - must NOT trigger quotation)
  * - Q11: "ออกใบเสนอราคา เรท a" (quotation after shopping list - expect PDF link with all products)
- * - Q12: "มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W" (color inquiry - AI must NOT fabricate color variants not in data)
+ * - Q12: "ช่วยติดต่อกลับด้วยค่ะ คุณสมชาย 081-234-5678" (contact after quotation - shop calls back, no new PDF link)
+ * - Q13: "มีแสงสีเหลืองไหมค่ะ BEC LED speed 50 W" (color inquiry - AI must NOT fabricate color variants not in data)
  *
  * Usage: php test-chatbot-with-history.php
  */
@@ -112,6 +113,9 @@ $questions = array(
             if (mb_strpos($response, '.pdf') === false) {
                 return 'Response must contain a PDF download link (default rate c)';
             }
+            if (mb_strpos($response, 'ติดต่อกลับ') === false) {
+                return 'Response must invite the customer to leave contact for a callback';
+            }
             return null;
         }
     ),
@@ -144,6 +148,23 @@ $questions = array(
         'validate' => function($response) {
             if (mb_strpos($response, '.pdf') === false) {
                 return 'Response must contain a PDF download link (rate a, all accumulated products)';
+            }
+            return null;
+        }
+    ),
+    // Contact after a quotation: shop calls back, no new PDF link, no "call the shop" redirect
+    array(
+        'question' => 'ช่วยติดต่อกลับด้วยค่ะ คุณสมชาย 081-234-5678',
+        'expectation' => 'AI should re-call generate_quotation with remark, hide the PDF link, and confirm the shop will contact back',
+        'validate' => function($response) {
+            if (mb_strpos($response, 'ติดต่อกลับ') === false) {
+                return 'Response must confirm the shop will contact the customer back';
+            }
+            if (mb_strpos($response, '.pdf') !== false) {
+                return 'Response must NOT show a new PDF link';
+            }
+            if (mb_strpos($response, '02-111-7801') !== false) {
+                return 'Response must NOT push the customer to call the shop';
             }
             return null;
         }
